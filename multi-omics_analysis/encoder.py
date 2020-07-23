@@ -14,3 +14,15 @@ class Encoder(nn.Module):
     def forward(self, x):
         output = self.En(x)
         return output
+
+
+class Classifier(nn.Module):
+    def __init__(self, input, rate):
+        super(Classifier, self).__init__()
+        self.FC = torch.nn.Sequential(
+            nn.Linear(Z_in, 1),
+            nn.Dropout(rate4),
+            nn.Sigmoid())
+
+    def forward(self, x):
+        return self.FC(x)

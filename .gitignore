@@ -129,4 +129,6 @@ dmypy.json
 .pyre/
 
 # multi-omics data (several gigabytes)
-data/*
+multi-omics_analysis/data/*
+*.ipynb
+.idea/
