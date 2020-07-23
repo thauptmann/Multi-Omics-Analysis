@@ -10,9 +10,7 @@ import pandas as pd
 import torch.cuda.amp
 import seaborn as sns
 import encoder
-from sklearn import metrics
 from sklearn.feature_selection import VarianceThreshold
-from sklearn.model_selection import train_test_split
 from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, RandomNegativeTripletSelector, \
     SemihardNegativeTripletSelector  # Strategies for selecting triplets within a minibatch
 from siamese_triplet.metrics import AverageNonzeroTripletsMetric
@@ -20,10 +18,11 @@ from torch.utils.data.sampler import WeightedRandomSampler
 from sklearn.metrics import roc_auc_score
 import random
 from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import StandardScaler
 
 
 def main():
-    save_results_to = '.'
+    save_results_to = Path('.')
     torch.manual_seed(42)
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
@@ -102,33 +101,48 @@ def main():
     ls_epoch = [20, 50, 10, 15, 30, 40, 60, 70, 80, 90, 100]
     ls_rate = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
     ls_wd = [0.01, 0.001, 0.1, 0.0001]
-    ls_lam = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+    ls_gam = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 
-    Y = GDSCR.response.values
+    Y = GDSCR.response.to_numpy()
 
-    skf = StratifiedKFold(n_splits=5, random_state=42)
+    skf = StratifiedKFold(n_splits=5)
 
-    max_iter = 100
+    max_iter = 1
     for iters in range(max_iter):
         k = 0
         mb_size = 30
-        h_dim1 = random.choice(ls_h_dim)
-        h_dim2 = random.choice(ls_h_dim)
-        h_dim3 = random.choice(ls_h_dim)
-        marg = random.choice(ls_marg)
-        lrE = random.choice(ls_lr)
-        lrM = random.choice(ls_lr)
-        lrC = random.choice(ls_lr)
-        lrCL = random.choice(ls_lr)
-        epochs = random.choice(ls_epoch)
-        rateE = random.choice(ls_rate)
-        rateM = random.choice(ls_rate)
-        rateC = random.choice(ls_rate)
-        rateClf = random.choice(ls_rate)
-        wd = random.choice(ls_wd)
-        lam = random.choice(ls_lam)
+        # h_dim1 = random.choice(ls_h_dim)
+        h_dim1 = 256
+        # h_dim2 = random.choice(ls_h_dim)
+        h_dim2 = 512
+        # h_dim3 = random.choice(ls_h_dim)
+        h_dim3 = 128
+        # marg = random.choice(ls_marg)
+        marg = 2
+        # lrE = random.choice(ls_lr)
+        lrE = 0.0001
+        #lrM = random.choice(ls_lr)
+        lrM = 0.0005
+        # lrC = random.choice(ls_lr)
+        lrC = 0.0005
+        # lrCL = random.choice(ls_lr)
+        lrCL = 0.0005
+        # epochs = random.choice(ls_epoch)
+        epochs = 10
+        # rateE = random.choice(ls_rate)
+        rateE = 0.3
+        # rateM = random.choice(ls_rate)
+        rateM = 0.8
+        # rateC = random.choice(ls_rate)
+        rateC = 0.8
+        # rateClf = random.choice(ls_rate)
+        rateClf = 0.4
+        # wd = random.choice(ls_wd)
+        wd = 0.01
+        # gam = random.choice(ls_gam)
+        gam = 0.2
 
-        for train_index, test_index in skf.split(GDSCE.values, Y):
+        for train_index, test_index in skf.split(GDSCE.to_numpy(), Y):
             k = k + 1
             X_trainE = GDSCE.values[train_index, :]
             X_testE = GDSCE.values[test_index, :]
@@ -139,7 +153,7 @@ def main():
             y_trainE = Y[train_index]
             y_testE = Y[test_index]
 
-            scalerGDSC = sk.StandardScaler()
+            scalerGDSC = StandardScaler()
             scalerGDSC.fit(X_trainE)
             X_trainE = scalerGDSC.transform(X_trainE)
             X_testE = scalerGDSC.transform(X_testE)
@@ -244,7 +258,7 @@ def main():
                             Pred = Clas(ZT)
 
                             Triplets = TripSel2(ZT, target)
-                            loss = lam * trip_criterion(ZT[Triplets[:, 0], :], ZT[Triplets[:, 1], :],
+                            loss = gam * trip_criterion(ZT[Triplets[:, 0], :], ZT[Triplets[:, 1], :],
                                                     ZT[Triplets[:, 2], :]) + C_loss(Pred, target.view(-1, 1))
 
                         y_true = target.view(-1, 1)
@@ -283,7 +297,7 @@ def main():
                     PredT = Clas(ZTT)
 
                     TripletsT = TripSel2(ZTT, ty_testE)
-                    lossT = lam * trip_criterion(ZTT[TripletsT[:, 0], :], ZTT[TripletsT[:, 1], :],
+                    lossT = gam * trip_criterion(ZTT[TripletsT[:, 0], :], ZTT[TripletsT[:, 1], :],
                                                  ZTT[TripletsT[:, 2], :]) + C_loss(PredT, ty_testE.view(-1, 1))
 
                     y_truet = ty_testE.view(-1, 1)
@@ -298,9 +312,11 @@ def main():
             plt.ylabel('Total cost')
             plt.xlabel('iterations (per tens)')
 
-            title = 'Cost Cetuximab iter = {}, fold = {}, mb_size = {},  h_dim[1,2,3] = ({},{},{}), marg = {}, lr[E,M,C] = ({}, {}, {}), epoch = {}, rate[1,2,3,4] = ({},{},{},{}), wd = {}, lrCL = {}, lam = {}'. \
-                format(iters, k, mbs, hdm1, hdm2, hdm3, mrg, lre, lrm, lrc, epch, rateE, rateM, rateC, rateClf, wd, lrCL,
-                       lam)
+            title = f'Cost Cetuximab iter = {iters}, fold = {k}, mb_size = {mb_size},  ' \
+                    f'h_dim[1,2,3] = ({h_dim1},{h_dim2},{h_dim3}), marg = {marg}, lr[E,M,C] = ({lrE}, {lrM}, {lrC}),' \
+                    f' epoch = {epoch}, rate[1,2,3,4] = ({rateE},{rateM},{rateC},{rateClf}),wd = {wd},' \
+                    f' lrCL = {lrCL}, gam = {gam}'
+
 
             plt.suptitle(title)
             plt.savefig(save_results_to + title + '.png', dpi=150)
@@ -310,9 +326,10 @@ def main():
             plt.ylabel('AUC')
             plt.xlabel('iterations (per tens)')
 
-            title = 'AUC Cetuximab iter = {}, fold = {}, mb_size = {},  h_dim[1,2,3] = ({},{},{}), marg = {}, lr[E,M,C] = ({}, {}, {}), epoch = {}, rate[1,2,3,4] = ({},{},{},{}), wd = {}, lrCL = {}, lam = {}'. \
-                format(iters, k, mbs, hdm1, hdm2, hdm3, mrg, lre, lrm, lrc, epch, rateE, rateM, rateC, rateClf, wd, lrCL,
-                       lam)
+            title = f'AUC Cetuximab iter = {iters}, fold = {k}, mb_size = {mb_size},  h_dim[1,2,3] = ' \
+                    f'({h_dim1},{h_dim2},{h_dim3}), marg = {marg}, lr[E,M,C] = ({lrE}, {lrM}, {lrC}), ' \
+                    f'epoch = {epoch}, rate[1,2,3,4] = ({rateE},{rateM},{rateC},{rateClf}), ' \
+                    f'wd = {wd}, lrCL = {lrCL}, gam = {gam}'
 
             plt.suptitle(title)
             plt.savefig(save_results_to + title + '.png', dpi=150)
