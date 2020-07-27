@@ -132,3 +132,4 @@ dmypy.json
 multi-omics_analysis/data/*
 *.ipynb
 .idea/
+results_*/*
