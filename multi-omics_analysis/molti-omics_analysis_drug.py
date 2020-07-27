@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import hyperparameter
 from tqdm import trange
 
 import encoder
@@ -18,54 +19,17 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 
-paclitaxel = {'drug': 'paclitaxel', 'mini_batch': 64, 'h_dim1': 512, 'h_dim2': 256, 'h_dim3': 1024, 'lrE': 0.0005,
-              'lrM': 0.5, 'lrC': 0.5, 'lrCL': 0.5, 'dropout_rateE': 0.4, 'dropout_rateM': 0.6,
-              'dropout_rateC': 0.3, 'weight_decay': 0.01,
-              'dropout_rateClf': 0.6, 'gamma': 0.3, 'epochs': 5, 'margin': 1.5}
-
-gemcitabine_pdx = {'drug': 'gemcitabine_pdx', 'mini_batch': 13, 'h_dim1': 256, 'h_dim2': 32, 'h_dim3': 64, 'lrE': 0.05,
-                   'lrM': 0.00005, 'lrC': 0.0005, 'lrCL': 0.001, 'dropout_rateE': 0.4, 'dropout_rateM': 0.6,
-                   'dropout_rateC': 0.5, 'weight_decay': 0.0001,
-                   'dropout_rateClf': 0.3, 'gamma': 0.6, 'epochs': 10, 'margin': 0.5}
-
-cetuximab = {'drug': 'cetuximab', 'mini_batch': 16, 'h_dim1': 32, 'h_dim2': 16, 'h_dim3': 256, 'lrE': 0.001,
-             'lrM': 0.0001, 'lrC': 0.00005, 'lrCL': 0.005, 'dropout_rateE': 0.5, 'dropout_rateM': 0.8,
-             'dropout_rateC': 0.5, 'weight_decay': 0.0001,
-             'dropout_rateClf': 0.3, 'gamma': 0.5, 'epochs': 20, 'margin': 1.5,
-             'expression':,
-'response':
-'mutation':,
-'cna':,
-
-
-             }
-
-erlotinib = {'drug': 'erlotinib', 'mini_batch': 16, 'h_dim1': 32, 'h_dim2': 16, 'h_dim3': 256, 'lrE': 0.001,
-             'lrM': 0.0001, 'lrC': 0.00005, 'lrCL': 0.005, 'dropout_rateE': 0.5, 'dropout_rateM': 0.8,
-             'dropout_rateC': 0.5, 'weight_decay': 0.0001,
-             'dropout_rateClf': 0.3, 'gamma': 0.5, 'epochs': 20, 'margin': 1.5}
-
-docetaxel = {'drug': 'docetaxel', 'mini_batch': 8, 'h_dim1': 16, 'h_dim2': 16, 'h_dim3': 16, 'lrE': 0.0001,
-             'lrM': 0.0005, 'lrC': 0.0005, 'lrCL': 0.001, 'dropout_rateE': 0.5, 'dropout_rateM': 0.5,
-             'dropout_rateC': 0.5, 'weight_decay': 0.0001,
-             'dropout_rateClf': 0.5, 'gamma': 0.4, 'epochs': 10, 'margin': 0.5}
-
-cisplatin = {'drug': 'cisplatin', 'mini_batch': 15, 'h_dim1': 128, 'h_dim2': 128, 'h_dim3': 127, 'lrE': 0.05,
-             'lrM': 0.005, 'lrC': 0.005, 'lrCL': 0.0005, 'dropout_rateE': 0.5, 'dropout_rateM': 0.6,
-             'dropout_rateC': 0.8, 'weight_decay': 0.01,
-             'dropout_rateClf': 0.6, 'gamma': 0.2, 'epochs': 20, 'margin': 0.5}
-
-gemcitabine_tcga = {'drug': 'gemcitabine_tcga', 'mini_batch': 13, 'h_dim1': 16, 'h_dim2': 16, 'h_dim3': 16, 'lrE': 0.0001,
-                    'lrM': 0.001, 'lrC': 0.01, 'lrCL': 0.05, 'dropout_rateE': 0.5, 'dropout_rateM': 0.5,
-                    'dropout_rateC': 0.5, 'weight_decay': 0.001,
-                    'dropout_rateClf': 0.5, 'gamma': 0.6, 'epochs': 10, 'margin': 2}
-
-
+# possible = gemcitabine_tcga, cisplatin, docetaxel, erlotinib, cetuximab, gemcitabine_pdx, paclitaxel
 parameter = paclitaxel
 
 
 def main():
+    #reproducibility
     torch.manual_seed(42)
+    np.random.seed(42)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
     else:
@@ -198,7 +162,7 @@ def main():
         random_negative_triplet_selector = RandomNegativeTripletSelector(marg)
         all_triplet_selector = AllTripletSelector()
 
-        torch.cuda.manual_seed_all(42)
+
         AutoencoderE = encoder.Encoder(IE_dim, parameter['h_dim1'], parameter['dropout_rateE']).to(device)
         AutoencoderM = encoder.Encoder(IM_dim, parameter['h_dim2'], parameter['dropout_rateM']).to(device)
         AutoencoderC = encoder.Encoder(IM_dim, parameter['h_dim3'], parameter['dropout_rateC']).to(device)
