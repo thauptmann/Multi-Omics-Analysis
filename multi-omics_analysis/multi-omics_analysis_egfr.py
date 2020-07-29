@@ -1,72 +1,69 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import math
-import encoder
 from pathlib import Path
-import sklearn as sk
-import seaborn as sns
-from sklearn import metrics
+
+import torch
+import torch.nn.functional as F
+import numpy as np
+from tqdm import trange
+import encoder
+import pandas as pd
+import sklearn.preprocessing as sk
 from sklearn.feature_selection import VarianceThreshold
-from sklearn.model_selection import train_test_split
 from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, RandomNegativeTripletSelector, \
     SemihardNegativeTripletSelector  # Strategies for selecting triplets within a minibatch
 from siamese_triplet.metrics import AverageNonzeroTripletsMetric
 from torch.utils.data.sampler import WeightedRandomSampler
 from sklearn.metrics import roc_auc_score
-from sklearn.metrics import average_precision_score
-import random
-from random import randint
-from sklearn.model_selection import StratifiedKFold
-from scipy.stats.stats import pearsonr
-from scipy.stats import spearmanr
-import statsmodels.api as sm
-from mne.stats import bonferroni_correction
+
 
 def main():
-    save_results_to = Path('.')
-    torch.manual_seed(42)
-    random.seed(42)
+    # reproducibility
+    # torch.manual_seed(42)
+    # np.random.seed(42)
 
-    GDSCE = pd.read_csv("GDSC_exprs.z.EGFRi.tsv",
-                    sep="\t", index_col=0, decimal=",")
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")
+    else:
+        device = torch.device("cpu")
+
+    data_path = Path('data/MOLI')
+    cna_binary_path = data_path / 'CNA_binary'
+    response_path = data_path / 'response'
+    sna_binary_path = data_path / 'SNA_binary'
+    expressions_homogenized_path = data_path / 'exprs_homogenized'
+    expressions_path = data_path / 'exprs'
+
+    GDSCE = pd.read_csv(expressions_path / "GDSC_exprs.z.EGFRi.tsv", sep="\t", index_col=0, decimal=",")
     GDSCE = pd.DataFrame.transpose(GDSCE)
 
-    GDSCM = pd.read_csv("GDSC_mutations.EGFRi.tsv",
-                        sep="\t", index_col=0, decimal=".")
+    GDSCM = pd.read_csv(sna_binary_path / "GDSC_mutations.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
     GDSCM = pd.DataFrame.transpose(GDSCM)
     GDSCM = GDSCM.loc[:, ~GDSCM.columns.duplicated()]
 
-    GDSCC = pd.read_csv("GDSC_CNA.EGFRi.tsv",
-                        sep="\t", index_col=0, decimal=".")
+    GDSCC = pd.read_csv(cna_binary_path / "GDSC_CNA.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
     GDSCC.drop_duplicates(keep='last')
     GDSCC = pd.DataFrame.transpose(GDSCC)
     GDSCC = GDSCC.loc[:, ~GDSCC.columns.duplicated()]
 
-    PDXEerlo = pd.read_csv("PDX_exprs.Erlotinib.eb_with.GDSC_exprs.Erlotinib.tsv",
+    PDXEerlo = pd.read_csv(expressions_homogenized_path / "PDX_exprs.Erlotinib.eb_with.GDSC_exprs.Erlotinib.tsv",
                            sep="\t", index_col=0, decimal=",")
     PDXEerlo = pd.DataFrame.transpose(PDXEerlo)
-    PDXMerlo = pd.read_csv("PDX_mutations.Erlotinib.tsv",
-                           sep="\t", index_col=0, decimal=",")
+
+    PDXMerlo = pd.read_csv(sna_binary_path / "PDX_mutations.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
     PDXMerlo = pd.DataFrame.transpose(PDXMerlo)
-    PDXCerlo = pd.read_csv("PDX_CNA.Erlotinib.tsv",
-                           sep="\t", index_col=0, decimal=",")
+
+    PDXCerlo = pd.read_csv(cna_binary_path / "PDX_CNA.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
     PDXCerlo.drop_duplicates(keep='last')
     PDXCerlo = pd.DataFrame.transpose(PDXCerlo)
     PDXCerlo = PDXCerlo.loc[:, ~PDXCerlo.columns.duplicated()]
 
-    PDXEcet = pd.read_csv("PDX_exprs.Cetuximab.eb_with.GDSC_exprs.Cetuximab.tsv",
+    PDXEcet = pd.read_csv(expressions_homogenized_path / "PDX_exprs.Cetuximab.eb_with.GDSC_exprs.Cetuximab.tsv",
                           sep="\t", index_col=0, decimal=",")
     PDXEcet = pd.DataFrame.transpose(PDXEcet)
-    PDXMcet = pd.read_csv("PDX_mutations.Cetuximab.tsv",
-                          sep="\t", index_col=0, decimal=",")
+
+    PDXMcet = pd.read_csv(sna_binary_path / "PDX_mutations.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
     PDXMcet = pd.DataFrame.transpose(PDXMcet)
-    PDXCcet = pd.read_csv("PDX_CNA.Cetuximab.tsv",
-                          sep="\t", index_col=0, decimal=",")
+
+    PDXCcet = pd.read_csv(cna_binary_path / "PDX_CNA.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
     PDXCcet.drop_duplicates(keep='last')
     PDXCcet = pd.DataFrame.transpose(PDXCcet)
     PDXCcet = PDXCcet.loc[:, ~PDXCcet.columns.duplicated()]
@@ -80,6 +77,16 @@ def main():
     GDSCC = GDSCC.fillna(0)
     GDSCC[GDSCC != 0.0] = 1
 
+    PDXMcet = PDXMcet.fillna(0)
+    PDXMcet[PDXMcet != 0.0] = 1
+    PDXCcet = PDXCcet.fillna(0)
+    PDXCcet[PDXCcet != 0.0] = 1
+
+    PDXMerlo = PDXMerlo.fillna(0)
+    PDXMerlo[PDXMerlo != 0.0] = 1
+    PDXCerlo = PDXCerlo.fillna(0)
+    PDXCerlo[PDXCerlo != 0.0] = 1
+
     ls = GDSCE.columns.intersection(GDSCM.columns)
     ls = ls.intersection(GDSCC.columns)
     ls = ls.intersection(PDXEerlo.columns)
@@ -88,8 +95,6 @@ def main():
     ls = ls.intersection(PDXEcet.columns)
     ls = ls.intersection(PDXMcet.columns)
     ls = ls.intersection(PDXCcet.columns)
-    ls2 = GDSCE.index.intersection(GDSCM.index)
-    ls2 = ls2.intersection(GDSCC.index)
     ls3 = PDXEerlo.index.intersection(PDXMerlo.index)
     ls3 = ls3.intersection(PDXCerlo.index)
     ls4 = PDXEcet.index.intersection(PDXMcet.index)
@@ -106,13 +111,22 @@ def main():
     GDSCM = GDSCM.loc[:, ls]
     GDSCC = GDSCC.loc[:, ls]
 
-    GDSCR = pd.read_csv("GDSC_response.EGFRi.tsv",
+    GDSCR = pd.read_csv(response_path / "GDSC_response.EGFRi.tsv",
                         sep="\t", index_col=0, decimal=",")
+    PDXRcet = pd.read_csv(response_path / "PDX_response.Cetuximab.tsv",
+                          sep="\t", index_col=0, decimal=",")
+    PDXRerlo = pd.read_csv(response_path / "PDX_response.Erlotinib.tsv",
+                           sep="\t", index_col=0, decimal=",")
+
+    PDXRcet = PDXRcet.loc[ls4, :]
+    PDXRerlo = PDXRerlo.loc[ls3, :]
 
     GDSCR.rename(mapper=str, axis='index', inplace=True)
 
     d = {"R": 0, "S": 1}
     GDSCR["response"] = GDSCR.loc[:, "response"].apply(lambda x: d[x])
+    PDXRcet["response"] = PDXRcet.loc[:, "response"].apply(lambda x: d[x])
+    PDXRerlo["response"] = PDXRerlo.loc[:, "response"].apply(lambda x: d[x])
 
     responses = GDSCR
     drugs = set(responses["drug"].values)
@@ -148,558 +162,170 @@ def main():
     GDSCCv2 = GDSCCv2.loc[ls2, :]
     GDSCRv2 = GDSCRv2.loc[ls2, :]
 
-    Y = GDSCRv2['response'].values
-
-    PDXRcet = pd.read_csv("PDX_response.Cetuximab.tsv",
-                          sep="\t", index_col=0, decimal=",")
-    PDXRcet.loc[PDXRcet.iloc[:, 0] == 'R'] = 0
-    PDXRcet.loc[PDXRcet.iloc[:, 0] == 'S'] = 1
-    PDXRcet = PDXRcet.loc[ls4, :]
-    Ytscet = PDXRcet['response'].values
-
-    PDXRerlo = pd.read_csv("PDX_response.Erlotinib.tsv",
-                           sep="\t", index_col=0, decimal=",")
-    PDXRerlo.loc[PDXRerlo.iloc[:, 0] == 'R'] = 0
-    PDXRerlo.loc[PDXRerlo.iloc[:, 0] == 'S'] = 1
-    PDXRerlo = PDXRerlo.loc[ls3, :]
-    Ytserlo = PDXRerlo['response'].values
-
+    mbs = 16
     hdm1 = 32
     hdm2 = 16
     hdm3 = 256
+    margin = 1.5
+    lre = 0.001
+    lrm = 0.0001
+    lrc = 0.00005
+    lrCL = 0.005
+    epochs = 40
     rate1 = 0.5
     rate2 = 0.8
     rate3 = 0.5
     rate4 = 0.3
+    wd = 0.0001
+    gamma = 0.5
+
+    X_trainE = GDSCEv2.values
+    X_trainM = GDSCMv2.values
+    X_trainC = GDSCCv2.values
+    Y = GDSCRv2['response'].values
+
+    X_testEerlo = PDXEerlo.values
+    X_testMerlo = PDXMerlo.values
+    X_testCerlo = PDXCerlo.values
+    Ytserlo = PDXRerlo['response'].values
+
+    X_testEcet = PDXEcet.values
+    X_testMcet = PDXMcet.values
+    X_testCcet = PDXCcet.values
+    Ytscet = PDXRcet['response'].values
 
     scalerGDSC = sk.StandardScaler()
-    scalerGDSC.fit(GDSCEv2.values)
-    X_trainE = scalerGDSC.transform(GDSCEv2.values)
-    X_testEerlo = scalerGDSC.transform(PDXEerlo.values)
-    X_testEcet = scalerGDSC.transform(PDXEcet.values)
+    scalerGDSC.fit(X_trainE)
+    X_trainE = scalerGDSC.transform(X_trainE)
+    X_testEcet = scalerGDSC.transform(X_testEcet)
+    X_testEerlo = scalerGDSC.transform(X_testEerlo)
 
-    X_trainM = np.nan_to_num(GDSCMv2.values)
-    X_trainC = np.nan_to_num(GDSCCv2.values)
-    X_testMerlo = np.nan_to_num(PDXMerlo.values)
-    X_testCerlo = np.nan_to_num(PDXCerlo.values)
-    X_testMcet = np.nan_to_num(PDXMcet.values)
-    X_testCcet = np.nan_to_num(PDXCcet.values)
+    X_trainM = np.nan_to_num(X_trainM)
+    X_trainC = np.nan_to_num(X_trainC)
 
-    TX_testEerlo = torch.FloatTensor(X_testEerlo)
-    TX_testMerlo = torch.FloatTensor(X_testMerlo)
-    TX_testCerlo = torch.FloatTensor(X_testCerlo)
-    ty_testEerlo = torch.FloatTensor(Ytserlo.astype(int))
+    X_testEcet = torch.FloatTensor(X_testEcet)
+    X_testMcet = torch.FloatTensor(X_testMcet)
+    X_testCcet = torch.FloatTensor(X_testCcet)
+    Ytscet = torch.FloatTensor(Ytscet.astype(int))
 
-    TX_testEcet = torch.FloatTensor(X_testEcet)
-    TX_testMcet = torch.FloatTensor(X_testMcet)
-    TX_testCcet = torch.FloatTensor(X_testCcet)
-    ty_testEcet = torch.FloatTensor(Ytscet.astype(int))
+    X_testEerlo = torch.FloatTensor(X_testEerlo)
+    X_testMerlo = torch.FloatTensor(X_testMerlo)
+    X_testCerlo = torch.FloatTensor(X_testCerlo)
+    Ytserlo = torch.FloatTensor(Ytserlo.astype(int))
+
+    # Train
+    class_sample_count = np.array([len(np.where(Y == t)[0]) for t in np.unique(Y)])
+    weight = 1. / class_sample_count
+    samples_weight = np.array([weight[t] for t in Y])
+
+    samples_weight = torch.from_numpy(samples_weight)
+    sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
+                                    replacement=True)
+
+    trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(X_trainE), torch.FloatTensor(X_trainM),
+                                                  torch.FloatTensor(X_trainC),
+                                                  torch.FloatTensor(Y))
+
+    trainLoader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mbs,
+                                              shuffle=False,
+                                              num_workers=8, sampler=sampler, pin_memory=True)
 
     n_sampE, IE_dim = X_trainE.shape
     n_sampM, IM_dim = X_trainM.shape
     n_sampC, IC_dim = X_trainC.shape
 
-    h_dim1 = hdm1
-    h_dim2 = hdm2
-    h_dim3 = hdm3
-    Z_in = h_dim1 + h_dim2 + h_dim3
-
-    costtr = []
-    auctr = []
-    costts = []
-    aucts = []
-
-    torch.cuda.manual_seed_all(42)
-
-    AutoencoderE = torch.load('EGFRv2Exprs.pt')
-    AutoencoderM = torch.load('EGFRv2Mut.pt')
-    AutoencoderC = torch.load('EGFRv2CNA.pt')
-
-    Clas = torch.load('EGFRv2Class.pt')
-
-    AutoencoderE.eval()
-    AutoencoderM.eval()
-    AutoencoderC.eval()
-    Clas.eval()
-
-    ZEX = AutoencoderE(torch.FloatTensor(X_trainE))
-    ZMX = AutoencoderM(torch.FloatTensor(X_trainM))
-    ZCX = AutoencoderC(torch.FloatTensor(X_trainC))
-    ZTX = torch.cat((ZEX, ZMX, ZCX), 1)
-    ZTX = F.normalize(ZTX, p=2, dim=0)
-    PredX = Clas(ZTX)
-    AUCt = roc_auc_score(Y, PredX.detach().numpy())
-    print(AUCt)
-
-    ZETerlo = AutoencoderE(TX_testEerlo)
-    ZMTerlo = AutoencoderM(TX_testMerlo)
-    ZCTerlo = AutoencoderC(TX_testCerlo)
-    ZTTerlo = torch.cat((ZETerlo, ZMTerlo, ZCTerlo), 1)
-    ZTTerlo = F.normalize(ZTTerlo, p=2, dim=0)
-    PredTerlo = Clas(ZTTerlo)
-    AUCterlo = roc_auc_score(Ytserlo, PredTerlo.detach().numpy())
-    print(AUCterlo)
-
-    ZETcet = AutoencoderE(TX_testEcet)
-    ZMTcet = AutoencoderM(TX_testMcet)
-    ZCTcet = AutoencoderC(TX_testCcet)
-    ZTTcet = torch.cat((ZETcet, ZMTcet, ZCTcet), 1)
-    ZTTcet = F.normalize(ZTTcet, p=2, dim=0)
-    PredTcet = Clas(ZTTcet)
-    AUCtcet = roc_auc_score(Ytscet, PredTcet.detach().numpy())
-    print(AUCtcet)
-
-    PRADE = pd.read_csv("TCGA-PRAD_exprs.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    PRADE = pd.DataFrame.transpose(PRADE)
-
-    PRADM = pd.read_csv("TCGA-PRAD_mutations.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    PRADM = pd.DataFrame.transpose(PRADM)
-    PRADM = PRADM.loc[:, ~PRADM.columns.duplicated()]
-
-    PRADC = pd.read_csv("TCGA-PRAD_CNA.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    PRADC = pd.DataFrame.transpose(PRADC)
-    PRADC = PRADC.loc[:, ~PRADC.columns.duplicated()]
-
-    PRADM = PRADM.fillna(0)
-    PRADM[PRADM != 0.0] = 1
-    PRADC = PRADC.fillna(0)
-    PRADC[PRADC != 0.0] = 1
-
-    # PRADE.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # PRADM.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # PRADC.rename(lambda x : x[0:11], axis = "index", inplace=True)
-
-    lsPRAD = PRADE.index.intersection(PRADM.index)
-    lsPRAD = lsPRAD.intersection(PRADC.index)
-    lsPRAD = pd.unique(lsPRAD)
-
-    PRADE = PRADE.loc[lsPRAD, ls]
-    PRADM = PRADM.loc[lsPRAD, ls]
-    PRADC = PRADC.loc[lsPRAD, ls]
-
-    print(PRADE.shape)
-    print(PRADM.shape)
-    print(PRADC.shape)
-
-    AutoencoderE.eval()
-    AutoencoderM.eval()
-    AutoencoderC.eval()
-    Clas.eval()
-
-    PRADE2 = np.nan_to_num(PRADE.values)
-    PRADM2 = np.nan_to_num(PRADM.values)
-    PRADC2 = np.nan_to_num(PRADC.values)
-
-    NPRADE2 = scalerGDSC.transform(PRADE2)
-
-    PRADexprs = torch.FloatTensor(NPRADE2)
-    PRADmut = torch.FloatTensor(PRADM2)
-    PRADcna = torch.FloatTensor(PRADC2)
-
-    PRADZE = AutoencoderE(PRADexprs)
-    PRADZM = AutoencoderM(PRADmut)
-    PRADZC = AutoencoderC(PRADcna)
-
-    PRADZT = torch.cat((PRADZE, PRADZM, PRADZC), 1)
-    PRADZTX = F.normalize(PRADZT, p=2, dim=0)
-    PredPRAD = Clas(PRADZTX)
-
-    KIRPE = pd.read_csv("TCGA-KIRP_exprs.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    KIRPE = pd.DataFrame.transpose(KIRPE)
-
-    KIRPM = pd.read_csv("TCGA-KIRP_mutations.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    KIRPM = pd.DataFrame.transpose(KIRPM)
-    KIRPM = KIRPM.loc[:, ~KIRPM.columns.duplicated()]
-
-    KIRPC = pd.read_csv("TCGA-KIRP_CNA.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    KIRPC = pd.DataFrame.transpose(KIRPC)
-    KIRPC = KIRPC.loc[:, ~KIRPC.columns.duplicated()]
-
-    KIRPM = KIRPM.fillna(0)
-    KIRPM[KIRPM != 0.0] = 1
-    KIRPC = KIRPC.fillna(0)
-    KIRPC[KIRPC != 0.0] = 1
-
-    # KIRPE.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # KIRPM.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # KIRPC.rename(lambda x : x[0:11], axis = "index", inplace=True)
-
-    lsKIRP = KIRPE.index.intersection(KIRPM.index)
-    lsKIRP = lsKIRP.intersection(KIRPC.index)
-    lsKIRP = pd.unique(lsKIRP)
-
-    KIRPE = KIRPE.loc[lsKIRP, ls]
-    KIRPM = KIRPM.loc[lsKIRP, ls]
-    KIRPC = KIRPC.loc[lsKIRP, ls]
-
-    print(KIRPE.shape)
-    print(KIRPM.shape)
-    print(KIRPC.shape)
-
-    AutoencoderE.eval()
-    AutoencoderM.eval()
-    AutoencoderC.eval()
-    Clas.eval()
-
-    KIRPE2 = np.nan_to_num(KIRPE.values)
-    KIRPM2 = np.nan_to_num(KIRPM.values)
-    KIRPC2 = np.nan_to_num(KIRPC.values)
-
-    NKIRPE2 = scalerGDSC.transform(KIRPE2)
-
-    KIRPexprs = torch.FloatTensor(NKIRPE2)
-    KIRPmut = torch.FloatTensor(KIRPM2)
-    KIRPcna = torch.FloatTensor(KIRPC2)
-
-    KIRPZE = AutoencoderE(KIRPexprs)
-    KIRPZM = AutoencoderM(KIRPmut)
-    KIRPZC = AutoencoderC(KIRPcna)
-
-    KIRPZT = torch.cat((KIRPZE, KIRPZM, KIRPZC), 1)
-    KIRPZTX = F.normalize(KIRPZT, p=2, dim=0)
-    PredKIRP = Clas(KIRPZTX)
-
-    BLCAE = pd.read_csv("TCGA-BLCA_exprs.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    BLCAE = pd.DataFrame.transpose(BLCAE)
-
-    BLCAM = pd.read_csv("TCGA-BLCA_mutations.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    BLCAM = pd.DataFrame.transpose(BLCAM)
-    BLCAM = BLCAM.loc[:, ~BLCAM.columns.duplicated()]
-
-    BLCAC = pd.read_csv("TCGA-BLCA_CNA.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    BLCAC = pd.DataFrame.transpose(BLCAC)
-    BLCAC = BLCAC.loc[:, ~BLCAC.columns.duplicated()]
-
-    BLCAM = BLCAM.fillna(0)
-    BLCAM[BLCAM != 0.0] = 1
-    BLCAC = BLCAC.fillna(0)
-    BLCAC[BLCAC != 0.0] = 1
-
-    # BLCAE.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # BLCAM.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # BLCAC.rename(lambda x : x[0:11], axis = "index", inplace=True)
-
-    lsBLCA = BLCAE.index.intersection(BLCAM.index)
-    lsBLCA = lsBLCA.intersection(BLCAC.index)
-    lsBLCA = pd.unique(lsBLCA)
-
-    BLCAE = BLCAE.loc[lsBLCA, ls]
-    BLCAM = BLCAM.loc[lsBLCA, ls]
-    BLCAC = BLCAC.loc[lsBLCA, ls]
-
-    print(BLCAE.shape)
-    print(BLCAM.shape)
-    print(BLCAC.shape)
-
-    AutoencoderE.eval()
-    AutoencoderM.eval()
-    AutoencoderC.eval()
-    Clas.eval()
-
-    BLCAE2 = np.nan_to_num(BLCAE.values)
-    BLCAM2 = np.nan_to_num(BLCAM.values)
-    BLCAC2 = np.nan_to_num(BLCAC.values)
-
-    NBLCAE2 = scalerGDSC.transform(BLCAE2)
-
-    BLCAexprs = torch.FloatTensor(NBLCAE2)
-    BLCAmut = torch.FloatTensor(BLCAM2)
-    BLCAcna = torch.FloatTensor(BLCAC2)
-
-    BLCAZE = AutoencoderE(BLCAexprs)
-    BLCAZM = AutoencoderM(BLCAmut)
-    BLCAZC = AutoencoderC(BLCAcna)
-
-    BLCAZT = torch.cat((BLCAZE, BLCAZM, BLCAZC), 1)
-    BLCAZTX = F.normalize(BLCAZT, p=2, dim=0)
-    PredBLCA = Clas(BLCAZTX)
-
-    BRCAE = pd.read_csv("TCGA-BRCA_exprs.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    BRCAE = pd.DataFrame.transpose(BRCAE)
-
-    BRCAM = pd.read_csv("TCGA-BRCA_mutations.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    BRCAM = pd.DataFrame.transpose(BRCAM)
-    BRCAM = BRCAM.loc[:, ~BRCAM.columns.duplicated()]
-
-    BRCAC = pd.read_csv("TCGA-BRCA_CNA.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    BRCAC = pd.DataFrame.transpose(BRCAC)
-    BRCAC = BRCAC.loc[:, ~BRCAC.columns.duplicated()]
-
-    BRCAM = BRCAM.fillna(0)
-    BRCAM[BRCAM != 0.0] = 1
-    BRCAC = BRCAC.fillna(0)
-    BRCAC[BRCAC != 0.0] = 1
-
-    # BRCAE.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # BRCAM.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # BRCAC.rename(lambda x : x[0:11], axis = "index", inplace=True)
-
-    lsBRCA = BRCAE.index.intersection(BRCAM.index)
-    lsBRCA = lsBRCA.intersection(BRCAC.index)
-    lsBRCA = pd.unique(lsBRCA)
-
-    BRCAE = BRCAE.loc[lsBRCA, ls]
-    BRCAM = BRCAM.loc[lsBRCA, ls]
-    BRCAC = BRCAC.loc[lsBRCA, ls]
-
-    print(BRCAE.shape)
-    print(BRCAM.shape)
-    print(BRCAC.shape)
-
-    AutoencoderE.eval()
-    AutoencoderM.eval()
-    AutoencoderC.eval()
-    Clas.eval()
-
-    BRCAE2 = np.nan_to_num(BRCAE.values)
-    BRCAM2 = np.nan_to_num(BRCAM.values)
-    BRCAC2 = np.nan_to_num(BRCAC.values)
-
-    NBRCAE2 = scalerGDSC.transform(BRCAE2)
-
-    BRCAexprs = torch.FloatTensor(NBRCAE2)
-    BRCAmut = torch.FloatTensor(BRCAM2)
-    BRCAcna = torch.FloatTensor(BRCAC2)
-
-    BRCAZE = AutoencoderE(BRCAexprs)
-    BRCAZM = AutoencoderM(BRCAmut)
-    BRCAZC = AutoencoderC(BRCAcna)
-
-    BRCAZT = torch.cat((BRCAZE, BRCAZM, BRCAZC), 1)
-    BRCAZTX = F.normalize(BRCAZT, p=2, dim=0)
-    PredBRCA = Clas(BRCAZTX)
-
-    PAADE = pd.read_csv("TCGA-PAAD_exprs.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    PAADE = pd.DataFrame.transpose(PAADE)
-
-    PAADM = pd.read_csv("TCGA-PAAD_mutations.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    PAADM = pd.DataFrame.transpose(PAADM)
-    PAADM = PAADM.loc[:, ~PAADM.columns.duplicated()]
-
-    PAADC = pd.read_csv("TCGA-PAAD_CNA.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    PAADC = pd.DataFrame.transpose(PAADC)
-    PAADC = PAADC.loc[:, ~PAADC.columns.duplicated()]
-
-    PAADM = PAADM.fillna(0)
-    PAADM[PAADM != 0.0] = 1
-    PAADC = PAADC.fillna(0)
-    PAADC[PAADC != 0.0] = 1
-
-    # PAADE.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # PAADM.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # PAADC.rename(lambda x : x[0:11], axis = "index", inplace=True)
-
-    lsPAAD = PAADE.index.intersection(PAADM.index)
-    lsPAAD = lsPAAD.intersection(PAADC.index)
-    lsPAAD = pd.unique(lsPAAD)
-
-    PAADE = PAADE.loc[lsPAAD, ls]
-    PAADM = PAADM.loc[lsPAAD, ls]
-    PAADC = PAADC.loc[lsPAAD, ls]
-
-    print(PAADE.shape)
-    print(PAADM.shape)
-    print(PAADC.shape)
-
-    AutoencoderE.eval()
-    AutoencoderM.eval()
-    AutoencoderC.eval()
-    Clas.eval()
-
-    PAADE2 = np.nan_to_num(PAADE.values)
-    PAADM2 = np.nan_to_num(PAADM.values)
-    PAADC2 = np.nan_to_num(PAADC.values)
-
-    NPAADE2 = scalerGDSC.transform(PAADE2)
-
-    PAADexprs = torch.FloatTensor(NPAADE2)
-    PAADmut = torch.FloatTensor(PAADM2)
-    PAADcna = torch.FloatTensor(PAADC2)
-
-    PAADZE = AutoencoderE(PAADexprs)
-    PAADZM = AutoencoderM(PAADmut)
-    PAADZC = AutoencoderC(PAADcna)
-
-    PAADZT = torch.cat((PAADZE, PAADZM, PAADZC), 1)
-    PAADZTX = F.normalize(PAADZT, p=2, dim=0)
-    PredPAAD = Clas(PAADZTX)
-
-    LUADE = pd.read_csv("TCGA-LUAD_exprs.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    LUADE = pd.DataFrame.transpose(LUADE)
-
-    LUADM = pd.read_csv("TCGA-LUAD_mutations.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    LUADM = pd.DataFrame.transpose(LUADM)
-    LUADM = LUADM.loc[:, ~LUADM.columns.duplicated()]
-
-    LUADC = pd.read_csv("TCGA-LUAD_CNA.tsv",
-                        sep="\t", index_col=0, decimal=".")
-    LUADC = pd.DataFrame.transpose(LUADC)
-    LUADC = LUADC.loc[:, ~LUADC.columns.duplicated()]
-
-    LUADM = LUADM.fillna(0)
-    LUADM[LUADM != 0.0] = 1
-    LUADC = LUADC.fillna(0)
-    LUADC[LUADC != 0.0] = 1
-
-    # LUADE.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # LUADM.rename(lambda x : x[0:11], axis = "index", inplace=True)
-    # LUADC.rename(lambda x : x[0:11], axis = "index", inplace=True)
-
-    lsLUAD = LUADE.index.intersection(LUADM.index)
-    lsLUAD = lsLUAD.intersection(LUADC.index)
-    lsLUAD = pd.unique(lsLUAD)
-
-    LUADE = LUADE.loc[lsLUAD, ls]
-    LUADM = LUADM.loc[lsLUAD, ls]
-    LUADC = LUADC.loc[lsLUAD, ls]
-
-    print(LUADE.shape)
-    print(LUADM.shape)
-    print(LUADC.shape)
-
-    AutoencoderE.eval()
-    AutoencoderM.eval()
-    AutoencoderC.eval()
-    Clas.eval()
-
-    LUADE2 = np.nan_to_num(LUADE.values)
-    LUADM2 = np.nan_to_num(LUADM.values)
-    LUADC2 = np.nan_to_num(LUADC.values)
-
-    NLUADE2 = scalerGDSC.transform(LUADE2)
-
-    LUADexprs = torch.FloatTensor(NLUADE2)
-    LUADmut = torch.FloatTensor(LUADM2)
-    LUADcna = torch.FloatTensor(LUADC2)
-
-    LUADZE = AutoencoderE(LUADexprs)
-    LUADZM = AutoencoderM(LUADmut)
-    LUADZC = AutoencoderC(LUADcna)
-
-    LUADZT = torch.cat((LUADZE, LUADZM, LUADZC), 1)
-    LUADZTX = F.normalize(LUADZT, p=2, dim=0)
-    PredLUAD = Clas(LUADZTX)
-
-    lsEGFR = [10000, 102, 10252, 10253, 10254, 1026, 1027, 107, 108, 109, 111, 11140, 112, 113, 114, 1147, 115, 117145,
-              1173, 1175, 1211, 1213, 1385, 1445, 156, 160, 161, 163, 1950, 1956, 196883, 2060, 207, 208, 2308, 2309, 23239,
-              2475, 253260, 2549, 26018, 2885, 2931, 29924, 30011, 3164, 3265, 3320, 3709, 3710, 3845, 4193, 4303, 4893,
-              5136, 5153, 5170, 5290, 5295, 5335, 5566, 5567, 5568, 5573, 5575, 5576, 5577, 5578, 5580, 5581, 5582, 55824,
-              5594, 5595, 5604, 5605, 572, 5728, 57761, 58513, 5894, 6199, 6233, 64223, 6456, 6464, 6654, 6714, 6868, 7249,
-              728590, 729120, 730418, 7311, 731292, 7529, 79109, 801, 8027, 8038, 805, 808, 814, 842, 84335, 867, 9146, 983,
-              998]
-
-    listEGFR = PRADE.columns.intersection(lsEGFR)
-    PRADEEGFR = PRADE[listEGFR]
-    PRADMEGFR = PRADM[listEGFR]
-    PRADCEGFR = PRADC[listEGFR]
-
-    X = PRADEEGFR
-    y = PredPRAD.detach().numpy()
-
-    # Note the difference in argument order
-    model = sm.OLS(y, X).fit()
-    predictions = model.predict(X)  # make the predictions by the model
-
-    # Print out the statistics
-    model.summary()
-
-    print(bonferroni_correction(model.pvalues, alpha=0.05))
-
-    listEGFR = KIRPE.columns.intersection(lsEGFR)
-    KIRPEEGFR = KIRPE[listEGFR]
-    KIRPMEGFR = KIRPM[listEGFR]
-    KIRPCEGFR = KIRPC[listEGFR]
-
-    X = KIRPEEGFR
-    y = PredKIRP.detach().numpy()
-
-    # Note the difference in argument order
-    model = sm.OLS(y, X).fit()
-    predictions = model.predict(X)  # make the predictions by the model
-
-    # Print out the statistics
-    model.summary()
-    print(bonferroni_correction(model.pvalues, alpha=0.05))
-
-    listEGFR = BLCAE.columns.intersection(lsEGFR)
-    BLCAEEGFR = BLCAE[listEGFR]
-    BLCAMEGFR = BLCAM[listEGFR]
-    BLCACEGFR = BLCAC[listEGFR]
-
-    X = BLCAEEGFR
-    y = PredBLCA.detach().numpy()
-
-    # Note the difference in argument order
-    model = sm.OLS(y, X).fit()
-    predictions = model.predict(X)  # make the predictions by the model
-
-    # Print out the statistics
-    model.summary()
-    print(bonferroni_correction(model.pvalues, alpha=0.05))
-    listEGFR = BRCAE.columns.intersection(lsEGFR)
-    BRCAEEGFR = BRCAE[listEGFR]
-    BRCAMEGFR = BRCAM[listEGFR]
-    BRCACEGFR = BRCAC[listEGFR]
-    X = BRCAEEGFR
-    y = PredBRCA.detach().numpy()
-
-    # Note the difference in argument order
-    model = sm.OLS(y, X).fit()
-    predictions = model.predict(X)  # make the predictions by the model
-
-    # Print out the statistics
-    model.summary()
-    print(bonferroni_correction(model.pvalues, alpha=0.05))
-    listEGFR = PAADE.columns.intersection(lsEGFR)
-    PAADEEGFR = PAADE[listEGFR]
-    PAADMEGFR = PAADM[listEGFR]
-    PAADCEGFR = PAADC[listEGFR]
-
-    X = PAADEEGFR
-    y = PredPAAD.detach().numpy()
-
-    # Note the difference in argument order
-    model = sm.OLS(y, X).fit()
-    predictions = model.predict(X)  # make the predictions by the model
-
-    # Print out the statistics
-    model.summary()
-
-    print(bonferroni_correction(model.pvalues, alpha=0.05))
-
-    listEGFR = LUADE.columns.intersection(lsEGFR)
-    LUADEEGFR = LUADE[listEGFR]
-    LUADMEGFR = LUADM[listEGFR]
-    LUADCEGFR = LUADC[listEGFR]
-
-    X = LUADEEGFR
-    y = PredLUAD.detach().numpy()
-
-    # Note the difference in argument order
-    model = sm.OLS(y, X).fit()
-    predictions = model.predict(X)  # make the predictions by the model
-
-    # Print out the statistics
-    model.summary()
-    print(bonferroni_correction(model.pvalues, alpha=0.05))
+    Z_in = hdm1 + hdm2 + hdm3
+
+    random_negative_triplet_selector = RandomNegativeTripletSelector(margin)
+    all_triplet_selector = AllTripletSelector()
+
+    AutoencoderE = encoder.Encoder(IE_dim, hdm1, rate1).to(device)
+    AutoencoderM = encoder.Encoder(IM_dim, hdm2, rate2).to(device)
+    AutoencoderC = encoder.Encoder(IC_dim, hdm3, rate3).to(device)
+
+    optimE = torch.optim.Adagrad(AutoencoderE.parameters(), lr=lre)
+    optimM = torch.optim.Adagrad(AutoencoderM.parameters(), lr=lrm)
+    optimC = torch.optim.Adagrad(AutoencoderC.parameters(), lr=lrc)
+
+    trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
+
+    Clas = encoder.Classifier(Z_in, rate4).to(device)
+    optim_clas = torch.optim.Adagrad(Clas.parameters(), lr=lrCL,
+                                     weight_decay=wd)
+    bce_loss = torch.nn.BCELoss()
+    for epoch in trange(epochs):
+        # train
+        train(trainLoader, AutoencoderE, AutoencoderM, AutoencoderC, Clas, optimE, optimM, optimC, optim_clas,
+              all_triplet_selector, trip_criterion, bce_loss, device, gamma)
+
+    # test
+    auc_test_cet = validate(AutoencoderE, AutoencoderM, AutoencoderC, Clas, X_testEcet, X_testMcet, X_testCcet, Ytscet,
+                            device)
+    print(f'EGFR Cetuximab: AUC = {auc_test_cet}')
+
+    auc_test_erlo = validate(AutoencoderE, AutoencoderM, AutoencoderC, Clas, X_testEerlo, X_testMerlo, X_testCerlo,
+                             Ytserlo, device)
+    print(f'EGFR Erlotinib: AUC = {auc_test_erlo}')
+
+
+def train(trainLoader, AutoencoderE, AutoencoderM, AutoencoderC, Clas, optimE, optimM, optimC, optim_clas,
+          all_triplet_selector, trip_criterion, bce_with_logits_loss, device, gamma):
+    for (dataE, dataM, dataC, target) in trainLoader:
+        if torch.mean(target) != 0. and torch.mean(target) != 1.:
+            dataE = dataE.to(device)
+            dataM = dataM.to(device)
+            dataC = dataC.to(device)
+            target = target.to(device)
+
+            for optim in (optimE, optimM, optimC, optim_clas):
+                optim.zero_grad()
+
+            AutoencoderE.train()
+            AutoencoderM.train()
+            AutoencoderC.train()
+            Clas.train()
+
+            ZEX = AutoencoderE(dataE)
+            ZMX = AutoencoderM(dataM)
+            ZCX = AutoencoderC(dataC)
+
+            ZT = torch.cat((ZEX, ZMX, ZCX), 1)
+            ZT = F.normalize(ZT, p=2, dim=0)
+            y_pred = Clas(ZT)
+            Triplets = all_triplet_selector.get_triplets(ZT, target)
+            target = target.view(-1, 1)
+            loss = gamma * trip_criterion(ZT[Triplets[:, 0], :], ZT[Triplets[:, 1], :],
+                                          ZT[Triplets[:, 2], :]) + bce_with_logits_loss(y_pred, target)
+
+            # print(roc_auc_score(target.cpu().detach(), y_pred.cpu().detach()))
+
+            loss.backward()
+            for optim in (optim_clas, optimE, optimM, optimC):
+                optim.step()
+
+
+def validate(AutoencoderE, AutoencoderM, AutoencoderC, Clas, X_testE, X_testM, X_testC, y_test, device):
+    TX_testE = torch.FloatTensor(X_testE).to(device)
+    TX_testM = torch.FloatTensor(X_testM).to(device)
+    TX_testC = torch.FloatTensor(X_testC).to(device)
+    ty_testE = torch.FloatTensor(y_test).to(device)
+    with torch.no_grad():
+        AutoencoderE.eval()
+        AutoencoderM.eval()
+        AutoencoderC.eval()
+        Clas.eval()
+        ZET = AutoencoderE(TX_testE)
+        ZMT = AutoencoderM(TX_testM)
+        ZCT = AutoencoderC(TX_testC)
+
+        ZTT = torch.cat((ZET, ZMT, ZCT), 1)
+        ZTT = F.normalize(ZTT, p=2, dim=0)
+        PredT = Clas(ZTT)
+        y_truet = ty_testE.view(-1, 1)
+
+        auc_test = roc_auc_score(y_truet.cpu().detach(), PredT.cpu().detach())
+        return auc_test
+
 
 if __name__ == "__main__":
-    # execute only if run as a script
     main()
