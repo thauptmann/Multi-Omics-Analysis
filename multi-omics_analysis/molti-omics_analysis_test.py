@@ -18,8 +18,8 @@ from sklearn.preprocessing import StandardScaler
 
 def main(parameter):
     # reproducibility
-    #torch.manual_seed(42)
-    #np.random.seed(42)
+    torch.manual_seed(42)
+    np.random.seed(42)
 
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
@@ -162,10 +162,7 @@ def main(parameter):
     optim_clas = torch.optim.Adagrad(Clas.parameters(), lr=parameter['lrCL'],
                                      weight_decay=parameter['weight_decay'])
     bce_loss = torch.nn.BCELoss()
-    for epoch in trange(parameter['epochs']):
-        cost_train = 0
-        auc_train = []
-        num_minibatches = int(n_sampE / parameter['mini_batch'])
+    for _ in trange(parameter['epochs']):
         train(trainLoader, AutoencoderE, AutoencoderM, AutoencoderC, Clas, optimE, optimM, optimC, optim_clas,
           all_triplet_selector, trip_criterion, bce_loss, device)
 
