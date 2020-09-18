@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import random
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -8,17 +8,29 @@ import encoder
 import pandas as pd
 import sklearn.preprocessing as sk
 from sklearn.feature_selection import VarianceThreshold
-from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, RandomNegativeTripletSelector, \
-    SemihardNegativeTripletSelector  # Strategies for selecting triplets within a minibatch
-from siamese_triplet.metrics import AverageNonzeroTripletsMetric
+from siamese_triplet.utils import AllTripletSelector,RandomNegativeTripletSelector
 from torch.utils.data.sampler import WeightedRandomSampler
 from sklearn.metrics import roc_auc_score
+from torch.cuda.amp import autocast
+from sklearn.model_selection import StratifiedKFold
+from torch.cuda.amp import GradScaler
 
+mini_batch_list = [8, 16, 32, 64]
+dim_list = [1024, 512, 256, 128, 64, 32, 16]
+margin_list = [0.5, 1, 1.5, 2, 2.5]
+learning_rate_list = [0.5, 0.1, 0.05, 0.01, 0.001, 0.005, 0.0005, 0.0001, 0.00005, 0.00001]
+epoch_list = [20, 50, 10, 15, 30, 40, 60, 70, 80, 90, 100]
+drop_rate_list = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+weight_decay_list = [0.01, 0.001, 0.1, 0.0001]
+gamma_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+max_iter = 10
 
 def main():
     # reproducibility
-    # torch.manual_seed(42)
-    # np.random.seed(42)
+    torch.manual_seed(42)
+    np.random.seed(42)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
@@ -40,7 +52,7 @@ def main():
     GDSCM = GDSCM.loc[:, ~GDSCM.columns.duplicated()]
 
     GDSCC = pd.read_csv(cna_binary_path / "GDSC_CNA.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
-    GDSCC.drop_duplicates(keep='last')
+    GDSCC = GDSCC.drop_duplicates(keep='last')
     GDSCC = pd.DataFrame.transpose(GDSCC)
     GDSCC = GDSCC.loc[:, ~GDSCC.columns.duplicated()]
 
@@ -64,7 +76,7 @@ def main():
     PDXMcet = pd.DataFrame.transpose(PDXMcet)
 
     PDXCcet = pd.read_csv(cna_binary_path / "PDX_CNA.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
-    PDXCcet.drop_duplicates(keep='last')
+    PDXCcet = PDXCcet.drop_duplicates(keep='last')
     PDXCcet = pd.DataFrame.transpose(PDXCcet)
     PDXCcet = PDXCcet.loc[:, ~PDXCcet.columns.duplicated()]
 
@@ -141,7 +153,6 @@ def main():
         e_z = exprs_z.loc[samples, :]
         c = cna.loc[samples, :]
         m = mut.loc[samples, :]
-        m = mut.loc[samples, :]
         # next 3 rows if you want non-unique sample names
         e_z.rename(lambda x: str(x) + "_" + drug, axis="index", inplace=True)
         c.rename(lambda x: str(x) + "_" + drug, axis="index", inplace=True)
@@ -161,170 +172,286 @@ def main():
     GDSCMv2 = GDSCMv2.loc[ls2, :]
     GDSCCv2 = GDSCCv2.loc[ls2, :]
     GDSCRv2 = GDSCRv2.loc[ls2, :]
-
-    mbs = 16
-    hdm1 = 32
-    hdm2 = 16
-    hdm3 = 256
-    margin = 1.5
-    lre = 0.001
-    lrm = 0.0001
-    lrc = 0.00005
-    lrCL = 0.005
-    epochs = 40
-    rate1 = 0.5
-    rate2 = 0.8
-    rate3 = 0.5
-    rate4 = 0.3
-    wd = 0.0001
-    gamma = 0.5
-
-    X_trainE = GDSCEv2.values
-    X_trainM = GDSCMv2.values
-    X_trainC = GDSCCv2.values
     Y = GDSCRv2['response'].values
 
-    X_testEerlo = PDXEerlo.values
-    X_testMerlo = PDXMerlo.values
-    X_testCerlo = PDXCerlo.values
-    Ytserlo = PDXRerlo['response'].values
+    skf = StratifiedKFold(n_splits=5)
+    best_auc = 0
+    for _ in trange(max_iter):
+        mini_batch = random.choice(mini_batch_list)
+        h_dim1 = random.choice(dim_list)
+        h_dim2 = random.choice(dim_list)
+        h_dim3 = random.choice(dim_list)
+        lr_e = random.choice(learning_rate_list)
+        lr_m = random.choice(learning_rate_list)
+        lr_c = random.choice(learning_rate_list)
+        lr_cl = random.choice(learning_rate_list)
+        dropout_rate_e = random.choice(drop_rate_list)
+        dropout_rate_m = random.choice(drop_rate_list)
+        dropout_rate_c = random.choice(drop_rate_list)
+        weight_decay = random.choice(weight_decay_list)
+        dropout_rate_clf = random.choice(drop_rate_list)
+        gamma = random.choice(gamma_list)
+        epochs = random.choice(epoch_list)
+        margin = random.choice(margin_list)
 
-    X_testEcet = PDXEcet.values
-    X_testMcet = PDXMcet.values
-    X_testCcet = PDXCcet.values
-    Ytscet = PDXRcet['response'].values
+        aucs_validate = []
+        for train_index, test_index in skf.split(GDSCEv2.to_numpy(), Y):
+            x_train_e = GDSCEv2.values[train_index, :]
+            x_train_m = GDSCMv2.values[train_index, :]
+            x_train_c = GDSCCv2.values[train_index, :]
 
-    scalerGDSC = sk.StandardScaler()
-    scalerGDSC.fit(X_trainE)
-    X_trainE = scalerGDSC.transform(X_trainE)
-    X_testEcet = scalerGDSC.transform(X_testEcet)
-    X_testEerlo = scalerGDSC.transform(X_testEerlo)
+            x_test_e = GDSCEv2.values[test_index, :]
+            x_test_m = GDSCMv2.values[test_index, :]
+            x_test_c = GDSCCv2.values[test_index, :]
 
-    X_trainM = np.nan_to_num(X_trainM)
-    X_trainC = np.nan_to_num(X_trainC)
+            y_train = Y[train_index]
+            y_test = Y[test_index]
 
-    X_testEcet = torch.FloatTensor(X_testEcet)
-    X_testMcet = torch.FloatTensor(X_testMcet)
-    X_testCcet = torch.FloatTensor(X_testCcet)
-    Ytscet = torch.FloatTensor(Ytscet.astype(int))
+            scaler_gdsc = sk.StandardScaler()
+            x_train_e = scaler_gdsc.fit_transform(x_train_e)
+            x_test_e = scaler_gdsc.transform(x_test_e)
+            x_train_m = np.nan_to_num(x_train_m)
+            x_train_c = np.nan_to_num(x_train_c)
 
-    X_testEerlo = torch.FloatTensor(X_testEerlo)
-    X_testMerlo = torch.FloatTensor(X_testMerlo)
-    X_testCerlo = torch.FloatTensor(X_testCerlo)
-    Ytserlo = torch.FloatTensor(Ytserlo.astype(int))
+            # Initialisation
+            class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
+            weight = 1. / class_sample_count
+            samples_weight = np.array([weight[t] for t in y_train])
 
-    # Train
-    class_sample_count = np.array([len(np.where(Y == t)[0]) for t in np.unique(Y)])
+            samples_weight = torch.from_numpy(samples_weight)
+            sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
+                                            replacement=True)
+
+            train_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_train_e), torch.FloatTensor(x_train_m),
+                                                           torch.FloatTensor(x_train_c),
+                                                           torch.FloatTensor(y_train))
+            train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=mini_batch,
+                                                       shuffle=False,
+                                                       num_workers=8, sampler=sampler, pin_memory=True)
+
+            test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e), torch.FloatTensor(x_test_m),
+                                                          torch.FloatTensor(x_test_c),
+                                                          torch.FloatTensor(y_test))
+            test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=mini_batch,
+                                                      shuffle=False, num_workers=8, pin_memory=True)
+
+            n_samp_e, IE_dim = x_train_e.shape
+            _, IM_dim = x_train_m.shape
+            _, IC_dim = x_train_c.shape
+
+            z_in = h_dim1 + h_dim2 + h_dim3
+
+            random_negative_triplet_selector = RandomNegativeTripletSelector(margin)
+            all_triplet_selector = AllTripletSelector()
+
+            autoencoder_e = encoder.Encoder(IE_dim, h_dim1, dropout_rate_e).to(device)
+            autoencoder_m = encoder.Encoder(IM_dim, h_dim2, dropout_rate_m).to(device)
+            autoencoder_c = encoder.Encoder(IC_dim, h_dim3, dropout_rate_c).to(device)
+
+            optim_e = torch.optim.Adagrad(autoencoder_e.parameters(), lr=lr_e)
+            optim_m = torch.optim.Adagrad(autoencoder_m.parameters(), lr=lr_m)
+            optim_c = torch.optim.Adagrad(autoencoder_c.parameters(), lr=lr_c)
+
+            trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
+
+            clas = encoder.Classifier(z_in, dropout_rate_clf).to(device)
+            optim_clas = torch.optim.Adagrad(clas.parameters(), lr=lr_cl, weight_decay=weight_decay)
+            bce_loss = torch.nn.BCEWithLogitsLoss()
+
+            for epoch in range(epochs):
+                cost_train = 0
+                auc_train = []
+                num_minibatches = int(n_samp_e / mini_batch)
+                auc_train, cost_train = train(train_loader, autoencoder_e, autoencoder_m, autoencoder_c, clas, optim_e,
+                                              optim_m, optim_c, optim_clas,
+                                              all_triplet_selector, trip_criterion, bce_loss, device, cost_train,
+                                              num_minibatches,
+                                              auc_train, gamma)
+
+                # validate
+                auc_validate = test(test_loader, autoencoder_e, autoencoder_m, autoencoder_c, clas,
+                                                   device)
+            aucs_validate.append(auc_validate)
+        auc_cv = np.mean(aucs_validate)
+        if auc_cv > best_auc:
+            best_auc = auc_cv
+            best_mini_batch = mini_batch
+            best_h_dim1 = h_dim1
+            best_h_dim2 = h_dim2
+            best_h_dim3 = h_dim3
+            best_lr_e = lr_e
+            best_lr_m = lr_m
+            best_lr_c = lr_c
+            best_lr_cl = lr_cl
+            best_dropout_rate_e = dropout_rate_e
+            best_dropout_rate_m = dropout_rate_m
+            best_dropout_rate_c = dropout_rate_c
+            best_weight_decay = weight_decay
+            best_dropout_rate_clf = dropout_rate_clf
+            best_gamma = gamma
+            best_epochs = epochs
+            best_margin = margin
+
+    print(f'Best validation AUROC: {best_auc}')
+
+    # Test
+    x_test_eerlo = PDXEerlo.values
+    x_test_merlo = torch.FloatTensor(PDXMerlo.values)
+    x_test_cerlo = torch.FloatTensor(PDXCerlo.values)
+    ytserlo = PDXRerlo['response'].values
+
+    x_test_ecet = PDXEcet.values
+    x_test_mcet = torch.FloatTensor(PDXMcet.values)
+    x_test_ccet = torch.FloatTensor(PDXCcet.values)
+    ytscet = PDXRcet['response'].values
+
+    x_test_ecet = scaler_gdsc.transform(x_test_ecet)
+    x_test_ecet = torch.FloatTensor(x_test_ecet)
+    x_test_eerlo = scaler_gdsc.transform(x_test_eerlo)
+    x_test_eerlo = torch.FloatTensor(x_test_eerlo)
+
+    ytscet = torch.FloatTensor(ytscet.astype(int))
+    ytserlo = torch.FloatTensor(ytserlo.astype(int))
+
+    _, ie_dim = x_train_e.shape
+    _, im_dim = x_train_m.shape
+    _, ic_dim = x_test_m.shape
+    z_in = best_h_dim1 + best_h_dim2 + best_h_dim3
+
+    random_negative_triplet_selector = RandomNegativeTripletSelector(best_margin)
+    all_triplet_selector = AllTripletSelector()
+
+    autoencoder_e = encoder.Encoder(ie_dim, best_h_dim1, best_dropout_rate_e).to(device)
+    autoencoder_m = encoder.Encoder(im_dim, best_h_dim2, best_dropout_rate_m).to(device)
+    autoencoder_c = encoder.Encoder(ic_dim, best_h_dim3, best_dropout_rate_c).to(device)
+    clas = encoder.Classifier(z_in, best_dropout_rate_clf).to(device)
+
+    optim_e = torch.optim.Adagrad(autoencoder_e.parameters(), lr=best_lr_e)
+    optim_m = torch.optim.Adagrad(autoencoder_m.parameters(), lr=best_lr_m)
+    optim_c = torch.optim.Adagrad(autoencoder_c.parameters(), lr=best_lr_c)
+    optim_clas = torch.optim.Adagrad(clas.parameters(), lr=best_lr_cl,
+                                     weight_decay=best_weight_decay)
+
+    trip_criterion = torch.nn.TripletMarginLoss(margin=best_margin, p=2)
+    bce_loss = torch.nn.BCEWithLogitsLoss()
+
+    x_train_e = GDSCEv2.values
+    x_train_m = GDSCMv2.values
+    x_train_c = GDSCCv2.values
+
+    y_train = Y
+
+    scaler_gdsc = sk.StandardScaler()
+    scaler_gdsc.fit(x_train_e)
+    x_train_e = scaler_gdsc.transform(x_train_e)
+    x_train_m = np.nan_to_num(x_train_m)
+    x_train_c = np.nan_to_num(x_train_c)
+    class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
     weight = 1. / class_sample_count
-    samples_weight = np.array([weight[t] for t in Y])
+    samples_weight = np.array([weight[t] for t in y_train])
 
     samples_weight = torch.from_numpy(samples_weight)
     sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
                                     replacement=True)
+    train_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_train_e), torch.FloatTensor(x_train_m),
+                                                   torch.FloatTensor(x_train_c),
+                                                   torch.FloatTensor(y_train))
+    train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=best_mini_batch,
+                                               shuffle=False,
+                                               num_workers=8, sampler=sampler, pin_memory=True, drop_last=True)
 
-    trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(X_trainE), torch.FloatTensor(X_trainM),
-                                                  torch.FloatTensor(X_trainC),
-                                                  torch.FloatTensor(Y))
+    test_dataset_erlo = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_eerlo), torch.FloatTensor(x_test_merlo),
+                                                       torch.FloatTensor(x_test_cerlo), torch.FloatTensor(ytserlo))
+    test_loader_erlo = torch.utils.data.DataLoader(dataset=test_dataset_erlo, batch_size=mini_batch,
+                                                   shuffle=False, num_workers=8, pin_memory=True)
 
-    trainLoader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mbs,
-                                              shuffle=False,
-                                              num_workers=8, sampler=sampler, pin_memory=True)
+    test_dataset_cet = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_ecet), torch.FloatTensor(x_test_mcet),
+                                                      torch.FloatTensor(x_test_ccet), torch.FloatTensor(ytscet))
+    test_loader_cet = torch.utils.data.DataLoader(dataset=test_dataset_cet, batch_size=mini_batch, shuffle=False,
+                                                  num_workers=8, pin_memory=True)
 
-    n_sampE, IE_dim = X_trainE.shape
-    n_sampM, IM_dim = X_trainM.shape
-    n_sampC, IC_dim = X_trainC.shape
+    num_minibatches = int(n_samp_e / best_mini_batch)
+    for _ in trange(best_epochs):
+        auc_train, cost_train = train(train_loader, autoencoder_e, autoencoder_m, autoencoder_c, clas, optim_e,
+                                      optim_m, optim_c, optim_clas, all_triplet_selector, trip_criterion,
+                                      bce_loss, device, cost_train, num_minibatches, auc_train, best_gamma)
 
-    Z_in = hdm1 + hdm2 + hdm3
+    auc_test_erlo = test(test_loader_erlo, autoencoder_e, autoencoder_m, autoencoder_c, clas, device)
+    auc_test_cet = test(test_loader_cet, autoencoder_e, autoencoder_m, autoencoder_c, clas, device)
 
-    random_negative_triplet_selector = RandomNegativeTripletSelector(margin)
-    all_triplet_selector = AllTripletSelector()
-
-    AutoencoderE = encoder.Encoder(IE_dim, hdm1, rate1).to(device)
-    AutoencoderM = encoder.Encoder(IM_dim, hdm2, rate2).to(device)
-    AutoencoderC = encoder.Encoder(IC_dim, hdm3, rate3).to(device)
-
-    optimE = torch.optim.Adagrad(AutoencoderE.parameters(), lr=lre)
-    optimM = torch.optim.Adagrad(AutoencoderM.parameters(), lr=lrm)
-    optimC = torch.optim.Adagrad(AutoencoderC.parameters(), lr=lrc)
-
-    trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
-
-    Clas = encoder.Classifier(Z_in, rate4).to(device)
-    optim_clas = torch.optim.Adagrad(Clas.parameters(), lr=lrCL,
-                                     weight_decay=wd)
-    bce_loss = torch.nn.BCELoss()
-    for epoch in trange(epochs):
-        # train
-        train(trainLoader, AutoencoderE, AutoencoderM, AutoencoderC, Clas, optimE, optimM, optimC, optim_clas,
-              all_triplet_selector, trip_criterion, bce_loss, device, gamma)
-
-    # test
-    auc_test_cet = validate(AutoencoderE, AutoencoderM, AutoencoderC, Clas, X_testEcet, X_testMcet, X_testCcet, Ytscet,
-                            device)
-    print(f'EGFR Cetuximab: AUC = {auc_test_cet}')
-
-    auc_test_erlo = validate(AutoencoderE, AutoencoderM, AutoencoderC, Clas, X_testEerlo, X_testMerlo, X_testCerlo,
-                             Ytserlo, device)
-    print(f'EGFR Erlotinib: AUC = {auc_test_erlo}')
+    print(f'EGFR: AUROC Train = {auc_train[-1]}')
+    print(f'EGFR Cetuximab: AUROCC = {auc_test_cet}')
+    print(f'EGFR Erlotinib: AUROCC = {auc_test_erlo}')
 
 
-def train(trainLoader, AutoencoderE, AutoencoderM, AutoencoderC, Clas, optimE, optimM, optimC, optim_clas,
-          all_triplet_selector, trip_criterion, bce_with_logits_loss, device, gamma):
-    for (dataE, dataM, dataC, target) in trainLoader:
+def train(train_loader, autoencoder_e, autoencoder_m, autoencoder_c, clas, optim_e, optim_m, optim_c, optim_clas,
+          all_triplet_selector, trip_criterion, bce_loss, device, cost_train, num_minibatches,
+          auc_train, gamma):
+    # Creates a GradScaler once at the beginning of training.
+    scaler = GradScaler()
+    for (dataE, dataM, dataC, target) in train_loader:
         if torch.mean(target) != 0. and torch.mean(target) != 1.:
             dataE = dataE.to(device)
             dataM = dataM.to(device)
             dataC = dataC.to(device)
             target = target.to(device)
 
-            for optim in (optimE, optimM, optimC, optim_clas):
-                optim.zero_grad()
+            for optimizer in (optim_e, optim_m, optim_c, optim_clas):
+                optimizer.zero_grad()
 
-            AutoencoderE.train()
-            AutoencoderM.train()
-            AutoencoderC.train()
-            Clas.train()
+            autoencoder_e.train()
+            autoencoder_m.train()
+            autoencoder_c.train()
+            clas.train()
 
-            ZEX = AutoencoderE(dataE)
-            ZMX = AutoencoderM(dataM)
-            ZCX = AutoencoderC(dataC)
+            with autocast():
+                ZEX = autoencoder_e(dataE)
+                ZMX = autoencoder_m(dataM)
+                ZCX = autoencoder_c(dataC)
 
-            ZT = torch.cat((ZEX, ZMX, ZCX), 1)
-            ZT = F.normalize(ZT, p=2, dim=0)
-            y_pred = Clas(ZT)
-            Triplets = all_triplet_selector.get_triplets(ZT, target)
-            target = target.view(-1, 1)
-            loss = gamma * trip_criterion(ZT[Triplets[:, 0], :], ZT[Triplets[:, 1], :],
-                                          ZT[Triplets[:, 2], :]) + bce_with_logits_loss(y_pred, target)
+                ZT = torch.cat((ZEX, ZMX, ZCX), 1)
+                ZT = F.normalize(ZT, p=2, dim=0)
+                y_prediction = clas(ZT)
+                triplets = all_triplet_selector.get_triplets(ZT, target)
+                target = target.view(-1, 1)
+                loss = gamma * trip_criterion(ZT[triplets[:, 0], :], ZT[triplets[:, 1], :],
+                                              ZT[triplets[:, 2], :]) + bce_loss(y_prediction, target)
 
-            # print(roc_auc_score(target.cpu().detach(), y_pred.cpu().detach()))
+            auc = roc_auc_score(target.detach().cpu(), y_prediction.detach().cpu())
+            scaler.scale(loss).backward()
+            for optimizer in (optim_clas, optim_e, optim_m, optim_c):
+                scaler.step(optimizer)
 
-            loss.backward()
-            for optim in (optim_clas, optimE, optimM, optimC):
-                optim.step()
+            # Updates the scale for next iteration.
+            scaler.update()
+            cost_train += (loss.item() / num_minibatches)
+            auc_train.append(auc)
+        return auc_train, cost_train
 
 
-def validate(AutoencoderE, AutoencoderM, AutoencoderC, Clas, X_testE, X_testM, X_testC, y_test, device):
-    TX_testE = torch.FloatTensor(X_testE).to(device)
-    TX_testM = torch.FloatTensor(X_testM).to(device)
-    TX_testC = torch.FloatTensor(X_testC).to(device)
-    ty_testE = torch.FloatTensor(y_test).to(device)
-    with torch.no_grad():
-        AutoencoderE.eval()
-        AutoencoderM.eval()
-        AutoencoderC.eval()
-        Clas.eval()
-        ZET = AutoencoderE(TX_testE)
-        ZMT = AutoencoderM(TX_testM)
-        ZCT = AutoencoderC(TX_testC)
+def test(data_loader, autoencoder_e, autoencoder_m, autoencoder_c, clas, device):
+    y_true_test = []
+    prediction_test = []
+    for (dataE, dataM, dataC, target) in data_loader:
+        tx_test_e = torch.FloatTensor(dataE).to(device)
+        tx_test_m = torch.FloatTensor(dataM).to(device)
+        tx_test_c = torch.FloatTensor(dataC).to(device)
+        y_true_test.extend(target.view(-1, 1))
+        with torch.no_grad():
+            autoencoder_e.eval()
+            autoencoder_m.eval()
+            autoencoder_c.eval()
+            clas.eval()
+            ZET = autoencoder_e(tx_test_e)
+            ZMT = autoencoder_m(tx_test_m)
+            ZCT = autoencoder_c(tx_test_c)
 
-        ZTT = torch.cat((ZET, ZMT, ZCT), 1)
-        ZTT = F.normalize(ZTT, p=2, dim=0)
-        PredT = Clas(ZTT)
-        y_truet = ty_testE.view(-1, 1)
+            ztt = torch.cat((ZET, ZMT, ZCT), 1)
+            ztt = F.normalize(ztt, p=2, dim=0)
+            prediction_test.extend(clas(ztt).cpu().detach())
 
-        auc_test = roc_auc_score(y_truet.cpu().detach(), PredT.cpu().detach())
-        return auc_test
+    auc_test = roc_auc_score(y_true_test, prediction_test)
+    return auc_test
 
 
 if __name__ == "__main__":

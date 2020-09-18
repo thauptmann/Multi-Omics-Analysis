@@ -20,8 +20,7 @@ class Classifier(nn.Module):
         super(Classifier, self).__init__()
         self.FC = torch.nn.Sequential(
             nn.Linear(input_size, 1),
-            nn.Dropout(rate),
-            nn.Sigmoid())
+            nn.Dropout(rate))
 
     def forward(self, x):
         return self.FC(x)
