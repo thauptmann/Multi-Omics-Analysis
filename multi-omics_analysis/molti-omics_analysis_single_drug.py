@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import json
 from tqdm import trange
-import encoder
+import moli
 from sklearn.feature_selection import VarianceThreshold
 # Strategies for selecting triplets within a minibatch
 from siamese_triplet.utils import AllTripletSelector
@@ -194,9 +194,9 @@ def main(parameter):
 
             all_triplet_selector = AllTripletSelector()
 
-            autoencoder_e = encoder.Encoder(ie_dim, h_dim1, dropout_rate_e).to(device)
-            autoencoder_m = encoder.Encoder(im_dim, h_dim2, dropout_rate_m).to(device)
-            autoencoder_c = encoder.Encoder(ic_dim, h_dim3, dropout_rate_c).to(device)
+            autoencoder_e = moli.Encoder(ie_dim, h_dim1, dropout_rate_e).to(device)
+            autoencoder_m = moli.Encoder(im_dim, h_dim2, dropout_rate_m).to(device)
+            autoencoder_c = moli.Encoder(ic_dim, h_dim3, dropout_rate_c).to(device)
 
             optimizer_e = torch.optim.Adagrad(autoencoder_e.parameters(), lr=lr_e)
             optimizer_m = torch.optim.Adagrad(autoencoder_m.parameters(), lr=lr_m)
@@ -204,7 +204,7 @@ def main(parameter):
 
             trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
 
-            classifier = encoder.Classifier(z_in, dropout_rate_clf).to(device)
+            classifier = moli.Classifier(z_in, dropout_rate_clf).to(device)
             optimizer_classifier = torch.optim.Adagrad(classifier.parameters(), lr=lr_cl,
                                                        weight_decay=weight_decay)
 
@@ -270,10 +270,10 @@ def main(parameter):
     # random_negative_triplet_selector = RandomNegativeTripletSelector(best_margin)
     all_triplet_selector = AllTripletSelector()
 
-    autoencoder_e = encoder.Encoder(ie_dim, best_h_dim1, best_dropout_rate_e).to(device)
-    autoencoder_m = encoder.Encoder(im_dim, best_h_dim2, best_dropout_rate_m).to(device)
-    autoencoder_c = encoder.Encoder(ic_dim, best_h_dim3, best_dropout_rate_c).to(device)
-    classifier = encoder.Classifier(z_in, best_dropout_rate_clf).to(device)
+    autoencoder_e = moli.Encoder(ie_dim, best_h_dim1, best_dropout_rate_e).to(device)
+    autoencoder_m = moli.Encoder(im_dim, best_h_dim2, best_dropout_rate_m).to(device)
+    autoencoder_c = moli.Encoder(ic_dim, best_h_dim3, best_dropout_rate_c).to(device)
+    classifier = moli.Classifier(z_in, best_dropout_rate_clf).to(device)
 
     optimizer_e = torch.optim.Adagrad(autoencoder_e.parameters(), lr=best_lr_e)
     optimizer_m = torch.optim.Adagrad(autoencoder_m.parameters(), lr=best_lr_m)

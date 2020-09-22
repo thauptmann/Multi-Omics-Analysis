@@ -4,7 +4,8 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 from tqdm import trange
-import encoder
+import moli
+import utils
 import pandas as pd
 import sklearn.preprocessing as sk
 from sklearn.feature_selection import VarianceThreshold
@@ -37,45 +38,46 @@ def main():
     else:
         device = torch.device("cpu")
 
-    data_path = Path('data/MOLI')
+    data_path = Path('data/')
     cna_binary_path = data_path / 'CNA_binary'
     response_path = data_path / 'response'
     sna_binary_path = data_path / 'SNA_binary'
     expressions_homogenized_path = data_path / 'exprs_homogenized'
     expressions_path = data_path / 'exprs'
+    egfr_path = data_path / 'EGFR_experiments_data'
 
-    GDSCE = pd.read_csv(expressions_path / "GDSC_exprs.z.EGFRi.tsv", sep="\t", index_col=0, decimal=",")
+    GDSCE = pd.read_csv(egfr_path / "GDSC_exprs.z.EGFRi.tsv", sep="\t", index_col=0, decimal=",")
     GDSCE = pd.DataFrame.transpose(GDSCE)
 
-    GDSCM = pd.read_csv(sna_binary_path / "GDSC_mutations.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
+    GDSCM = pd.read_csv(egfr_path / "GDSC_mutations.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
     GDSCM = pd.DataFrame.transpose(GDSCM)
     GDSCM = GDSCM.loc[:, ~GDSCM.columns.duplicated()]
 
-    GDSCC = pd.read_csv(cna_binary_path / "GDSC_CNA.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
+    GDSCC = pd.read_csv(egfr_path / "GDSC_CNA.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
     GDSCC = GDSCC.drop_duplicates(keep='last')
     GDSCC = pd.DataFrame.transpose(GDSCC)
     GDSCC = GDSCC.loc[:, ~GDSCC.columns.duplicated()]
 
-    PDXEerlo = pd.read_csv(expressions_homogenized_path / "PDX_exprs.Erlotinib.eb_with.GDSC_exprs.Erlotinib.tsv",
+    PDXEerlo = pd.read_csv(egfr_path / "PDX_exprs.Erlotinib.eb_with.GDSC_exprs.Erlotinib.tsv",
                            sep="\t", index_col=0, decimal=",")
     PDXEerlo = pd.DataFrame.transpose(PDXEerlo)
 
-    PDXMerlo = pd.read_csv(sna_binary_path / "PDX_mutations.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
+    PDXMerlo = pd.read_csv(egfr_path / "PDX_mutations.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
     PDXMerlo = pd.DataFrame.transpose(PDXMerlo)
 
-    PDXCerlo = pd.read_csv(cna_binary_path / "PDX_CNA.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
+    PDXCerlo = pd.read_csv(egfr_path / "PDX_CNV.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
     PDXCerlo.drop_duplicates(keep='last')
     PDXCerlo = pd.DataFrame.transpose(PDXCerlo)
     PDXCerlo = PDXCerlo.loc[:, ~PDXCerlo.columns.duplicated()]
 
-    PDXEcet = pd.read_csv(expressions_homogenized_path / "PDX_exprs.Cetuximab.eb_with.GDSC_exprs.Cetuximab.tsv",
+    PDXEcet = pd.read_csv(egfr_path / "PDX_exprs.Cetuximab.eb_with.GDSC_exprs.Cetuximab.tsv",
                           sep="\t", index_col=0, decimal=",")
     PDXEcet = pd.DataFrame.transpose(PDXEcet)
 
-    PDXMcet = pd.read_csv(sna_binary_path / "PDX_mutations.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
+    PDXMcet = pd.read_csv(egfr_path / "PDX_mutations.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
     PDXMcet = pd.DataFrame.transpose(PDXMcet)
 
-    PDXCcet = pd.read_csv(cna_binary_path / "PDX_CNA.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
+    PDXCcet = pd.read_csv(egfr_path / "PDX_CNV.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
     PDXCcet = PDXCcet.drop_duplicates(keep='last')
     PDXCcet = pd.DataFrame.transpose(PDXCcet)
     PDXCcet = PDXCcet.loc[:, ~PDXCcet.columns.duplicated()]
@@ -123,11 +125,11 @@ def main():
     GDSCM = GDSCM.loc[:, ls]
     GDSCC = GDSCC.loc[:, ls]
 
-    GDSCR = pd.read_csv(response_path / "GDSC_response.EGFRi.tsv",
+    GDSCR = pd.read_csv(egfr_path / "GDSC_response.EGFRi.tsv",
                         sep="\t", index_col=0, decimal=",")
-    PDXRcet = pd.read_csv(response_path / "PDX_response.Cetuximab.tsv",
+    PDXRcet = pd.read_csv(egfr_path / "PDX_response.Cetuximab.tsv",
                           sep="\t", index_col=0, decimal=",")
-    PDXRerlo = pd.read_csv(response_path / "PDX_response.Erlotinib.tsv",
+    PDXRerlo = pd.read_csv(egfr_path / "PDX_response.Erlotinib.tsv",
                            sep="\t", index_col=0, decimal=",")
 
     PDXRcet = PDXRcet.loc[ls4, :]
@@ -244,9 +246,9 @@ def main():
             random_negative_triplet_selector = RandomNegativeTripletSelector(margin)
             all_triplet_selector = AllTripletSelector()
 
-            autoencoder_e = encoder.Encoder(IE_dim, h_dim1, dropout_rate_e).to(device)
-            autoencoder_m = encoder.Encoder(IM_dim, h_dim2, dropout_rate_m).to(device)
-            autoencoder_c = encoder.Encoder(IC_dim, h_dim3, dropout_rate_c).to(device)
+            autoencoder_e = moli.Encoder(IE_dim, h_dim1, dropout_rate_e).to(device)
+            autoencoder_m = moli.Encoder(IM_dim, h_dim2, dropout_rate_m).to(device)
+            autoencoder_c = moli.Encoder(IC_dim, h_dim3, dropout_rate_c).to(device)
 
             optim_e = torch.optim.Adagrad(autoencoder_e.parameters(), lr=lr_e)
             optim_m = torch.optim.Adagrad(autoencoder_m.parameters(), lr=lr_m)
@@ -254,7 +256,7 @@ def main():
 
             trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
 
-            clas = encoder.Classifier(z_in, dropout_rate_clf).to(device)
+            clas = moli.Classifier(z_in, dropout_rate_clf).to(device)
             optim_clas = torch.optim.Adagrad(clas.parameters(), lr=lr_cl, weight_decay=weight_decay)
             bce_loss = torch.nn.BCEWithLogitsLoss()
 
@@ -321,10 +323,10 @@ def main():
     random_negative_triplet_selector = RandomNegativeTripletSelector(best_margin)
     all_triplet_selector = AllTripletSelector()
 
-    autoencoder_e = encoder.Encoder(ie_dim, best_h_dim1, best_dropout_rate_e).to(device)
-    autoencoder_m = encoder.Encoder(im_dim, best_h_dim2, best_dropout_rate_m).to(device)
-    autoencoder_c = encoder.Encoder(ic_dim, best_h_dim3, best_dropout_rate_c).to(device)
-    clas = encoder.Classifier(z_in, best_dropout_rate_clf).to(device)
+    autoencoder_e = moli.Encoder(ie_dim, best_h_dim1, best_dropout_rate_e).to(device)
+    autoencoder_m = moli.Encoder(im_dim, best_h_dim2, best_dropout_rate_m).to(device)
+    autoencoder_c = moli.Encoder(ic_dim, best_h_dim3, best_dropout_rate_c).to(device)
+    clas = moli.Classifier(z_in, best_dropout_rate_clf).to(device)
 
     optim_e = torch.optim.Adagrad(autoencoder_e.parameters(), lr=best_lr_e)
     optim_m = torch.optim.Adagrad(autoencoder_m.parameters(), lr=best_lr_m)
