@@ -1,11 +1,11 @@
 import torch
-from sklearn.metrics import roc_auc_score
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
-class Encoder(nn.Module):
+
+class AdaptiveEncoder(nn.Module):
     def __init__(self, input_size, output_size, dropout_rate):
-        super(Encoder, self).__init__()
+        super(AdaptiveEncoder, self).__init__()
         self.En = torch.nn.Sequential(
             nn.Linear(input_size, output_size),
             nn.BatchNorm1d(output_size),
@@ -21,8 +21,7 @@ class Classifier(nn.Module):
     def __init__(self, input_size, dropout_rate):
         super(Classifier, self).__init__()
         self.FC = torch.nn.Sequential(
-            nn.Linear(input_size, 1),
-            nn.Dropout(dropout_rate))
+            nn.Linear(input_size, 1))
 
     def forward(self, x):
         return self.FC(x)
@@ -32,9 +31,9 @@ class Moli(nn.Module):
     def __init__(self, input_sizes, output_sizes, dropout_rates):
         super(Moli, self).__init__()
         z_in = 0
-        self.expression_encoder = Encoder(input_sizes[0], output_sizes[0], dropout_rates[0])
-        self.mutation_encoder = Encoder(input_sizes[1], output_sizes[1], dropout_rates[1])
-        self.cna_encoder = Encoder(input_sizes[2], output_sizes[2], dropout_rates[2])
+        self.expression_encoder = AdaptiveEncoder(input_sizes[0], output_sizes[0], dropout_rates[0])
+        self.mutation_encoder = AdaptiveEncoder(input_sizes[1], output_sizes[1], dropout_rates[1])
+        self.cna_encoder = AdaptiveEncoder(input_sizes[2], output_sizes[2], dropout_rates[2])
         z_in = sum(output_sizes)
         self.classifier = Classifier(z_in, dropout_rates[3])
 
@@ -45,6 +44,3 @@ class Moli(nn.Module):
         zt = torch.cat((expression_out, mutation_out, cna_out), 1)
         zt = F.normalize(zt, p=2, dim=0)
         return self.classifier(zt), zt
-
-
-

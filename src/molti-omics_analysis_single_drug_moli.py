@@ -1,16 +1,17 @@
+import json
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
-import json
-from tqdm import trange
 import torch
-import moli
-import utils
 from sklearn.feature_selection import VarianceThreshold
-from siamese_triplet.utils import AllTripletSelector
-from torch.utils.data.sampler import WeightedRandomSampler
-from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import StandardScaler
+from torch.utils.data.sampler import WeightedRandomSampler
+from tqdm import trange
+
+import utils
+from models.moli_model import Moli
+from siamese_triplet.utils import AllTripletSelector
 
 
 def main(optimal_parameters):
@@ -160,9 +161,9 @@ def main(optimal_parameters):
 
     triplet_selector = AllTripletSelector()
 
-    moli_model = moli.Moli([ie_dim, im_dim, ic_dim], [h_dim1, h_dim2, h_dim3],
-                           [dropout_rate_e, dropout_rate_m, dropout_rate_c,
-                               dropout_rate_clf]).to(device)
+    moli_model = Moli([ie_dim, im_dim, ic_dim], [h_dim1, h_dim2, h_dim3],
+                      [dropout_rate_e, dropout_rate_m, dropout_rate_c,
+                       dropout_rate_clf]).to(device)
 
     moli_optimiser = torch.optim.Adagrad([
         {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
@@ -174,9 +175,11 @@ def main(optimal_parameters):
     trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
     cross_entropy = torch.nn.BCEWithLogitsLoss()
 
+    auc = 0
     for _ in trange(epochs):
-        auc, cost = utils.train(train_loader, moli_model, moli_optimiser, triplet_selector, trip_criterion, cross_entropy,
-                          device, gamma)
+        auc, cost = utils.train(train_loader, moli_model, moli_optimiser, triplet_selector, trip_criterion,
+                                cross_entropy,
+                                device, gamma)
     print(f'{optimal_parameters["drug"]}: AUROC Train = {auc}')
 
     # test
