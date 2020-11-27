@@ -1,7 +1,5 @@
 {
-  "drugs_hyperparameters": [
-     {
-      "drug": "paclitaxel",
+     "paclitaxel" :{
       "mini_batch": 64,
       "h_dim1": 512,
       "h_dim2": 256,
@@ -97,8 +95,7 @@
         ]
       }
     },
-     {
-      "drug": "docetaxel",
+     "docetaxel": {
       "mini_batch": 8,
       "h_dim1": 16,
       "h_dim2": 16,
@@ -188,7 +185,7 @@
         ]
       }
     },
-     {
+     "cisplatin": {
       "drug": "cisplatin",
       "mini_batch": 15,
       "h_dim1": 128,
@@ -276,8 +273,7 @@
         ]
       }
     },
-     {
-      "drug": "tcga_gemcitabine",
+     "tcga_gemcitabine": {
       "mini_batch": 13,
       "h_dim1": 16,
       "h_dim2": 16,
@@ -363,7 +359,7 @@
         ]
       }
     },
-     {
+     "pdx_gemcitabine": {
       "drug": "pdx_gemcitabine",
       "mini_batch": 13,
       "h_dim1": 256,
@@ -460,8 +456,7 @@
         ]
       }
     },
-     {
-      "drug": "cetuximab",
+     "cetuximab": {
       "mini_batch": 30,
       "h_dim1": 256,
       "h_dim2": 512,
@@ -549,7 +544,7 @@
         ]
       }
     },
-     {
+     "erlotinib": {
       "drug": "erlotinib",
       "mini_batch": 30,
       "h_dim1": 64,
@@ -634,5 +629,4 @@
         ]
       }
     }
-  ]
 }

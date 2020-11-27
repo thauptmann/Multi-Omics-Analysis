@@ -9,18 +9,18 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange
 
-import utils
+import network_training_util
 from models.moli_model import Moli
 from siamese_triplet.utils import AllTripletSelector
 
 
 def main(optimal_parameters):
     # reproducibility
-    torch.manual_seed(42)
-    torch.cuda.manual_seed_all(42)
+    torch.manual_seed(5)
+    torch.cuda.manual_seed_all(5)
 
     if torch.cuda.is_available():
-        device = torch.device("cuda:0")
+        device = torch.device("cuda")
         pin_memory = True
     else:
         device = torch.device("cpu")
@@ -43,7 +43,7 @@ def main(optimal_parameters):
     epochs = optimal_parameters['epochs']
     margin = optimal_parameters['margin']
 
-    data_path = Path('data/')
+    data_path = Path('../data/')
     cna_binary_path = data_path / 'CNA_binary'
     response_path = data_path / 'response'
     sna_binary_path = data_path / 'SNA_binary'
@@ -151,11 +151,11 @@ def main(optimal_parameters):
     sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
                                     replacement=True)
 
-    train_loader = utils.create_dataloader(x_train_e, x_train_m, x_train_c, y_train, mini_batch, pin_memory, sampler,
-                                           True)
-    test_loader = utils.create_dataloader(x_test_e, x_test_m, x_test_c, y_test, mini_batch, pin_memory)
+    train_loader = network_training_util.create_dataloader(x_train_e, x_train_m, x_train_c, y_train, mini_batch,
+                                                           pin_memory, sampler, True)
+    test_loader = network_training_util.create_dataloader(x_test_e, x_test_m, x_test_c, y_test, mini_batch, pin_memory)
 
-    n_samp_e, ie_dim = x_train_e.shape
+    n_sample_e, ie_dim = x_train_e.shape
     _, im_dim = x_train_m.shape
     _, ic_dim = x_train_c.shape
 
@@ -177,19 +177,18 @@ def main(optimal_parameters):
 
     auc = 0
     for _ in trange(epochs):
-        auc, cost = utils.train(train_loader, moli_model, moli_optimiser, triplet_selector, trip_criterion,
-                                cross_entropy,
-                                device, gamma)
+        auc, cost = network_training_util.train(train_loader, moli_model, moli_optimiser, triplet_selector,
+                                                trip_criterion, cross_entropy, device, gamma)
     print(f'{optimal_parameters["drug"]}: AUROC Train = {auc}')
 
     # test
-    auc_test = utils.validate(test_loader, moli_model, device)
+    auc_test = network_training_util.validate(test_loader, moli_model, device)
     print(f'{optimal_parameters["drug"]}: AUROC Test = {auc_test}')
 
 
 if __name__ == "__main__":
     with open("hyperparameter.json") as json_data_file:
         hyperparameter = json.load(json_data_file)
-    # execute only if run as a script
-    for drug_hyperparameters in hyperparameter['drugs_hyperparameters']:
-        main(drug_hyperparameters)
+    for drug in hyperparameter:
+        drug_hyperparameters = hyperparameter[drug]
+    main(drug_hyperparameters)

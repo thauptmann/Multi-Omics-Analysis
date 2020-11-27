@@ -4,8 +4,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 from tqdm import trange
-import moli
-import utils
+import network_training_util
 import pandas as pd
 import sklearn.preprocessing as sk
 from sklearn.feature_selection import VarianceThreshold
@@ -15,6 +14,7 @@ from sklearn.metrics import roc_auc_score
 from torch.cuda.amp import autocast
 from sklearn.model_selection import StratifiedKFold
 from torch.cuda.amp import GradScaler
+from models.moli_model import Moli
 
 mini_batch_list = [8, 16, 32, 64]
 dim_list = [1024, 512, 256, 128, 64, 32, 16]
@@ -25,6 +25,7 @@ drop_rate_list = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 weight_decay_list = [0.01, 0.001, 0.1, 0.0001]
 gamma_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 max_iter = 10
+
 
 def main():
     # reproducibility
@@ -237,42 +238,41 @@ def main():
             test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=mini_batch,
                                                       shuffle=False, num_workers=8, pin_memory=True)
 
-            n_samp_e, IE_dim = x_train_e.shape
-            _, IM_dim = x_train_m.shape
-            _, IC_dim = x_train_c.shape
+            n_samp_e, ie_dim = x_train_e.shape
+            _, im_dim = x_train_m.shape
+            _, ic_dim = x_train_c.shape
 
             z_in = h_dim1 + h_dim2 + h_dim3
 
             random_negative_triplet_selector = RandomNegativeTripletSelector(margin)
             all_triplet_selector = AllTripletSelector()
 
-            autoencoder_e = moli.Encoder(IE_dim, h_dim1, dropout_rate_e).to(device)
-            autoencoder_m = moli.Encoder(IM_dim, h_dim2, dropout_rate_m).to(device)
-            autoencoder_c = moli.Encoder(IC_dim, h_dim3, dropout_rate_c).to(device)
+            moli_model = Moli([ie_dim, im_dim, ic_dim],
+                              [h_dim1, h_dim2, h_dim3],
+                              [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_clf]).to(device)
 
-            optim_e = torch.optim.Adagrad(autoencoder_e.parameters(), lr=lr_e)
-            optim_m = torch.optim.Adagrad(autoencoder_m.parameters(), lr=lr_m)
-            optim_c = torch.optim.Adagrad(autoencoder_c.parameters(), lr=lr_c)
+            moli_optimiser = torch.optim.Adagrad([
+                {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
+                {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
+                {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c},
+                {'params': moli_model.classifier.parameters(), 'lr': lr_cl, 'weight_decay': weight_decay},
+            ])
 
             trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
 
-            clas = moli.Classifier(z_in, dropout_rate_clf).to(device)
+            clas = Moli.Classifier(z_in, dropout_rate_clf).to(device)
             optim_clas = torch.optim.Adagrad(clas.parameters(), lr=lr_cl, weight_decay=weight_decay)
             bce_loss = torch.nn.BCEWithLogitsLoss()
-
+            auc_validate = 0
             for epoch in range(epochs):
                 cost_train = 0
                 auc_train = []
                 num_minibatches = int(n_samp_e / mini_batch)
-                auc_train, cost_train = train(train_loader, autoencoder_e, autoencoder_m, autoencoder_c, clas, optim_e,
-                                              optim_m, optim_c, optim_clas,
-                                              all_triplet_selector, trip_criterion, bce_loss, device, cost_train,
-                                              num_minibatches,
-                                              auc_train, gamma)
+                auc_train, cost_train = network_training_util.train(train_loader, moli_model, moli_optimiser,
+                                              all_triplet_selector, trip_criterion, bce_loss, device, gamma)
 
                 # validate
-                auc_validate = test(test_loader, autoencoder_e, autoencoder_m, autoencoder_c, clas,
-                                                   device)
+                auc_validate = network_training_util.validate(test_loader, moli_model, device)
             aucs_validate.append(auc_validate)
         auc_cv = np.mean(aucs_validate)
         if auc_cv > best_auc:
@@ -323,16 +323,17 @@ def main():
     random_negative_triplet_selector = RandomNegativeTripletSelector(best_margin)
     all_triplet_selector = AllTripletSelector()
 
-    autoencoder_e = moli.Encoder(ie_dim, best_h_dim1, best_dropout_rate_e).to(device)
-    autoencoder_m = moli.Encoder(im_dim, best_h_dim2, best_dropout_rate_m).to(device)
-    autoencoder_c = moli.Encoder(ic_dim, best_h_dim3, best_dropout_rate_c).to(device)
-    clas = moli.Classifier(z_in, best_dropout_rate_clf).to(device)
+    moli_model = Moli([ie_dim, im_dim, ic_dim],
+                      [best_h_dim1, best_h_dim2, best_h_dim3],
+                      [best_dropout_rate_e, best_dropout_rate_m, best_dropout_rate_c, best_dropout_rate_clf]) \
+        .to(device)
 
-    optim_e = torch.optim.Adagrad(autoencoder_e.parameters(), lr=best_lr_e)
-    optim_m = torch.optim.Adagrad(autoencoder_m.parameters(), lr=best_lr_m)
-    optim_c = torch.optim.Adagrad(autoencoder_c.parameters(), lr=best_lr_c)
-    optim_clas = torch.optim.Adagrad(clas.parameters(), lr=best_lr_cl,
-                                     weight_decay=best_weight_decay)
+    moli_optimiser = torch.optim.Adagrad([
+        {'params': moli_model.expression_encoder.parameters(), 'lr': best_lr_e},
+        {'params': moli_model.mutation_encoder.parameters(), 'lr': best_lr_m},
+        {'params': moli_model.cna_encoder.parameters(), 'lr': best_lr_c},
+        {'params': moli_model.classifier.parameters(), 'lr': best_lr_cl, 'weight_decay': best_weight_decay},
+    ])
 
     trip_criterion = torch.nn.TripletMarginLoss(margin=best_margin, p=2)
     bce_loss = torch.nn.BCEWithLogitsLoss()
@@ -371,89 +372,17 @@ def main():
                                                       torch.FloatTensor(x_test_ccet), torch.FloatTensor(ytscet))
     test_loader_cet = torch.utils.data.DataLoader(dataset=test_dataset_cet, batch_size=mini_batch, shuffle=False,
                                                   num_workers=8, pin_memory=True)
-
-    num_minibatches = int(n_samp_e / best_mini_batch)
     for _ in trange(best_epochs):
-        auc_train, cost_train = train(train_loader, autoencoder_e, autoencoder_m, autoencoder_c, clas, optim_e,
-                                      optim_m, optim_c, optim_clas, all_triplet_selector, trip_criterion,
-                                      bce_loss, device, cost_train, num_minibatches, auc_train, best_gamma)
+        auc_train, cost_train = network_training_util.train(train_loader, moli_model, moli_optimiser,
+                                                            all_triplet_selector, trip_criterion,
+                                      bce_loss, device, best_gamma)
 
-    auc_test_erlo = test(test_loader_erlo, autoencoder_e, autoencoder_m, autoencoder_c, clas, device)
-    auc_test_cet = test(test_loader_cet, autoencoder_e, autoencoder_m, autoencoder_c, clas, device)
+    auc_test_erlo = network_training_util.validate(test_loader_erlo, moli_model, device)
+    auc_test_cet = network_training_util.validate(test_loader_cet, moli_model, device)
 
-    print(f'EGFR: AUROC Train = {auc_train[-1]}')
-    print(f'EGFR Cetuximab: AUROCC = {auc_test_cet}')
-    print(f'EGFR Erlotinib: AUROCC = {auc_test_erlo}')
-
-
-def train(train_loader, autoencoder_e, autoencoder_m, autoencoder_c, clas, optim_e, optim_m, optim_c, optim_clas,
-          all_triplet_selector, trip_criterion, bce_loss, device, cost_train, num_minibatches,
-          auc_train, gamma):
-    # Creates a GradScaler once at the beginning of training.
-    scaler = GradScaler()
-    for (dataE, dataM, dataC, target) in train_loader:
-        if torch.mean(target) != 0. and torch.mean(target) != 1.:
-            dataE = dataE.to(device)
-            dataM = dataM.to(device)
-            dataC = dataC.to(device)
-            target = target.to(device)
-
-            for optimizer in (optim_e, optim_m, optim_c, optim_clas):
-                optimizer.zero_grad()
-
-            autoencoder_e.train()
-            autoencoder_m.train()
-            autoencoder_c.train()
-            clas.train()
-
-            with autocast():
-                ZEX = autoencoder_e(dataE)
-                ZMX = autoencoder_m(dataM)
-                ZCX = autoencoder_c(dataC)
-
-                ZT = torch.cat((ZEX, ZMX, ZCX), 1)
-                ZT = F.normalize(ZT, p=2, dim=0)
-                y_prediction = clas(ZT)
-                triplets = all_triplet_selector.get_triplets(ZT, target)
-                target = target.view(-1, 1)
-                loss = gamma * trip_criterion(ZT[triplets[:, 0], :], ZT[triplets[:, 1], :],
-                                              ZT[triplets[:, 2], :]) + bce_loss(y_prediction, target)
-
-            auc = roc_auc_score(target.detach().cpu(), y_prediction.detach().cpu())
-            scaler.scale(loss).backward()
-            for optimizer in (optim_clas, optim_e, optim_m, optim_c):
-                scaler.step(optimizer)
-
-            # Updates the scale for next iteration.
-            scaler.update()
-            cost_train += (loss.item() / num_minibatches)
-            auc_train.append(auc)
-        return auc_train, cost_train
-
-
-def test(data_loader, autoencoder_e, autoencoder_m, autoencoder_c, clas, device):
-    y_true_test = []
-    prediction_test = []
-    for (dataE, dataM, dataC, target) in data_loader:
-        tx_test_e = torch.FloatTensor(dataE).to(device)
-        tx_test_m = torch.FloatTensor(dataM).to(device)
-        tx_test_c = torch.FloatTensor(dataC).to(device)
-        y_true_test.extend(target.view(-1, 1))
-        with torch.no_grad():
-            autoencoder_e.eval()
-            autoencoder_m.eval()
-            autoencoder_c.eval()
-            clas.eval()
-            ZET = autoencoder_e(tx_test_e)
-            ZMT = autoencoder_m(tx_test_m)
-            ZCT = autoencoder_c(tx_test_c)
-
-            ztt = torch.cat((ZET, ZMT, ZCT), 1)
-            ztt = F.normalize(ztt, p=2, dim=0)
-            prediction_test.extend(clas(ztt).cpu().detach())
-
-    auc_test = roc_auc_score(y_true_test, prediction_test)
-    return auc_test
+    print(f'EGFR: AUROC Train = {auc_train}')
+    print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
+    print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
 
 
 if __name__ == "__main__":
