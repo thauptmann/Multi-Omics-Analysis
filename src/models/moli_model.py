@@ -1,5 +1,4 @@
 import torch
-from sklearn.metrics import roc_auc_score
 from torch import nn
 import torch.nn.functional as F
 

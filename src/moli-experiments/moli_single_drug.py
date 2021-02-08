@@ -12,23 +12,17 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange
 
-import network_training_util
+from utils import network_training_util
+from utils.network_training_util import read_and_transpose_csv
 from models.moli_model import Moli
 # Strategies for selecting triplets within a minibatch
 from siamese_triplet.utils import AllTripletSelector
 
 
-def read_and_transpose_csv(path, drop=False):
-    csv_data = pd.read_csv(path, sep="\t", index_col=0, decimal=',')
-    if drop:
-        csv_data = csv_data.drop_duplicates(keep='last')
-    return pd.DataFrame.transpose(csv_data)
-
-
-def main(parameter, drug, run_test, max_iter):
+def cv_and_train(parameter, drug, run_test, max_iter):
     # reproducibility
-    torch.manual_seed(5)
-    np.random.seed(5)
+    torch.manual_seed(42)
+    np.random.seed(42)
 
     cross_validation = parameter['cross_validation']
     mini_batch_list = cross_validation['mini_batch_list']
@@ -45,13 +39,13 @@ def main(parameter, drug, run_test, max_iter):
     else:
         device = torch.device("cpu")
 
-    data_path = Path('../data')
+    data_path = Path('../../data')
     cna_binary_path = data_path / 'CNA_binary'
     response_path = data_path / 'response'
     sna_binary_path = data_path / 'SNA_binary'
     expressions_homogenized_path = data_path / 'exprs_homogenized'
 
-    save_results_to = Path(f'./results', drug)
+    save_results_to = Path(f'../results', drug)
     save_results_to.mkdir(parents=True, exist_ok=True)
 
     expression_train = read_and_transpose_csv(expressions_homogenized_path / parameter['expression_train'])
@@ -129,12 +123,12 @@ def main(parameter, drug, run_test, max_iter):
 
         aucs_validate = []
         for train_index, test_index in stratified_k_fold.split(expression_train.to_numpy(), y):
-            x_train_e = expression_train.values[train_index, :]
-            x_test_e = expression_train.values[test_index, :]
-            x_train_m = mutation_train.values[train_index, :]
-            x_test_m = mutation_train.values[test_index, :]
-            x_train_c = cna_train.values[train_index, :]
-            x_test_c = cna_train.values[test_index, :]
+            x_train_e = expression_train.values[train_index]
+            x_test_e = expression_train.values[test_index]
+            x_train_m = mutation_train.values[train_index]
+            x_test_m = mutation_train.values[test_index]
+            x_train_c = cna_train.values[train_index]
+            x_test_c = cna_train.values[test_index]
             y_train = y[train_index]
             y_test = y[test_index]
 
@@ -290,7 +284,7 @@ def main(parameter, drug, run_test, max_iter):
                                                                 trip_criterion,
                                                                 bce_with_logits_loss, device,
                                                                 best_gamma)
-        auc_test = network_training_util.validate(validate_loader,moli_model, device)
+        auc_test = network_training_util.validate(validate_loader, moli_model, device)
         print(f'{drug}: AUROC Train = {auc_train[-1]}')
         print(f'{drug}: AUROC Test = {auc_test}')
 
@@ -305,7 +299,7 @@ if __name__ == "__main__":
                                                                  'paclitaxel'])
     args = parser.parse_args()
 
-    with open("hyperparameter.json") as json_data_file:
+    with open("../utils/hyperparameter.json") as json_data_file:
         hyperparameter = json.load(json_data_file)
     drug_hyperparameters = hyperparameter[args.drug]
-    main(drug_hyperparameters, args.drug, args.test, args.random_search_iteration)
+    cv_and_train(drug_hyperparameters, args.drug, args.test, args.random_search_iteration)

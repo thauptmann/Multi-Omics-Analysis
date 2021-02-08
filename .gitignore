@@ -135,4 +135,5 @@ multi-omics_analysis/data/*
 results_*/*
 /runs/*
 *.pt
-/data/
+data/
+data

@@ -7,9 +7,9 @@ import sklearn.preprocessing as sk
 from sklearn.feature_selection import VarianceThreshold
 from siamese_triplet.utils import AllTripletSelector
 from torch.utils.data.sampler import WeightedRandomSampler
-import network_training_util
+from utils import network_training_util
 from models.moli_model import Moli
-from network_training_util import create_dataloader
+from utils.network_training_util import create_dataloader
 
 
 def main():
@@ -24,7 +24,7 @@ def main():
         device = torch.device("cpu")
         pin_memory = False
 
-    data_path = Path('../data/')
+    data_path = Path('../../data/')
     egfr_path = data_path / 'EGFR_experiments_data'
 
     GDSC_E = pd.read_csv(egfr_path / "GDSC_exprs.z.EGFRi.tsv", sep="\t", index_col=0, decimal=",")
