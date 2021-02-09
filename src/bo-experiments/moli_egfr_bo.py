@@ -7,14 +7,13 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange
 
-from models.moli_model import Moli
+from models.auto_moli_model import Moli
 from siamese_triplet.utils import AllTripletSelector
 from utils import egfr_data
 from utils import network_training_util
 
 
-def main(mini_batch, h_dim1, h_dim2, h_dim3, lr_e, lr_m, lr_c, lr_cl, dropout_rate_e, dropout_rate_m, dropout_rate_c,
-         dropout_rate_clf, weight_decay, gamma, epochs, margin):
+def train_evaluate(parameterization):
     # reproducibility
     torch.manual_seed(42)
     np.random.seed(42)
@@ -23,6 +22,22 @@ def main(mini_batch, h_dim1, h_dim2, h_dim3, lr_e, lr_m, lr_c, lr_cl, dropout_ra
         device = torch.device("cuda:0")
     else:
         device = torch.device("cpu")
+
+    mini_batch = parameterization['mini_batch']
+    h_dim1 = parameterization['h_dim1']
+    h_dim2 = parameterization['h_dim2']
+    h_dim3 = parameterization['h_dim3']
+    lr_e = parameterization['lr_e']
+    lr_m = parameterization['lr_m']
+    lr_c = parameterization['lr_c']
+    lr_cl = parameterization['lr_cl']
+    dropout_rate_e = parameterization['dropout_rate_e']
+    dropout_rate_m = parameterization['dropout_rate_m']
+    dropout_rate_c = parameterization['dropout_rate_c']
+    weight_decay = parameterization['weight_decay']
+    gamma = parameterization['gamma']
+    epochs = parameterization['epochs']
+    margin = parameterization['margin']
 
     data_path = Path('../..', 'data')
     egfr_path = Path(data_path, 'EGFR_experiments_data')
@@ -80,7 +95,7 @@ def main(mini_batch, h_dim1, h_dim2, h_dim3, lr_e, lr_m, lr_c, lr_cl, dropout_ra
 
         moli_model = Moli([ie_dim, im_dim, ic_dim],
                           [h_dim1, h_dim2, h_dim3],
-                          [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_clf]).to(device)
+                          [dropout_rate_e, dropout_rate_m, dropout_rate_c]).to(device)
 
         moli_optimiser = torch.optim.Adagrad([
             {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},

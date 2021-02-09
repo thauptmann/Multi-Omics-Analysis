@@ -18,8 +18,7 @@ mini_batch_list = [8, 16, 32, 64]
 dim_list = [1024, 512, 256, 128, 64, 32, 16]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.5, 0.1, 0.05, 0.01, 0.001, 0.005, 0.0005, 0.0001, 0.00005, 0.00001]
-# epoch_list = [20, 50, 10, 15, 30, 40, 60, 70, 80, 90, 100]
-epoch_list = [2]
+epoch_list = [20, 50, 10, 15, 30, 40, 60, 70, 80, 90, 100]
 drop_rate_list = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 weight_decay_list = [0.01, 0.001, 0.1, 0.0001]
 gamma_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
@@ -68,8 +67,7 @@ def cv_and_train(run_test, random_search_iterations):
         margin = random.choice(margin_list)
 
         aucs_validate = []
-        for train_index, test_index in tqdm(skf.split(GDSCE, GDSCR),
-                                            total=skf.get_n_splits(), desc="k-fold"):
+        for train_index, test_index in tqdm(skf.split(GDSCE, GDSCR), total=skf.get_n_splits(), desc="k-fold"):
             x_train_e = GDSCE.values[train_index]
             x_train_m = GDSCM.values[train_index]
             x_train_c = GDSCC.values[train_index]
@@ -190,15 +188,13 @@ def cv_and_train(run_test, random_search_iterations):
         _, ie_dim = x_train_e.shape
         _, im_dim = x_train_m.shape
         _, ic_dim = x_train_m.shape
-        z_in = best_h_dim1 + best_h_dim2 + best_h_dim3
 
-        random_negative_triplet_selector = RandomNegativeTripletSelector(best_margin)
         all_triplet_selector = AllTripletSelector()
 
         moli_model = Moli([ie_dim, im_dim, ic_dim],
                           [best_h_dim1, best_h_dim2, best_h_dim3],
-                          [best_dropout_rate_e, best_dropout_rate_m, best_dropout_rate_c, best_dropout_rate_clf]) \
-            .to(device)
+                          [best_dropout_rate_e, best_dropout_rate_m, best_dropout_rate_c, best_dropout_rate_clf])
+        moli_model = moli_model.to(device)
 
         moli_optimiser = torch.optim.Adagrad([
             {'params': moli_model.expression_encoder.parameters(), 'lr': best_lr_e},

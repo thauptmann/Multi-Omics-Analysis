@@ -31,7 +31,6 @@ class Classifier(nn.Module):
 class Moli(nn.Module):
     def __init__(self, input_sizes, output_sizes, dropout_rates):
         super(Moli, self).__init__()
-        z_in = 0
         self.expression_encoder = Encoder(input_sizes[0], output_sizes[0], dropout_rates[0])
         self.mutation_encoder = Encoder(input_sizes[1], output_sizes[1], dropout_rates[1])
         self.cna_encoder = Encoder(input_sizes[2], output_sizes[2], dropout_rates[2])

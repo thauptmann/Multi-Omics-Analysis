@@ -4,3 +4,4 @@ pandas~=1.2.1
 torch~=1.7.1+cpu
 tqdm~=4.56.0
 ax-platform
+psutil

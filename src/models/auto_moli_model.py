@@ -18,7 +18,7 @@ class AdaptiveEncoder(nn.Module):
 
 
 class Classifier(nn.Module):
-    def __init__(self, input_size, dropout_rate):
+    def __init__(self, input_size):
         super(Classifier, self).__init__()
         self.FC = torch.nn.Sequential(
             nn.Linear(input_size, 1))
@@ -30,12 +30,11 @@ class Classifier(nn.Module):
 class Moli(nn.Module):
     def __init__(self, input_sizes, output_sizes, dropout_rates):
         super(Moli, self).__init__()
-        z_in = 0
         self.expression_encoder = AdaptiveEncoder(input_sizes[0], output_sizes[0], dropout_rates[0])
         self.mutation_encoder = AdaptiveEncoder(input_sizes[1], output_sizes[1], dropout_rates[1])
         self.cna_encoder = AdaptiveEncoder(input_sizes[2], output_sizes[2], dropout_rates[2])
         z_in = sum(output_sizes)
-        self.classifier = Classifier(z_in, dropout_rates[3])
+        self.classifier = Classifier(z_in)
 
     def forward(self, expression, mutation, cna):
         expression_out = self.expression_encoder(expression)
