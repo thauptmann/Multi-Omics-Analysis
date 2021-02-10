@@ -43,7 +43,7 @@ def main(optimal_parameters):
     epochs = optimal_parameters['epochs']
     margin = optimal_parameters['margin']
 
-    data_path = Path('../../data/')
+    data_path = Path('../../../data/')
     cna_binary_path = data_path / 'CNA_binary'
     response_path = data_path / 'response'
     sna_binary_path = data_path / 'SNA_binary'
@@ -187,7 +187,7 @@ def main(optimal_parameters):
 
 
 if __name__ == "__main__":
-    with open("../utils/hyperparameter.json") as json_data_file:
+    with open("../../utils/hyperparameter.json") as json_data_file:
         hyperparameter = json.load(json_data_file)
     for drug in hyperparameter:
         drug_hyperparameters = hyperparameter[drug]

@@ -7,13 +7,12 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange
 
-from models.auto_moli_model import Moli
+from models.bo_moli_model import Moli
 from siamese_triplet.utils import AllTripletSelector
-from utils import egfr_data
 from utils import network_training_util
 
 
-def train_evaluate(parameterization):
+def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y):
     # reproducibility
     torch.manual_seed(42)
     np.random.seed(42)
@@ -23,10 +22,18 @@ def train_evaluate(parameterization):
     else:
         device = torch.device("cpu")
 
+    combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
     h_dim2 = parameterization['h_dim2']
     h_dim3 = parameterization['h_dim3']
+    h_dim4 = parameterization['h_dim4']
+    h_dim5 = parameterization['h_dim5']
+    depth_1 = parameterization['depth_1']
+    depth_2 = parameterization['depth_2']
+    depth_3 = parameterization['depth_3']
+    depth_4 = parameterization['depth_4']
+    depth_5 = parameterization['depth_5']
     lr_e = parameterization['lr_e']
     lr_m = parameterization['lr_m']
     lr_c = parameterization['lr_c']
@@ -34,26 +41,22 @@ def train_evaluate(parameterization):
     dropout_rate_e = parameterization['dropout_rate_e']
     dropout_rate_m = parameterization['dropout_rate_m']
     dropout_rate_c = parameterization['dropout_rate_c']
+    dropout_rate_clf = parameterization['dropout_rate_clf']
     weight_decay = parameterization['weight_decay']
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
     margin = parameterization['margin']
 
-    data_path = Path('../..', 'data')
-    egfr_path = Path(data_path, 'EGFR_experiments_data')
-
-    GDSCEv2, GDSCMv2, GDSCCv2, Y = egfr_data.load_train_data(egfr_path)
-
     skf = StratifiedKFold(n_splits=5)
     aucs_validate = []
-    for train_index, test_index in skf.split(GDSCEv2.to_numpy(), Y):
-        x_train_e = GDSCEv2.values[train_index]
-        x_train_m = GDSCMv2.values[train_index]
-        x_train_c = GDSCCv2.values[train_index]
+    for train_index, test_index in skf.split(GDSCE.to_numpy(), Y):
+        x_train_e = GDSCE.values[train_index]
+        x_train_m = GDSCM.values[train_index]
+        x_train_c = GDSCC.values[train_index]
 
-        x_test_e = GDSCEv2.values[test_index]
-        x_test_m = GDSCMv2.values[test_index]
-        x_test_c = GDSCCv2.values[test_index]
+        x_test_e = GDSCE.values[test_index]
+        x_test_m = GDSCM.values[test_index]
+        x_test_c = GDSCC.values[test_index]
 
         y_train = Y[train_index]
         y_test = Y[test_index]
@@ -93,14 +96,16 @@ def train_evaluate(parameterization):
 
         all_triplet_selector = AllTripletSelector()
 
-        moli_model = Moli([ie_dim, im_dim, ic_dim],
-                          [h_dim1, h_dim2, h_dim3],
-                          [dropout_rate_e, dropout_rate_m, dropout_rate_c]).to(device)
+        depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
+        input_sizes = [ie_dim, im_dim, ic_dim]
+        dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_clf]
+        output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
+        moli_model = Moli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
         moli_optimiser = torch.optim.Adagrad([
-            {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
-            {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
-            {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c},
+            {'params': moli_model.left.parameters(), 'lr': lr_e},
+            {'params': moli_model.middle.parameters(), 'lr': lr_m},
+            {'params': moli_model.right.parameters(), 'lr': lr_c},
             {'params': moli_model.classifier.parameters(), 'lr': lr_cl, 'weight_decay': weight_decay},
         ])
 

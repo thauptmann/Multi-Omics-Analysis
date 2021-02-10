@@ -35,7 +35,7 @@ def cv_and_train(run_test, random_search_iterations):
     else:
         device = torch.device("cpu")
 
-    data_path = Path('..', 'data')
+    data_path = Path('../..', 'data')
     egfr_path = Path(data_path, 'EGFR_experiments_data')
     cna_binary_path = data_path / 'CNA_binary'
     response_path = data_path / 'response'
