@@ -3,7 +3,6 @@ import random
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import sklearn
 import torch
 from sklearn.model_selection import StratifiedKFold
@@ -12,6 +11,8 @@ from tqdm import trange, tqdm
 from utils import network_training_util
 from models.moli_model import Moli
 from utils import egfr_data
+
+from utils.visualisation import save_auroc_plots
 from siamese_triplet.utils import AllTripletSelector, RandomNegativeTripletSelector
 
 mini_batch_list = [8, 16, 32, 64]
@@ -35,7 +36,7 @@ def cv_and_train(run_test, random_search_iterations):
     else:
         device = torch.device("cpu")
 
-    data_path = Path('../..', 'data')
+    data_path = Path('..', '..', '..', 'data')
     egfr_path = Path(data_path, 'EGFR_experiments_data')
     cna_binary_path = data_path / 'CNA_binary'
     response_path = data_path / 'response'
@@ -48,6 +49,7 @@ def cv_and_train(run_test, random_search_iterations):
 
     skf = StratifiedKFold(n_splits=5)
     best_auc = 0
+    all_aucs = []
     for _ in trange(random_search_iterations, desc='Random Search Iteration'):
         mini_batch = random.choice(mini_batch_list)
         h_dim1 = random.choice(dim_list)
@@ -137,6 +139,8 @@ def cv_and_train(run_test, random_search_iterations):
                 auc_validate = network_training_util.validate(test_loader, moli_model, device)
             aucs_validate.append(auc_validate)
         auc_cv = np.mean(aucs_validate)
+
+        all_aucs.append(auc_cv)
         if auc_cv > best_auc:
             best_auc = auc_cv
             best_mini_batch = mini_batch
@@ -247,6 +251,10 @@ def cv_and_train(run_test, random_search_iterations):
         print(f'EGFR: AUROC Train = {auc_train}')
         print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
         print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
+
+    result_path = Path('..', '..', '..', 'results', 'egfr')
+    all_aucs = np.array([all_aucs])
+    save_auroc_plots(all_aucs, result_path, 'rs')
 
 
 if __name__ == "__main__":

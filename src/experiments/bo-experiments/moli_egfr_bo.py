@@ -42,6 +42,7 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y):
     dropout_rate_m = parameterization['dropout_rate_m']
     dropout_rate_c = parameterization['dropout_rate_c']
     dropout_rate_clf = parameterization['dropout_rate_clf']
+    dropout_rate_middle = parameterization['dropout_rate_middle']
     weight_decay = parameterization['weight_decay']
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
@@ -98,7 +99,7 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y):
 
         depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
         input_sizes = [ie_dim, im_dim, ic_dim]
-        dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_clf]
+        dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_clf, dropout_rate_middle]
         output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
         moli_model = Moli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 

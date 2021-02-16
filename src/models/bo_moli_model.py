@@ -9,8 +9,8 @@ class AdaptiveEncoder(nn.Module):
         self.module_list = nn.ModuleList()
         self.module_list.extend(torch.nn.Sequential(
             nn.Linear(input_size, output_size),
-            nn.BatchNorm1d(output_size),
             nn.ReLU(),
+            nn.BatchNorm1d(output_size),
             nn.Dropout(dropout_rate)))
         for i in range(depth-1):
             dense = torch.nn.Sequential(
@@ -59,7 +59,8 @@ class Moli(nn.Module):
             self.left = expression_encoder
             self.middle = mutation_encoder
             self.right = cna_encoder
-            self.left_encoder = AdaptiveEncoder(output_sizes[0] + output_sizes[1], output_sizes[3], 0, depths[3])
+            self.left_encoder = AdaptiveEncoder(output_sizes[0] + output_sizes[1], output_sizes[3], dropout_rates[4],
+                                                depths[3])
             self.classifier = Classifier(output_sizes[3] + output_sizes[2], output_sizes[4],
                                          dropout_rates[3], depths[4])
 
@@ -67,15 +68,24 @@ class Moli(nn.Module):
             self.left = cna_encoder
             self.middle = mutation_encoder
             self.right = expression_encoder
-            self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[1], output_sizes[3], 0, depths[3])
+            self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[1], output_sizes[3], dropout_rates[4],
+                                                depths[3])
             self.classifier = Classifier(output_sizes[3] + output_sizes[0], output_sizes[4],
                                          dropout_rates[3], depths[4])
-        else:
+        elif combination == 2:
             self.left = cna_encoder
             self.middle = expression_encoder
             self.right = mutation_encoder
-            self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[0], output_sizes[3], 0, depths[3])
-            self.classifier = Classifier(output_sizes[3] + output_sizes[1], output_sizes[4],
+            self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[0], output_sizes[3], dropout_rates[4],
+                                                depths[3])
+            self.classifier = Classifier(output_sizes[3] + output_sizes[1], output_sizes[4], dropout_rates[3],
+                                         depths[4])
+        elif combination == 3:
+            self.left = expression_encoder
+            self.middle = mutation_encoder
+            self.right = cna_encoder
+            self.left_encoder = nn.Identity(output_sizes[0] + output_sizes[1] + output_sizes[2])
+            self.classifier = Classifier(output_sizes[0] + output_sizes[1] + output_sizes[2], output_sizes[4],
                                          dropout_rates[3], depths[4])
 
     def forward(self, expression, mutation, cna):
@@ -87,15 +97,18 @@ class Moli(nn.Module):
             left_input = cna
             middle_input = mutation
             right_input = expression
-        else:
+        elif self.combination == 2:
             left_input = cna
             middle_input = expression
             right_input = mutation
+        else:
+            left_input = expression
+            middle_input = mutation
+            right_input = cna
         left_out = self.left(left_input)
         middle_out = self.middle(middle_input)
         right_out = self.right(right_input)
         left_middle = torch.cat((left_out, middle_out), 1)
         left_middle_out = self.left_encoder(left_middle)
         left_middle_right = torch.cat((left_middle_out, right_out), 1)
-        zt = F.normalize(left_middle_right, p=2, dim=0)
-        return self.classifier(left_middle_right), zt
+        return self.classifier(left_middle_right), left_middle_right
