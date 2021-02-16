@@ -36,7 +36,7 @@ def cv_and_train(run_test, random_search_iterations):
     else:
         device = torch.device("cpu")
 
-    data_path = Path('..', '..', '..', 'data')
+    data_path = Path('../experiments', '..', '..', 'data')
     egfr_path = Path(data_path, 'EGFR_experiments_data')
     cna_binary_path = data_path / 'CNA_binary'
     response_path = data_path / 'response'
@@ -252,7 +252,7 @@ def cv_and_train(run_test, random_search_iterations):
         print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
         print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
 
-    result_path = Path('..', '..', '..', 'results', 'egfr')
+    result_path = Path('../experiments', '..', '..', 'results', 'egfr')
     all_aucs = np.array([all_aucs])
     save_auroc_plots(all_aucs, result_path, 'rs')
 

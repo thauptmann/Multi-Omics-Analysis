@@ -39,7 +39,7 @@ def cv_and_train(parameter, drug, run_test, max_iter):
     else:
         device = torch.device("cpu")
 
-    data_path = Path('../../../data')
+    data_path = Path('../../data')
     cna_binary_path = data_path / 'CNA_binary'
     response_path = data_path / 'response'
     sna_binary_path = data_path / 'SNA_binary'
@@ -299,7 +299,7 @@ if __name__ == "__main__":
                                                                  'paclitaxel'])
     args = parser.parse_args()
 
-    with open("../../utils/hyperparameter.json") as json_data_file:
+    with open("../utils/hyperparameter.json") as json_data_file:
         hyperparameter = json.load(json_data_file)
     drug_hyperparameters = hyperparameter[args.drug]
     cv_and_train(drug_hyperparameters, args.drug, args.test, args.random_search_iteration)

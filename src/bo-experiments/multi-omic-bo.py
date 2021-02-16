@@ -11,6 +11,7 @@ dim_list = [1024, 512, 256, 128, 64, 32, 16, 8]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.5, 0.1, 0.05, 0.01, 0.001, 0.005, 0.0005, 0.0001, 0.00005, 0.00001]
 epoch_list = [10, 20, 50, 15, 30, 40, 60, 70, 80, 90, 100]
+epoch_list = [1,1]
 drop_rate_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 weight_decay_list = [0.01, 0.001, 0.1, 0.0001]
 gamma_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
@@ -19,7 +20,7 @@ depth_list = [1, 2, 3]
 
 
 def bo_moli(search_iterations, run_test):
-    data_path = Path('../../..', 'data')
+    data_path = Path('..', '..', 'data')
     egfr_path = Path(data_path, 'EGFR_experiments_data')
     GDSCE, GDSCM, GDSCC, Y = egfr_data.load_train_data(egfr_path)
 
@@ -59,7 +60,7 @@ def bo_moli(search_iterations, run_test):
     print(best_parameters)
     print(means, covariances)
 
-    result_path = Path('..', '..', '..', 'results', 'egfr')
+    result_path = Path('..', '..', 'results', 'egfr')
     best_objectives = np.array([[trial.objective_mean * 100 for trial in experiment.trials.values()]])
     save_auroc_plots(best_objectives, result_path, 'bo')
 
