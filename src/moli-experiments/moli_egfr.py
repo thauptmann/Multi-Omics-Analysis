@@ -254,6 +254,7 @@ def cv_and_train(run_test, random_search_iterations):
         print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
 
     result_path = Path('..', '..', 'results', 'egfr')
+    result_path.mkdir(parents=True, exist_ok=True)
     all_aucs = np.array([all_aucs])
     save_auroc_plots(all_aucs, result_path, 'rs')
 

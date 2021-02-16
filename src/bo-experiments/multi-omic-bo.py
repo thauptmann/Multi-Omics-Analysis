@@ -10,7 +10,7 @@ import moli_egfr_bo
 from utils import egfr_data
 from utils.visualisation import save_auroc_plots
 
-mini_batch_list = [8, 16, 32, 64]
+mini_batch_list = [16, 32, 64, 128, 256]
 dim_list = [1024, 512, 256, 128, 64, 32, 16, 8]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.5, 0.1, 0.05, 0.01, 0.001, 0.005, 0.0005, 0.0001, 0.00005, 0.00001]
@@ -64,6 +64,7 @@ def bo_moli(search_iterations, run_test):
     print(means, covariances)
 
     result_path = Path('..', '..', 'results', 'egfr')
+    result_path.mkdir(parents=True, exist_ok=True)
     best_objectives = np.array([[trial.objective_mean * 100 for trial in experiment.trials.values()]])
     save_auroc_plots(best_objectives, result_path, 'bo')
 
