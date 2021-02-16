@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.absolute()))
+
 import argparse
 from pathlib import Path
 import numpy as np
@@ -11,7 +15,6 @@ dim_list = [1024, 512, 256, 128, 64, 32, 16, 8]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.5, 0.1, 0.05, 0.01, 0.001, 0.005, 0.0005, 0.0001, 0.00005, 0.00001]
 epoch_list = [10, 20, 50, 15, 30, 40, 60, 70, 80, 90, 100]
-epoch_list = [1,1]
 drop_rate_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 weight_decay_list = [0.01, 0.001, 0.1, 0.0001]
 gamma_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
