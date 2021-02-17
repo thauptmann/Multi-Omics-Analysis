@@ -83,8 +83,6 @@ def use_autocast(device):
     return autocast() if device == 'cuda:0' else nullcontext()
 
 
-def read_and_transpose_csv(path, drop=False):
+def read_and_transpose_csv(path):
     csv_data = pd.read_csv(path, sep="\t", index_col=0, decimal=',')
-    if drop:
-        csv_data = csv_data.drop_duplicates(keep='last')
     return pd.DataFrame.transpose(csv_data)

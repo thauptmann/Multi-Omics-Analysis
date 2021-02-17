@@ -64,13 +64,13 @@ def cv_and_train(run_test, random_search_iterations):
 
         aucs_validate = []
         for train_index, test_index in tqdm(skf.split(GDSCE, GDSCR), total=skf.get_n_splits(), desc="k-fold"):
-            x_train_e = GDSCE.values[train_index]
-            x_train_m = GDSCM.values[train_index]
-            x_train_c = GDSCC.values[train_index]
+            x_train_e = GDSCE[train_index]
+            x_train_m = GDSCM[train_index]
+            x_train_c = GDSCC[train_index]
 
-            x_test_e = GDSCE.values[test_index]
-            x_test_m = GDSCM.values[test_index]
-            x_test_c = GDSCC.values[test_index]
+            x_test_e = GDSCE[test_index]
+            x_test_m = GDSCM[test_index]
+            x_test_c = GDSCC[test_index]
 
             y_train = GDSCR[train_index]
             y_test = GDSCR[test_index]

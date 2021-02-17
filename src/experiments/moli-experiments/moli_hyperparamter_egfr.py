@@ -7,7 +7,7 @@ import sklearn.preprocessing as sk
 from sklearn.feature_selection import VarianceThreshold
 from siamese_triplet.utils import AllTripletSelector
 from torch.utils.data.sampler import WeightedRandomSampler
-from utils import network_training_util
+from utils import network_training_util, egfr_data
 from models.moli_model import Moli
 from utils.network_training_util import create_dataloader
 
@@ -24,137 +24,10 @@ def main():
         device = torch.device("cpu")
         pin_memory = False
 
-    data_path = Path('../../../data/')
-    egfr_path = data_path / 'EGFR_experiments_data'
-
-    GDSC_E = pd.read_csv(egfr_path / "GDSC_exprs.z.EGFRi.tsv", sep="\t", index_col=0, decimal=",")
-    GDSC_E = pd.DataFrame.transpose(GDSC_E)
-
-    GDSC_M = pd.read_csv(egfr_path / "GDSC_mutations.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
-    GDSC_M = pd.DataFrame.transpose(GDSC_M)
-    GDSC_M = GDSC_M.loc[:, ~GDSC_M.columns.duplicated()]
-
-    GDSC_C = pd.read_csv(egfr_path / "GDSC_CNA.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
-    GDSC_C = GDSC_C.drop_duplicates(keep='last')
-    GDSC_C = pd.DataFrame.transpose(GDSC_C)
-    GDSC_C = GDSC_C.loc[:, ~GDSC_C.columns.duplicated()]
-
-    PDX_E_erlo = pd.read_csv(egfr_path / "PDX_exprs.Erlotinib.eb_with.GDSC_exprs.Erlotinib.tsv",
-                             sep="\t", index_col=0, decimal=",")
-    PDX_E_erlo = pd.DataFrame.transpose(PDX_E_erlo)
-
-    PDX_M_erlo = pd.read_csv(egfr_path / "PDX_mutations.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
-    PDX_M_erlo = pd.DataFrame.transpose(PDX_M_erlo)
-
-    PDX_C_erlo = pd.read_csv(egfr_path / "PDX_CNV.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
-    PDX_C_erlo.drop_duplicates(keep='last')
-    PDX_C_erlo = pd.DataFrame.transpose(PDX_C_erlo)
-    PDX_C_erlo = PDX_C_erlo.loc[:, ~PDX_C_erlo.columns.duplicated()]
-
-    PDX_E_cet = pd.read_csv(egfr_path / "PDX_exprs.Cetuximab.eb_with.GDSC_exprs.Cetuximab.tsv",
-                            sep="\t", index_col=0, decimal=",")
-    PDX_E_cet = pd.DataFrame.transpose(PDX_E_cet)
-
-    PDX_M_cet = pd.read_csv(egfr_path / "PDX_mutations.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
-    PDX_M_cet = pd.DataFrame.transpose(PDX_M_cet)
-
-    PDX_C_cet = pd.read_csv(egfr_path / "PDX_CNV.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
-    PDX_C_cet = PDX_C_cet.drop_duplicates(keep='last')
-    PDX_C_cet = pd.DataFrame.transpose(PDX_C_cet)
-    PDX_C_cet = PDX_C_cet.loc[:, ~PDX_C_cet.columns.duplicated()]
-
-    selector = VarianceThreshold(0.05)
-    selector.fit_transform(GDSC_E)
-    GDSC_E = GDSC_E[GDSC_E.columns[selector.get_support(indices=True)]]
-
-    GDSC_M = GDSC_M.fillna(0)
-    GDSC_M[GDSC_M != 0.0] = 1
-    GDSC_C = GDSC_C.fillna(0)
-    GDSC_C[GDSC_C != 0.0] = 1
-
-    PDX_M_cet = PDX_M_cet.fillna(0)
-    PDX_M_cet[PDX_M_cet != 0.0] = 1
-    PDX_C_cet = PDX_C_cet.fillna(0)
-    PDX_C_cet[PDX_C_cet != 0.0] = 1
-
-    PDX_M_erlo = PDX_M_erlo.fillna(0)
-    PDX_M_erlo[PDX_M_erlo != 0.0] = 1
-    PDX_C_erlo = PDX_C_erlo.fillna(0)
-    PDX_C_erlo[PDX_C_erlo != 0.0] = 1
-
-    ls = GDSC_E.columns.intersection(GDSC_M.columns)
-    ls = ls.intersection(GDSC_C.columns)
-    ls = ls.intersection(PDX_E_erlo.columns)
-    ls = ls.intersection(PDX_M_erlo.columns)
-    ls = ls.intersection(PDX_C_erlo.columns)
-    ls = ls.intersection(PDX_E_cet.columns)
-    ls = ls.intersection(PDX_M_cet.columns)
-    ls = ls.intersection(PDX_C_cet.columns)
-    ls3 = PDX_E_erlo.index.intersection(PDX_M_erlo.index)
-    ls3 = ls3.intersection(PDX_C_erlo.index)
-    ls4 = PDX_E_cet.index.intersection(PDX_M_cet.index)
-    ls4 = ls4.intersection(PDX_C_cet.index)
-    ls = pd.unique(ls)
-
-    PDX_E_erlo = PDX_E_erlo.loc[ls3, ls]
-    PDX_M_erlo = PDX_M_erlo.loc[ls3, ls]
-    PDX_C_erlo = PDX_C_erlo.loc[ls3, ls]
-    PDX_E_cet = PDX_E_cet.loc[ls4, ls]
-    PDX_M_cet = PDX_M_cet.loc[ls4, ls]
-    PDX_C_cet = PDX_C_cet.loc[ls4, ls]
-    GDSC_E = GDSC_E.loc[:, ls]
-    GDSC_M = GDSC_M.loc[:, ls]
-    GDSC_C = GDSC_C.loc[:, ls]
-
-    GDSC_R = pd.read_csv(egfr_path / "GDSC_response.EGFRi.tsv",
-                         sep="\t", index_col=0, decimal=",")
-    PDX_R_cet = pd.read_csv(egfr_path / "PDX_response.Cetuximab.tsv",
-                            sep="\t", index_col=0, decimal=",")
-    PDX_R_erlo = pd.read_csv(egfr_path / "PDX_response.Erlotinib.tsv",
-                             sep="\t", index_col=0, decimal=",")
-
-    PDX_R_cet = PDX_R_cet.loc[ls4, :]
-    PDX_R_erlo = PDX_R_erlo.loc[ls3, :]
-
-    GDSC_R.rename(mapper=str, axis='index', inplace=True)
-
-    d = {"R": 0, "S": 1}
-    GDSC_R["response"] = GDSC_R.loc[:, "response"].apply(lambda x: d[x])
-    PDX_R_cet["response"] = PDX_R_cet.loc[:, "response"].apply(lambda x: d[x])
-    PDX_R_erlo["response"] = PDX_R_erlo.loc[:, "response"].apply(lambda x: d[x])
-
-    responses = GDSC_R
-    drugs = set(responses["drug"].values)
-    exprs_z = GDSC_E
-    cna = GDSC_C
-    mut = GDSC_M
-    expression_z_scores = []
-    CNA = []
-    mutations = []
-    for drug in drugs:
-        samples = responses.loc[responses["drug"] == drug, :].index.values
-        e_z = exprs_z.loc[samples, :]
-        c = cna.loc[samples, :]
-        m = mut.loc[samples, :]
-        # next 3 rows if you want non-unique sample names
-        e_z.rename(lambda x: str(x) + "_" + drug, axis="index", inplace=True)
-        c.rename(lambda x: str(x) + "_" + drug, axis="index", inplace=True)
-        m.rename(lambda x: str(x) + "_" + drug, axis="index", inplace=True)
-        expression_z_scores.append(e_z)
-        CNA.append(c)
-        mutations.append(m)
-    responses.index = responses.index.values + "_" + responses["drug"].values
-    GDSCEv2 = pd.concat(expression_z_scores, axis=0)
-    GDSCCv2 = pd.concat(CNA, axis=0)
-    GDSCMv2 = pd.concat(mutations, axis=0)
-    GDSCRv2 = responses
-
-    ls2 = GDSCEv2.index.intersection(GDSCMv2.index)
-    ls2 = ls2.intersection(GDSCCv2.index)
-    GDSCEv2 = GDSCEv2.loc[ls2, :]
-    GDSCMv2 = GDSCMv2.loc[ls2, :]
-    GDSCCv2 = GDSCCv2.loc[ls2, :]
-    GDSCRv2 = GDSCRv2.loc[ls2, :]
+    data_path = Path('..', '..', '..', 'data')
+    egfr_path = Path(data_path, 'EGFR_experiments_data')
+    GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet = \
+        egfr_data.load_data(egfr_path)
 
     mini_batch = 16
     h_dim1 = 32
@@ -173,21 +46,21 @@ def main():
     epochs = 20
     margin = 1.5
 
-    y_train = GDSCRv2.response.values.astype(int)
-    x_train_e = GDSCEv2.values
-    x_train_m = GDSCMv2.values
-    x_train_c = GDSCCv2.values
+    y_train = GDSCR
+    x_train_e = GDSCE
+    x_train_m = GDSCM
+    x_train_c = GDSCC
 
     # Train
-    x_test_e_erlo = PDX_E_erlo.values
-    x_test_m_erlo = torch.FloatTensor(PDX_M_erlo.values)
-    x_test_c_erlo = torch.FloatTensor(PDX_C_erlo.values)
-    y_test_erlo = PDX_R_erlo['response'].values
+    x_test_e_erlo = PDXEerlo
+    x_test_m_erlo = torch.FloatTensor(PDXMerlo)
+    x_test_c_erlo = torch.FloatTensor(PDXCerlo)
+    y_test_erlo = PDXRerlo
 
-    x_test_e_cet = PDX_E_cet.values
-    x_test_m_cet = torch.FloatTensor(PDX_M_cet.values)
-    x_test_c_cet = torch.FloatTensor(PDX_C_cet.values)
-    y_test_cet = PDX_R_cet['response'].values
+    x_test_e_cet = PDXEcet
+    x_test_m_cet = torch.FloatTensor(PDXMcet)
+    x_test_c_cet = torch.FloatTensor(PDXCcet)
+    y_test_cet = PDXRcet
 
     y_test_cet = torch.FloatTensor(y_test_cet.astype(int))
     y_test_erlo = torch.FloatTensor(y_test_erlo.astype(int))

@@ -3,7 +3,7 @@ import torch
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
-from tqdm import trange
+from tqdm import trange, tqdm
 
 from models.bo_moli_model import AdaptiveMoli
 from siamese_triplet.utils import AllTripletSelector
@@ -48,14 +48,14 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y):
 
     skf = StratifiedKFold(n_splits=5)
     aucs_validate = []
-    for train_index, test_index in skf.split(GDSCE.to_numpy(), Y):
-        x_train_e = GDSCE.values[train_index]
-        x_train_m = GDSCM.values[train_index]
-        x_train_c = GDSCC.values[train_index]
+    for train_index, test_index in tqdm(skf.split(GDSCE, Y), total=skf.get_n_splits(), desc="k-fold"):
+        x_train_e = GDSCE[train_index]
+        x_train_m = GDSCM[train_index]
+        x_train_c = GDSCC[train_index]
 
-        x_test_e = GDSCE.values[test_index]
-        x_test_m = GDSCM.values[test_index]
-        x_test_c = GDSCC.values[test_index]
+        x_test_e = GDSCE[test_index]
+        x_test_m = GDSCM[test_index]
+        x_test_c = GDSCC[test_index]
 
         y_train = Y[train_index]
         y_test = Y[test_index]

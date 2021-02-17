@@ -14,7 +14,7 @@ mini_batch_list = [16, 32, 64, 128, 256]
 dim_list = [1024, 512, 256, 128, 64, 32, 16, 8]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.5, 0.1, 0.05, 0.01, 0.001, 0.005, 0.0005, 0.0001, 0.00005, 0.00001]
-epoch_list = [10, 20, 50, 15, 30, 40, 60, 70, 80, 90, 100]
+epoch_list = [10, 20, 50, 15, 30, 40, 60, 70]
 drop_rate_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 weight_decay_list = [0.01, 0.001, 0.1, 0.0001]
 gamma_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
@@ -59,6 +59,7 @@ def bo_moli(search_iterations, run_test):
                                                                                  GDSCE, GDSCM, GDSCC, GDSCR),
         objective_name='accuracy',
         total_trials=search_iterations,
+        random_seed=42
     )
     means, covariances = values
     print(best_parameters)

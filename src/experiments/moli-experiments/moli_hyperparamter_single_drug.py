@@ -14,7 +14,7 @@ from models.moli_model import Moli
 from siamese_triplet.utils import AllTripletSelector
 
 
-def main(optimal_parameters):
+def main(drug, optimal_parameters):
     # reproducibility
     torch.manual_seed(42)
     torch.cuda.manual_seed_all(42)
@@ -62,7 +62,6 @@ def main(optimal_parameters):
 
     cna_train = pd.read_csv(cna_binary_path / optimal_parameters['cna_train'],
                             sep="\t", index_col=0, decimal='.')
-    cna_train.drop_duplicates(keep='last')
     cna_train = pd.DataFrame.transpose(cna_train)
 
     expression_test = pd.read_csv(expressions_homogenized_path / optimal_parameters['expression_test'],
@@ -75,7 +74,6 @@ def main(optimal_parameters):
 
     cna_test = pd.read_csv(cna_binary_path / optimal_parameters['cna_test'],
                            sep="\t", index_col=0, decimal='.')
-    cna_test.drop_duplicates(keep='last')
     cna_test = pd.DataFrame.transpose(cna_test)
     cna_test = cna_test.loc[:, ~cna_test.columns.duplicated()]
 
@@ -179,11 +177,11 @@ def main(optimal_parameters):
     for _ in trange(epochs):
         auc, cost = network_training_util.train(train_loader, moli_model, moli_optimiser, triplet_selector,
                                                 trip_criterion, cross_entropy, device, gamma)
-    print(f'{optimal_parameters["drug"]}: AUROC Train = {auc}')
+    print(f'{drug}: AUROC Train = {auc}')
 
     # test
     auc_test = network_training_util.validate(test_loader, moli_model, device)
-    print(f'{optimal_parameters["drug"]}: AUROC Test = {auc_test}')
+    print(f'{drug}: AUROC Test = {auc_test}')
 
 
 if __name__ == "__main__":
@@ -191,4 +189,4 @@ if __name__ == "__main__":
         hyperparameter = json.load(json_data_file)
     for drug in hyperparameter:
         drug_hyperparameters = hyperparameter[drug]
-    main(drug_hyperparameters)
+        main(drug, drug_hyperparameters)
