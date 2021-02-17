@@ -8,7 +8,7 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
 from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.absolute()))
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils import network_training_util
 from models.moli_model import Moli
 from utils import egfr_data
