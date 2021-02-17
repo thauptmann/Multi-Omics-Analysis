@@ -1,5 +1,3 @@
-from contextlib import nullcontext
-import torch
 import torch.utils.data
 import torch.nn
 from sklearn.metrics import roc_auc_score
