@@ -112,8 +112,8 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, device):
                                                all_triplet_selector, trip_criterion, bce_with_logits_loss,
                                                device, gamma)
 
-            # validate
-            auc_validate = network_training_util.validate(test_loader, moli_model, device)
+        # validate
+        auc_validate = network_training_util.validate(test_loader, moli_model, device)
         aucs_validate.append(auc_validate)
     return np.mean(aucs_validate)
 
@@ -240,6 +240,4 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
 
     auc_train, auc_test_erlo = network_training_util.validate(test_loader_erlo, moli_model, device)
     auc_test_cet = network_training_util.validate(test_loader_cet, moli_model, device)
-
-    torch.cuda.empty_cache()
     return auc_test_erlo, auc_test_cet

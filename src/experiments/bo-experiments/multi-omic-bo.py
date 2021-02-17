@@ -73,8 +73,10 @@ def bo_moli(search_iterations, run_test):
     print(means, covariances)
 
     if run_test:
-        auc_train, auc_test_erlo, auc_test_cet = auto_moli_egfr.train_and_test(best_parameters, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo,
-                                      PDXEcet, PDXMcet, PDXCcet, PDXRcet)
+        auc_train, auc_test_erlo, auc_test_cet = auto_moli_egfr.train_and_test(best_parameters, GDSCE, GDSCM, GDSCC,
+                                                                               GDSCR, PDXEerlo, PDXMerlo, PDXCerlo,
+                                                                               PDXRerlo, PDXEcet, PDXMcet, PDXCcet,
+                                                                               PDXRcet)
 
         print(f'EGFR: AUROC Train = {auc_train}')
         print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
