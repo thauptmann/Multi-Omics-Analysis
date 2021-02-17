@@ -8,7 +8,9 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+from utils.choose_gpu import get_free_gpu
 from utils import network_training_util
 from models.moli_model import Moli
 from utils import egfr_data
@@ -32,7 +34,8 @@ def cv_and_train(run_test, random_search_iterations):
     random.seed(42)
 
     if torch.cuda.is_available():
-        device = torch.device("cuda:0")
+        free_gpu_id = get_free_gpu()
+        device = torch.device(f"cuda:{free_gpu_id}")
     else:
         device = torch.device("cpu")
 
