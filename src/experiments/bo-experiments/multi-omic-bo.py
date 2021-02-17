@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 import numpy as np
 from ax import optimize
-import moli_egfr_bo
+import auto_moli_egfr
 from utils import egfr_data
 from utils.visualisation import save_auroc_plots
 
@@ -55,8 +55,8 @@ def bo_moli(search_iterations, run_test):
                     {"name": "margin", "type": "choice", "values": margin_list, "value_type": "float"},
                     {"name": "combination", "type": "choice", "values": combination_list, "value_type": "int"},
                     ],
-        evaluation_function=lambda parameterization: moli_egfr_bo.train_evaluate(parameterization,
-                                                                                 GDSCE, GDSCM, GDSCC, GDSCR),
+        evaluation_function=lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
+                                                                                   GDSCE, GDSCM, GDSCC, GDSCR),
         objective_name='accuracy',
         total_trials=search_iterations,
         random_seed=42
@@ -66,8 +66,8 @@ def bo_moli(search_iterations, run_test):
     print(means, covariances)
 
     if run_test:
-        moli_egfr_bo.train_and_test(best_parameters, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo,
-                                    PDXEcet, PDXMcet, PDXCcet, PDXRcet)
+        auto_moli_egfr.train_and_test(best_parameters, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo,
+                                      PDXEcet, PDXMcet, PDXCcet, PDXRcet)
 
     result_path = Path('..', '..', '..', 'results', 'egfr')
     result_path.mkdir(parents=True, exist_ok=True)
