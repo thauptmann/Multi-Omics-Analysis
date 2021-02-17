@@ -126,14 +126,13 @@ def cv_and_train(run_test, random_search_iterations):
             trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
 
             bce_loss = torch.nn.BCEWithLogitsLoss()
-            auc_validate = 0
             for _ in trange(epochs, desc='Epoch'):
                 auc_train, cost_train = network_training_util.train(train_loader, moli_model, moli_optimiser,
                                                                     all_triplet_selector, trip_criterion, bce_loss,
                                                                     device, gamma)
 
-                # validate
-                auc_validate = network_training_util.validate(test_loader, moli_model, device)
+            #validate
+            auc_validate = network_training_util.validate(test_loader, moli_model, device)
             aucs_validate.append(auc_validate)
         auc_cv = np.mean(aucs_validate)
 
