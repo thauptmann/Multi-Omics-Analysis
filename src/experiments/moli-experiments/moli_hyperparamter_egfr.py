@@ -24,7 +24,7 @@ def main():
         device = torch.device("cpu")
         pin_memory = False
 
-    data_path = Path('../../data/')
+    data_path = Path('../../../data/')
     egfr_path = data_path / 'EGFR_experiments_data'
 
     GDSC_E = pd.read_csv(egfr_path / "GDSC_exprs.z.EGFRi.tsv", sep="\t", index_col=0, decimal=",")

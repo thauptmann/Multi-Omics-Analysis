@@ -13,7 +13,7 @@ def save_auroc_plots(all_aucs, path, method):
 
     best_auc_plot = optimization_trace_single_method(
         y=np.maximum.accumulate(all_aucs, axis=1),
-        title="Model performance vs. # of iterations",
+        title="Best model performance vs. # of iterations",
         ylabel="AUROC, %",
     )
 

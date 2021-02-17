@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.absolute()))
+sys.path.append(str(Path(__file__).parent.parent.parent.absolute()))
 
 import argparse
 from pathlib import Path
@@ -23,9 +23,10 @@ depth_list = [1, 2, 3]
 
 
 def bo_moli(search_iterations, run_test):
-    data_path = Path('..', '..', 'data')
+    data_path = Path('..', '..', '..', 'data')
     egfr_path = Path(data_path, 'EGFR_experiments_data')
-    GDSCE, GDSCM, GDSCC, Y = egfr_data.load_train_data(egfr_path)
+    GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet = \
+        egfr_data.load_data(egfr_path)
 
     best_parameters, values, experiment, model = optimize(
         parameters=[{"name": "mini_batch", "type": "choice", "values": mini_batch_list},
@@ -55,7 +56,7 @@ def bo_moli(search_iterations, run_test):
                     {"name": "combination", "type": "choice", "values": combination_list, "value_type": "int"},
                     ],
         evaluation_function=lambda parameterization: moli_egfr_bo.train_evaluate(parameterization,
-                                                                                 GDSCE, GDSCM, GDSCC, Y),
+                                                                                 GDSCE, GDSCM, GDSCC, GDSCR),
         objective_name='accuracy',
         total_trials=search_iterations,
     )
@@ -63,7 +64,11 @@ def bo_moli(search_iterations, run_test):
     print(best_parameters)
     print(means, covariances)
 
-    result_path = Path('..', '..', 'results', 'egfr')
+    if run_test:
+        moli_egfr_bo.train_and_test(best_parameters, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo,
+                                    PDXEcet, PDXMcet, PDXCcet, PDXRcet)
+
+    result_path = Path('..', '..', '..', 'results', 'egfr')
     result_path.mkdir(parents=True, exist_ok=True)
     best_objectives = np.array([[trial.objective_mean * 100 for trial in experiment.trials.values()]])
     save_auroc_plots(best_objectives, result_path, 'bo')

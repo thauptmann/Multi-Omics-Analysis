@@ -46,9 +46,9 @@ class Classifier(nn.Module):
         return output
 
 
-class Moli(nn.Module):
+class AdaptiveMoli(nn.Module):
     def __init__(self, input_sizes, output_sizes, dropout_rates, combination, depths):
-        super(Moli, self).__init__()
+        super(AdaptiveMoli, self).__init__()
         self.combination = combination
         expression_encoder = AdaptiveEncoder(input_sizes[0], output_sizes[0], dropout_rates[0], depths[0])
         mutation_encoder = AdaptiveEncoder(input_sizes[1], output_sizes[1], dropout_rates[1], depths[1])

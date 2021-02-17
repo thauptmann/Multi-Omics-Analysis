@@ -1,18 +1,17 @@
+import sys
 import argparse
 import random
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.absolute()))
 import numpy as np
 import sklearn
 import torch
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent.absolute()))
 from utils import network_training_util
 from models.moli_model import Moli
 from utils import egfr_data
-
 from utils.visualisation import save_auroc_plots
 from siamese_triplet.utils import AllTripletSelector, RandomNegativeTripletSelector
 
@@ -37,14 +36,8 @@ def cv_and_train(run_test, random_search_iterations):
     else:
         device = torch.device("cpu")
 
-    data_path = Path('..', '..', 'data')
+    data_path = Path('..', '..', '..', 'data')
     egfr_path = Path(data_path, 'EGFR_experiments_data')
-    cna_binary_path = data_path / 'CNA_binary'
-    response_path = data_path / 'response'
-    sna_binary_path = data_path / 'SNA_binary'
-    expressions_homogenized_path = data_path / 'exprs_homogenized'
-    expressions_path = data_path / 'exprs'
-
     GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet = \
         egfr_data.load_data(egfr_path)
 
@@ -163,13 +156,17 @@ def cv_and_train(run_test, random_search_iterations):
             print(f'New best validation AUROC: {best_auc}')
 
     print(f'Best validation AUROC: {best_auc}')
+    result_path = Path('..', '..', '..', 'results', 'egfr')
+    result_path.mkdir(parents=True, exist_ok=True)
+    all_aucs = np.array([all_aucs])
+    save_auroc_plots(all_aucs, result_path, 'rs')
 
     # Test
     if run_test:
         x_train_e = GDSCE.values
         x_train_m = GDSCM.values
         x_train_c = GDSCC.values
-        y_train = GDSCR
+        y_train = GDSCR.values
 
         x_test_eerlo = PDXEerlo.values
         x_test_merlo = torch.FloatTensor(PDXMerlo.values)
@@ -182,7 +179,9 @@ def cv_and_train(run_test, random_search_iterations):
         ytscet = PDXRcet['response'].values
 
         train_scaler_gdsc = sklearn.preprocessing.StandardScaler()
-        x_test_ecet = train_scaler_gdsc.fit_transform(x_test_ecet)
+        x_train_e = train_scaler_gdsc.fit_transform(x_train_e)
+
+        x_test_ecet = train_scaler_gdsc.transform(x_test_ecet)
         x_test_ecet = torch.FloatTensor(x_test_ecet)
         x_test_eerlo = train_scaler_gdsc.transform(x_test_eerlo)
         x_test_eerlo = torch.FloatTensor(x_test_eerlo)
@@ -252,11 +251,6 @@ def cv_and_train(run_test, random_search_iterations):
         print(f'EGFR: AUROC Train = {auc_train}')
         print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
         print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
-
-    result_path = Path('..', '..', 'results', 'egfr')
-    result_path.mkdir(parents=True, exist_ok=True)
-    all_aucs = np.array([all_aucs])
-    save_auroc_plots(all_aucs, result_path, 'rs')
 
 
 if __name__ == "__main__":

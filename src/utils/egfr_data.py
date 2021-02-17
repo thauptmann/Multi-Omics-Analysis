@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.feature_selection import VarianceThreshold
 from utils.network_training_util import read_and_transpose_csv
 
@@ -22,7 +23,7 @@ def load_data(egfr_path):
     PDXMerlo = pd.DataFrame.transpose(PDXMerlo)
 
     PDXCerlo = pd.read_csv(egfr_path / "PDX_CNV.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
-    PDXCerlo.drop_duplicates(keep='last')
+    PDXCerlo = PDXCerlo.drop_duplicates(keep='last')
     PDXCerlo = pd.DataFrame.transpose(PDXCerlo)
     PDXCerlo = PDXCerlo.loc[:, ~PDXCerlo.columns.duplicated()]
 
@@ -88,9 +89,6 @@ def load_data(egfr_path):
     PDXRerlo = pd.read_csv(egfr_path / "PDX_response.Erlotinib.tsv",
                            sep="\t", index_col=0, decimal=",")
 
-    PDXRcet = PDXRcet.loc[ls4, :]
-    PDXRerlo = PDXRerlo.loc[ls3, :]
-
     GDSCR.rename(mapper=str, axis='index', inplace=True)
 
     d = {"R": 0, "S": 1}
@@ -131,6 +129,13 @@ def load_data(egfr_path):
     GDSCCv2 = GDSCCv2.loc[ls2, :]
     GDSCRv2 = GDSCRv2.loc[ls2, :]
     Y = GDSCRv2['response'].values
+
+    GDSCMv2 = np.nan_to_num(GDSCMv2)
+    GDSCCv2 = np.nan_to_num(GDSCCv2)
+    PDXMerlo = np.nan_to_num(PDXMerlo)
+    PDXMcet = np.nan_to_num(PDXMcet)
+    PDXCerlo = np.nan_to_num(PDXCerlo)
+    PDXCcet = np.nan_to_num(PDXCcet)
 
     return GDSCEv2, GDSCMv2, GDSCCv2, Y, PDXEerlo, PDXMerlo,PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet
 
@@ -205,3 +210,7 @@ def load_train_data(egfr_path):
     GDSCRv2 = GDSCRv2['response'].values
 
     return GDSCEv2, GDSCMv2, GDSCCv2, GDSCRv2
+
+
+def load_test_data(egfr_path):
+    return None
