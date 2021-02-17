@@ -8,19 +8,12 @@ from tqdm import trange, tqdm
 from models.bo_moli_model import AdaptiveMoli
 from siamese_triplet.utils import AllTripletSelector
 from utils import network_training_util
-from utils.choose_gpu import get_free_gpu
 
 
-def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y):
+def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, device):
     # reproducibility
     torch.manual_seed(42)
     np.random.seed(42)
-
-    if torch.cuda.is_available():
-        free_gpu_id = get_free_gpu()
-        device = torch.device(f"cuda:{free_gpu_id}")
-    else:
-        device = torch.device("cpu")
 
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']

@@ -1,7 +1,9 @@
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+import torch
 
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+from utils.choose_gpu import get_free_gpu
 import argparse
 from pathlib import Path
 import numpy as np
@@ -23,6 +25,11 @@ depth_list = [1, 2, 3]
 
 
 def bo_moli(search_iterations, run_test):
+    if torch.cuda.is_available():
+        free_gpu_id = get_free_gpu()
+        device = torch.device(f"cuda:{free_gpu_id}")
+    else:
+        device = torch.device("cpu")
     data_path = Path('..', '..', '..', 'data')
     egfr_path = Path(data_path, 'EGFR_experiments_data')
     GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet = \
@@ -56,7 +63,7 @@ def bo_moli(search_iterations, run_test):
                     {"name": "combination", "type": "choice", "values": combination_list, "value_type": "int"},
                     ],
         evaluation_function=lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
-                                                                                   GDSCE, GDSCM, GDSCC, GDSCR),
+                                                                                   GDSCE, GDSCM, GDSCC, GDSCR, device),
         objective_name='accuracy',
         total_trials=search_iterations,
         random_seed=42
