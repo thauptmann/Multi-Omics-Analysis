@@ -245,9 +245,6 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
                                                             all_triplet_selector, trip_criterion,
                                                             bce_with_logits_loss, device, gamma)
 
-    auc_test_erlo = network_training_util.validate(test_loader_erlo, moli_model, device)
+    auc_train, auc_test_erlo = network_training_util.validate(test_loader_erlo, moli_model, device)
     auc_test_cet = network_training_util.validate(test_loader_cet, moli_model, device)
-
-    print(f'EGFR: AUROC Train = {auc_train}')
-    print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
-    print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
+    return auc_test_erlo, auc_test_cet
