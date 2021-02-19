@@ -154,8 +154,8 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
     y_train = GDSCR
 
     x_test_eerlo = PDXEerlo
-    x_test_merlo = torch.FloatTensor(PDXMerlo.values)
-    x_test_cerlo = torch.FloatTensor(PDXCerlo.values)
+    x_test_merlo = torch.FloatTensor(PDXMerlo)
+    x_test_cerlo = torch.FloatTensor(PDXCerlo)
     ytserlo = PDXRerlo
 
     x_test_ecet = PDXEcet
@@ -233,6 +233,6 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
                                                             all_triplet_selector, trip_criterion,
                                                             bce_with_logits_loss, device, gamma)
 
-    auc_train, auc_test_erlo = network_training_util.validate(test_loader_erlo, moli_model, device)
+    auc_test_erlo = network_training_util.validate(test_loader_erlo, moli_model, device)
     auc_test_cet = network_training_util.validate(test_loader_cet, moli_model, device)
-    return auc_test_erlo, auc_test_cet
+    return auc_train, auc_test_erlo, auc_test_cet
