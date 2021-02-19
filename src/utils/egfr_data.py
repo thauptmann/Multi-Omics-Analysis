@@ -141,4 +141,4 @@ def load_data(egfr_path):
     PDXCerlo = np.nan_to_num(PDXCerlo)
     PDXEerlo = PDXEerlo.to_numpy()
 
-    return GDSCEv2, GDSCMv2, GDSCCv2, GDSCRv2, PDXEerlo, PDXMerlo,PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet
+    return GDSCEv2, GDSCMv2, GDSCCv2, GDSCRv2, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet

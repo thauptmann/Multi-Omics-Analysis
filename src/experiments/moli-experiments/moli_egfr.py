@@ -165,20 +165,20 @@ def cv_and_train(run_test, random_search_iterations):
 
     # Test
     if run_test:
-        x_train_e = GDSCE.values
-        x_train_m = GDSCM.values
-        x_train_c = GDSCC.values
-        y_train = GDSCR.values
+        x_train_e = GDSCE
+        x_train_m = GDSCM
+        x_train_c = GDSCC
+        y_train = GDSCR
 
-        x_test_eerlo = PDXEerlo.values
-        x_test_merlo = torch.FloatTensor(PDXMerlo.values)
-        x_test_cerlo = torch.FloatTensor(PDXCerlo.values)
-        ytserlo = PDXRerlo['response'].values
+        x_test_eerlo = PDXEerlo
+        x_test_merlo = torch.FloatTensor(PDXMerlo)
+        x_test_cerlo = torch.FloatTensor(PDXCerlo)
+        ytserlo = PDXRerlo
 
-        x_test_ecet = PDXEcet.values
-        x_test_mcet = torch.FloatTensor(PDXMcet.values)
-        x_test_ccet = torch.FloatTensor(PDXCcet.values)
-        ytscet = PDXRcet['response'].values
+        x_test_ecet = PDXEcet
+        x_test_mcet = torch.FloatTensor(PDXMcet)
+        x_test_ccet = torch.FloatTensor(PDXCcet)
+        ytscet = PDXRcet
 
         train_scaler_gdsc = sklearn.preprocessing.StandardScaler()
         x_train_e = train_scaler_gdsc.fit_transform(x_train_e)

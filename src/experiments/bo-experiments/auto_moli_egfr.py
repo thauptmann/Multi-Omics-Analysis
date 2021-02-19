@@ -119,7 +119,7 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, device):
 
 
 def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo,
-                                    PDXEcet, PDXMcet, PDXCcet, PDXRcet):
+                                    PDXEcet, PDXMcet, PDXCcet, PDXRcet, device):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -148,25 +148,20 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
     torch.manual_seed(42)
     np.random.seed(42)
 
-    if torch.cuda.is_available():
-        device = torch.device("cuda:0")
-    else:
-        device = torch.device("cpu")
+    x_train_e = GDSCE
+    x_train_m = GDSCM
+    x_train_c = GDSCC
+    y_train = GDSCR
 
-    x_train_e = GDSCE.values
-    x_train_m = GDSCM.values
-    x_train_c = GDSCC.values
-    y_train = GDSCR.values
-
-    x_test_eerlo = PDXEerlo.values
+    x_test_eerlo = PDXEerlo
     x_test_merlo = torch.FloatTensor(PDXMerlo.values)
     x_test_cerlo = torch.FloatTensor(PDXCerlo.values)
-    ytserlo = PDXRerlo['response'].values
+    ytserlo = PDXRerlo
 
-    x_test_ecet = PDXEcet.values
-    x_test_mcet = torch.FloatTensor(PDXMcet.values)
-    x_test_ccet = torch.FloatTensor(PDXCcet.values)
-    ytscet = PDXRcet['response'].values
+    x_test_ecet = PDXEcet
+    x_test_mcet = torch.FloatTensor(PDXMcet)
+    x_test_ccet = torch.FloatTensor(PDXCcet)
+    ytscet = PDXRcet
 
     train_scaler_gdsc = StandardScaler()
     x_train_e = train_scaler_gdsc.fit_transform(x_train_e)

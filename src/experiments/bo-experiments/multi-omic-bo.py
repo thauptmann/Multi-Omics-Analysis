@@ -72,20 +72,20 @@ def bo_moli(search_iterations, run_test):
     print(best_parameters)
     print(means, covariances)
 
-    if run_test:
-        auc_train, auc_test_erlo, auc_test_cet = auto_moli_egfr.train_and_test(best_parameters, GDSCE, GDSCM, GDSCC,
-                                                                               GDSCR, PDXEerlo, PDXMerlo, PDXCerlo,
-                                                                               PDXRerlo, PDXEcet, PDXMcet, PDXCcet,
-                                                                               PDXRcet)
-
-        print(f'EGFR: AUROC Train = {auc_train}')
-        print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
-        print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
-
     result_path = Path('..', '..', '..', 'results', 'egfr')
     result_path.mkdir(parents=True, exist_ok=True)
     best_objectives = np.array([[trial.objective_mean * 100 for trial in experiment.trials.values()]])
     save_auroc_plots(best_objectives, result_path, 'bo')
+
+    if run_test:
+        auc_train, auc_test_erlo, auc_test_cet = auto_moli_egfr.train_and_test(best_parameters, GDSCE, GDSCM, GDSCC,
+                                                                               GDSCR, PDXEerlo, PDXMerlo, PDXCerlo,
+                                                                               PDXRerlo, PDXEcet, PDXMcet, PDXCcet,
+                                                                               PDXRcet, device)
+
+        print(f'EGFR: AUROC Train = {auc_train}')
+        print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
+        print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
 
 
 if __name__ == '__main__':
