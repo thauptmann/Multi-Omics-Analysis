@@ -1,4 +1,3 @@
-from pathlib import Path
 from ax.plot.trace import optimization_trace_single_method
 import numpy as np
 import plotly.graph_objects as go
@@ -8,13 +7,13 @@ def save_auroc_plots(all_aucs, path, method):
     all_auc_plot = optimization_trace_single_method(
         y=all_aucs,
         title="Model performance vs. # of iterations",
-        ylabel="AUROC, %",
+        ylabel="AUROC",
     )
 
     best_auc_plot = optimization_trace_single_method(
         y=np.maximum.accumulate(all_aucs, axis=1),
         title="Best model performance vs. # of iterations",
-        ylabel="AUROC, %",
+        ylabel="AUROC",
     )
 
     file_names = ('all', 'best')
@@ -27,5 +26,6 @@ def save_auroc_plots(all_aucs, path, method):
             "layout": lay,
         }
         fig = go.Figure(fig)
+        fig.update_layout(yaxis_range=[0.5, 1])
         fig.write_html(str(path / f'{method}_{name}_multi-omics.html'))
         fig.write_image(str(path / f'{method}_{name}_multi-omics.svg'))
