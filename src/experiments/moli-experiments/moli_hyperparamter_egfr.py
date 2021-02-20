@@ -1,14 +1,14 @@
 from pathlib import Path
-import torch
+
 import numpy as np
-from tqdm import trange
-import pandas as pd
 import sklearn.preprocessing as sk
-from sklearn.feature_selection import VarianceThreshold
-from siamese_triplet.utils import AllTripletSelector
+import torch
 from torch.utils.data.sampler import WeightedRandomSampler
-from utils import network_training_util, egfr_data
+from tqdm import trange
+
 from models.moli_model import Moli
+from siamese_triplet.utils import AllTripletSelector
+from utils import network_training_util, egfr_data
 from utils.network_training_util import create_dataloader
 
 

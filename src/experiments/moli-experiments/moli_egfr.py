@@ -6,7 +6,8 @@ import sklearn
 import torch
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data.sampler import WeightedRandomSampler
-from tqdm import trange, tqdm
+import tqdm
+import tqdm.contrib
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
@@ -15,7 +16,7 @@ from utils import network_training_util
 from models.moli_model import Moli
 from utils import egfr_data
 from utils.visualisation import save_auroc_plots
-from siamese_triplet.utils import AllTripletSelector, RandomNegativeTripletSelector
+from siamese_triplet.utils import AllTripletSelector
 
 mini_batch_list = [8, 16, 32, 64]
 dim_list = [16, 32, 64, 128, 256, 512, 1024]
@@ -25,13 +26,15 @@ epoch_list = [10, 20, 50, 30, 40, 60, 70, 80]
 drop_rate_list = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 weight_decay_list = [0.1, 0.01, 0.001, 0.0001]
 gamma_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+cv_splits = 5
 
 
 def cv_and_train(run_test, random_search_iterations):
     # reproducibility
-    torch.manual_seed(42)
-    np.random.seed(42)
-    random.seed(42)
+    random_seed = 42
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)
+    random.seed(random_seed)
 
     if torch.cuda.is_available():
         free_gpu_id = get_free_gpu()
@@ -44,10 +47,11 @@ def cv_and_train(run_test, random_search_iterations):
     GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet = \
         egfr_data.load_data(egfr_path)
 
-    skf = StratifiedKFold(n_splits=5)
+    skf = StratifiedKFold(n_splits=cv_splits)
     best_auc = 0
     all_aucs = []
-    for _ in trange(random_search_iterations, desc='Random Search Iteration'):
+    first_iteration = True
+    for _ in tqdm.trange(random_search_iterations, desc='Random Search Iteration'):
         mini_batch = random.choice(mini_batch_list)
         h_dim1 = random.choice(dim_list)
         h_dim2 = random.choice(dim_list)
@@ -66,7 +70,8 @@ def cv_and_train(run_test, random_search_iterations):
         margin = random.choice(margin_list)
 
         aucs_validate = []
-        for train_index, test_index in tqdm(skf.split(GDSCE, GDSCR), total=skf.get_n_splits(), desc="k-fold"):
+        fold_number = 1
+        for train_index, test_index in skf.split(GDSCE, GDSCR):
             x_train_e = GDSCE[train_index]
             x_train_m = GDSCM[train_index]
             x_train_c = GDSCC[train_index]
@@ -126,17 +131,27 @@ def cv_and_train(run_test, random_search_iterations):
             trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
 
             bce_loss = torch.nn.BCEWithLogitsLoss()
-            for _ in trange(epochs, desc='Epoch'):
+            for _ in tqdm.trange(epochs, desc='Epoch'):
                 auc_train, cost_train = network_training_util.train(train_loader, moli_model, moli_optimiser,
                                                                     all_triplet_selector, trip_criterion, bce_loss,
                                                                     device, gamma)
 
-            #validate
+            # validate
             auc_validate = network_training_util.validate(test_loader, moli_model, device)
             aucs_validate.append(auc_validate)
+
+            # check for break
+            if fold_number != cv_splits and not first_iteration:
+                splits_left = np.ones(cv_splits - fold_number)
+                best_possible_result = np.mean(np.append(aucs_validate, splits_left))
+                if best_possible_result < best_auc:
+                    break
+            fold_number += 1
+
         auc_cv = np.mean(aucs_validate)
 
         all_aucs.append(auc_cv)
+        first_iteration = False
         if auc_cv > best_auc:
             best_auc = auc_cv
             best_mini_batch = mini_batch
