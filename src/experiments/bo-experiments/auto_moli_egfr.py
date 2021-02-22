@@ -12,8 +12,6 @@ from utils import network_training_util
 
 def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, device):
     # reproducibility
-    torch.manual_seed(42)
-    np.random.seed(42)
 
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']

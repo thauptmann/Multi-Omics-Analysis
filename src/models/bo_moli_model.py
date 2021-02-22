@@ -55,34 +55,22 @@ class AdaptiveMoli(nn.Module):
         self.cna_encoder = AdaptiveEncoder(input_sizes[2], output_sizes[2], dropout_rates[2], depths[2])
 
         if combination == 0:
-            self.left = expression_encoder
-            self.middle = mutation_encoder
-            self.right = cna_encoder
             self.left_encoder = AdaptiveEncoder(output_sizes[0] + output_sizes[1], output_sizes[3], dropout_rates[4],
                                                 depths[3])
             self.classifier = Classifier(output_sizes[3] + output_sizes[2], output_sizes[4],
                                          dropout_rates[3], depths[4])
 
         elif combination == 1:
-            self.left = cna_encoder
-            self.middle = mutation_encoder
-            self.right = expression_encoder
             self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[1], output_sizes[3], dropout_rates[4],
                                                 depths[3])
             self.classifier = Classifier(output_sizes[3] + output_sizes[0], output_sizes[4],
                                          dropout_rates[3], depths[4])
         elif combination == 2:
-            self.left = cna_encoder
-            self.middle = expression_encoder
-            self.right = mutation_encoder
             self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[0], output_sizes[3], dropout_rates[4],
                                                 depths[3])
             self.classifier = Classifier(output_sizes[3] + output_sizes[1], output_sizes[4], dropout_rates[3],
                                          depths[4])
         elif combination == 3:
-            self.left = expression_encoder
-            self.middle = mutation_encoder
-            self.right = cna_encoder
             self.left_encoder = nn.Identity(output_sizes[0] + output_sizes[1] + output_sizes[2])
             self.classifier = Classifier(output_sizes[0] + output_sizes[1] + output_sizes[2], output_sizes[4],
                                          dropout_rates[3], depths[4])
