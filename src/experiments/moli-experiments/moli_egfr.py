@@ -154,7 +154,7 @@ def cv_and_train(run_test, random_search_iterations):
         auc_cv = np.mean(aucs_validate)
 
         if iteration % 10 == 0:
-            save_auroc_plots(all_aucs, result_path, 'rs')
+            save_auroc_plots(np.array([all_aucs]), result_path, 'rs')
 
         all_aucs.append(auc_cv)
         first_iteration = False
@@ -179,23 +179,9 @@ def cv_and_train(run_test, random_search_iterations):
             print(f'New best validation AUROC: {best_auc}')
 
     print(f'Best validation AUROC: {best_auc}')
-    print(f'{best_mini_batch:},
-            best_h_dim1,
-            best_h_dim2 ,
-            best_h_dim3 ,
-            best_lr_e,
-            best_lr_m,
-            best_lr_c,
-            best_lr_cl,
-            best_dropout_rate_e,
-            best_dropout_rate_m,
-            best_dropout_rate_c,
-            best_dropout_rate_clf,
-            best_weight_decay,
-            best_gamma,
-            best_epochs,
-            best_margin)
-
+    print(f'{best_mini_batch=}, {best_h_dim1=}, {best_h_dim2=}, {best_h_dim3=}, {best_lr_e=}, {best_lr_m=}, '
+          f'{best_lr_c=}, {best_lr_cl=}, {best_dropout_rate_e=}, {best_dropout_rate_m=}, {best_dropout_rate_c=}, '
+          f'{best_dropout_rate_clf=}, {best_weight_decay=}, {best_gamma=}, {best_epochs=}, {best_margin=}')
 
     all_aucs = np.array([all_aucs])
     save_auroc_plots(all_aucs, result_path, 'rs')
@@ -271,14 +257,15 @@ def cv_and_train(run_test, random_search_iterations):
         test_dataset_erlo = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_eerlo),
                                                            torch.FloatTensor(x_test_merlo),
                                                            torch.FloatTensor(x_test_cerlo), torch.FloatTensor(ytserlo))
-        test_loader_erlo = torch.utils.data.DataLoader(dataset=test_dataset_erlo, batch_size=mini_batch,
+        test_loader_erlo = torch.utils.data.DataLoader(dataset=test_dataset_erlo, batch_size=best_mini_batch,
                                                        shuffle=False, num_workers=8, pin_memory=True)
 
         test_dataset_cet = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_ecet),
                                                           torch.FloatTensor(x_test_mcet),
                                                           torch.FloatTensor(x_test_ccet), torch.FloatTensor(ytscet))
-        test_loader_cet = torch.utils.data.DataLoader(dataset=test_dataset_cet, batch_size=mini_batch, shuffle=False,
-                                                      num_workers=8, pin_memory=True)
+        test_loader_cet = torch.utils.data.DataLoader(dataset=test_dataset_cet, batch_size=best_mini_batch,
+                                                      shuffle=False, num_workers=8, pin_memory=True)
+        auc_train = 0
         for _ in range(best_epochs):
             auc_train, cost_train = network_training_util.train(train_loader, moli_model, moli_optimiser,
                                                                 all_triplet_selector, trip_criterion,
