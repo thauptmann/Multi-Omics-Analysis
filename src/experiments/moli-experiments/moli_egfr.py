@@ -42,6 +42,9 @@ def cv_and_train(run_test, random_search_iterations):
     else:
         device = torch.device("cpu")
 
+    result_path = Path('..', '..', '..', 'results', 'egfr')
+    result_path.mkdir(parents=True, exist_ok=True)
+
     data_path = Path('..', '..', '..', 'data')
     egfr_path = Path(data_path, 'EGFR_experiments_data')
     GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet = \
@@ -51,7 +54,7 @@ def cv_and_train(run_test, random_search_iterations):
     best_auc = 0
     all_aucs = []
     first_iteration = True
-    for _ in tqdm.trange(random_search_iterations, desc='Random Search Iteration'):
+    for iteration in tqdm.trange(random_search_iterations, desc='Random Search Iteration'):
         mini_batch = random.choice(mini_batch_list)
         h_dim1 = random.choice(dim_list)
         h_dim2 = random.choice(dim_list)
@@ -150,6 +153,9 @@ def cv_and_train(run_test, random_search_iterations):
 
         auc_cv = np.mean(aucs_validate)
 
+        if iteration % 10 == 0:
+            save_auroc_plots(all_aucs, result_path, 'rs')
+
         all_aucs.append(auc_cv)
         first_iteration = False
         if auc_cv > best_auc:
@@ -165,16 +171,32 @@ def cv_and_train(run_test, random_search_iterations):
             best_dropout_rate_e = dropout_rate_e
             best_dropout_rate_m = dropout_rate_m
             best_dropout_rate_c = dropout_rate_c
-            best_weight_decay = weight_decay
             best_dropout_rate_clf = dropout_rate_clf
+            best_weight_decay = weight_decay
             best_gamma = gamma
             best_epochs = epochs
             best_margin = margin
             print(f'New best validation AUROC: {best_auc}')
 
     print(f'Best validation AUROC: {best_auc}')
-    result_path = Path('..', '..', '..', 'results', 'egfr')
-    result_path.mkdir(parents=True, exist_ok=True)
+    print(f'{best_mini_batch:},
+            best_h_dim1,
+            best_h_dim2 ,
+            best_h_dim3 ,
+            best_lr_e,
+            best_lr_m,
+            best_lr_c,
+            best_lr_cl,
+            best_dropout_rate_e,
+            best_dropout_rate_m,
+            best_dropout_rate_c,
+            best_dropout_rate_clf,
+            best_weight_decay,
+            best_gamma,
+            best_epochs,
+            best_margin)
+
+
     all_aucs = np.array([all_aucs])
     save_auroc_plots(all_aucs, result_path, 'rs')
 
