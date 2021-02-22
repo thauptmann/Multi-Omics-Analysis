@@ -28,6 +28,7 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, device):
     lr_e = parameterization['lr_e']
     lr_m = parameterization['lr_m']
     lr_c = parameterization['lr_c']
+    lr_middle = parameterization['lr_middle']
     lr_cl = parameterization['lr_cl']
     dropout_rate_e = parameterization['dropout_rate_e']
     dropout_rate_m = parameterization['dropout_rate_m']
@@ -95,7 +96,7 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, device):
         moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
         moli_optimiser = torch.optim.Adagrad([
-            {'params': moli_model.left_encoder.parameters()},
+            {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle},
             {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
             {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
             {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c},

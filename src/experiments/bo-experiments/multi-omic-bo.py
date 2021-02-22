@@ -2,13 +2,11 @@ import sys
 from pathlib import Path
 import torch
 from ax import (
-    ComparisonOp,
     ParameterType,
     RangeParameter,
     ChoiceParameter,
     SearchSpace,
     SimpleExperiment,
-    OutcomeConstraint,
 )
 from ax.modelbridge.registry import Models
 
@@ -49,6 +47,7 @@ moli_search_space = SearchSpace(
         RangeParameter(name="lr_m", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
         RangeParameter(name="lr_c", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
         RangeParameter(name="lr_cl", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
+        RangeParameter(name="lr_middle", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
         RangeParameter(name="dropout_rate_e", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
         RangeParameter(name="dropout_rate_m", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
         RangeParameter(name="dropout_rate_c", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
@@ -63,7 +62,7 @@ moli_search_space = SearchSpace(
 )
 
 
-def bo_moli(search_iterations, run_test):
+def bo_moli(search_iterations, run_test, sobol_iterations):
     random_seed = 42
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
@@ -93,7 +92,7 @@ def bo_moli(search_iterations, run_test):
 
     print(f"Running Sobol initialization trials...")
     sobol = Models.SOBOL(experiment.search_space, seed=random_seed)
-    for i in range(5):
+    for i in range(sobol_iterations):
         experiment.new_trial(generator_run=sobol.gen(1))
 
     best_arm = None
@@ -107,7 +106,7 @@ def bo_moli(search_iterations, run_test):
 
         if i % 10 == 0:
             best_objectives = np.array([[trial.objective_mean for trial in experiment.trials.values()]])
-            save_auroc_plots(best_objectives, result_path, 'bo')
+            save_auroc_plots(best_objectives, result_path, 'bo', sobol_iterations)
             best_parameters = best_arm.parameters
             print(best_parameters)
 
@@ -116,7 +115,7 @@ def bo_moli(search_iterations, run_test):
     print("Done!")
 
     best_objectives = np.array([[trial.objective_mean for trial in experiment.trials.values()]])
-    save_auroc_plots(best_objectives, result_path, 'bo')
+    save_auroc_plots(best_objectives, result_path, 'bo', sobol_iterations)
 
     if run_test:
         auc_train, auc_test_erlo, auc_test_cet = auto_moli_egfr.train_and_test(best_parameters, GDSCE, GDSCM, GDSCC,
@@ -133,5 +132,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--run_test', action='store_true')
     parser.add_argument('--search_iterations', default=1, type=int)
+    parser.add_argument('--sobol_iterations', default=5, type=int)
     args = parser.parse_args()
-    bo_moli(args.search_iterations, args.run_test)
+    bo_moli(args.search_iterations, args.run_test, args.sobol_iterations)

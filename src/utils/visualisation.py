@@ -3,17 +3,19 @@ import numpy as np
 import plotly.graph_objects as go
 
 
-def save_auroc_plots(all_aucs, path, method):
+def save_auroc_plots(all_aucs, path, method, model_transitions=None):
     all_auc_plot = optimization_trace_single_method(
         y=all_aucs,
         title="Model performance vs. # of iterations",
         ylabel="AUROC",
+        model_transitions=model_transitions
     )
 
     best_auc_plot = optimization_trace_single_method(
         y=np.maximum.accumulate(all_aucs, axis=1),
         title="Best model performance vs. # of iterations",
         ylabel="AUROC",
+        model_transitions=model_transitions
     )
 
     file_names = ('all', 'best')
