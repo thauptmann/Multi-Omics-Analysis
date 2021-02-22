@@ -97,16 +97,16 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, device):
         moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
         moli_optimiser = torch.optim.Adagrad([
-            {'params': moli_model.left.parameters(), 'lr': lr_e},
-            {'params': moli_model.middle.parameters(), 'lr': lr_m},
-            {'params': moli_model.right.parameters(), 'lr': lr_c},
+            {'params': moli_model.left_encoder.parameters()},
+            {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
+            {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
+            {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c},
             {'params': moli_model.classifier.parameters(), 'lr': lr_cl, 'weight_decay': weight_decay},
         ])
 
         trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
 
         bce_with_logits_loss = torch.nn.BCEWithLogitsLoss()
-        auc_validate = 0
         for _ in trange(epochs, desc='Epoch'):
             _, _ = network_training_util.train(train_loader, moli_model, moli_optimiser,
                                                all_triplet_selector, trip_criterion, bce_with_logits_loss,

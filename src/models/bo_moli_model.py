@@ -50,9 +50,9 @@ class AdaptiveMoli(nn.Module):
     def __init__(self, input_sizes, output_sizes, dropout_rates, combination, depths):
         super(AdaptiveMoli, self).__init__()
         self.combination = combination
-        expression_encoder = AdaptiveEncoder(input_sizes[0], output_sizes[0], dropout_rates[0], depths[0])
-        mutation_encoder = AdaptiveEncoder(input_sizes[1], output_sizes[1], dropout_rates[1], depths[1])
-        cna_encoder = AdaptiveEncoder(input_sizes[2], output_sizes[2], dropout_rates[2], depths[2])
+        self.expression_encoder = AdaptiveEncoder(input_sizes[0], output_sizes[0], dropout_rates[0], depths[0])
+        self.mutation_encoder = AdaptiveEncoder(input_sizes[1], output_sizes[1], dropout_rates[1], depths[1])
+        self.cna_encoder = AdaptiveEncoder(input_sizes[2], output_sizes[2], dropout_rates[2], depths[2])
 
         if combination == 0:
             self.left = expression_encoder
@@ -89,24 +89,21 @@ class AdaptiveMoli(nn.Module):
 
     def forward(self, expression, mutation, cna):
         if self.combination == 0:
-            left_input = expression
-            middle_input = mutation
-            right_input = cna
+            left_out = self.expression_encoder(expression)
+            middle_out = self.mutation_encoder(mutation)
+            right_out = self.cna_encoder(cna)
         elif self.combination == 1:
-            left_input = cna
-            middle_input = mutation
-            right_input = expression
+            left_out = self.cna_encoder(cna)
+            middle_out = self.mutation_encoder(mutation)
+            right_out = self.expression_encoder(expression)
         elif self.combination == 2:
-            left_input = cna
-            middle_input = expression
-            right_input = mutation
+            left_out = self.cna_encoder(cna)
+            middle_out = self.expression_encoder(expression)
+            right_out = self.mutation_encoder(mutation)
         else:
-            left_input = expression
-            middle_input = mutation
-            right_input = cna
-        left_out = self.left(left_input)
-        middle_out = self.middle(middle_input)
-        right_out = self.right(right_input)
+            left_out = self.expression_encoder(expression)
+            middle_out = self.mutation_encoder(mutation)
+            right_out = self.cna_encoder(cna)
         left_middle = torch.cat((left_out, middle_out), 1)
         left_middle_out = self.left_encoder(left_middle)
         left_middle_right = torch.cat((left_middle_out, right_out), 1)
