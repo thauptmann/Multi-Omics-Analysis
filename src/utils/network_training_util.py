@@ -3,6 +3,7 @@ import torch.nn
 from sklearn.metrics import roc_auc_score
 import pandas as pd
 import warnings
+
 warnings.filterwarnings('ignore')
 
 
@@ -30,10 +31,14 @@ def train(train_loader, moli_model, moli_optimiser, triplet_selector, trip_crite
             target = target.to(device)
 
             prediction, zt = moli_model.forward(data_e, data_m, data_c)
-            triplets = triplet_selector.get_triplets(zt, target)
-            target = target.view(-1, 1)
-            loss = gamma * trip_criterion(zt[triplets[:, 0], :], zt[triplets[:, 1], :],
-                                          zt[triplets[:, 2], :]) + bce_with_logits(prediction, target)
+            if gamma > 0:
+                triplets = triplet_selector.get_triplets(zt, target)
+                target = target.view(-1, 1)
+                loss = gamma * trip_criterion(zt[triplets[:, 0], :], zt[triplets[:, 1], :],
+                                              zt[triplets[:, 2], :]) + bce_with_logits(prediction, target)
+            else:
+                target = target.view(-1, 1)
+                loss = bce_with_logits(prediction, target)
             sigmoid = torch.nn.Sigmoid()
             prediction = sigmoid(prediction)
             predictions.extend(prediction.cpu().detach())
