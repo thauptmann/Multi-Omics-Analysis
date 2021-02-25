@@ -66,16 +66,15 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, device):
         samples_weight = np.array([weight[t] for t in y_train])
 
         samples_weight = torch.from_numpy(samples_weight)
-        sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
-                                        replacement=True)
+        sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight))
 
         train_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_train_e),
                                                        torch.FloatTensor(x_train_m),
                                                        torch.FloatTensor(x_train_c),
                                                        torch.FloatTensor(y_train))
         train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=mini_batch,
-                                                   shuffle=False,
-                                                   num_workers=8, sampler=sampler, pin_memory=True)
+                                                   shuffle=False, num_workers=8, sampler=sampler, pin_memory=True,
+                                                   drop_last=True)
 
         test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e), torch.FloatTensor(x_test_m),
                                                       torch.FloatTensor(x_test_c),

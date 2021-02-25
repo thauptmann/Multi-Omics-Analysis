@@ -29,7 +29,7 @@ gamma_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 cv_splits = 5
 
 
-def cv_and_train(run_test, random_search_iterations):
+def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment_name):
     # reproducibility
     random_seed = 42
     torch.manual_seed(random_seed)
@@ -42,7 +42,7 @@ def cv_and_train(run_test, random_search_iterations):
     else:
         device = torch.device("cpu")
 
-    result_path = Path('..', '..', '..', 'results', 'egfr')
+    result_path = Path('..', '..', '..', 'results', 'egfr', 'random_search', experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
 
     data_path = Path('..', '..', '..', 'data')
@@ -51,10 +51,17 @@ def cv_and_train(run_test, random_search_iterations):
         egfr_data.load_data(egfr_path)
 
     skf = StratifiedKFold(n_splits=cv_splits)
-    best_auc = 0
-    all_aucs = []
-    first_iteration = True
-    for iteration in tqdm.trange(random_search_iterations, desc='Random Search Iteration'):
+
+    if load_checkpoint:
+        first_iteration = False
+        all_aucs = np.load(result_path / 'all_aucs')
+        best_auc = max(all_aucs)
+    else:
+        first_iteration = True
+        best_auc = 0
+        all_aucs = []
+
+    for iteration in tqdm.trange(len(all_aucs), random_search_iterations, desc='Random Search Iteration'):
         mini_batch = random.choice(mini_batch_list)
         h_dim1 = random.choice(dim_list)
         h_dim2 = random.choice(dim_list)
@@ -154,7 +161,7 @@ def cv_and_train(run_test, random_search_iterations):
         auc_cv = np.mean(aucs_validate)
 
         if iteration % 10 == 0:
-            save_auroc_plots(np.array([all_aucs]), result_path, 'rs')
+            save_auroc_plots(np.array([all_aucs]), result_path)
 
         all_aucs.append(auc_cv)
         first_iteration = False
@@ -177,6 +184,7 @@ def cv_and_train(run_test, random_search_iterations):
             best_epochs = epochs
             best_margin = margin
             print(f'New best validation AUROC: {best_auc}')
+            np.save(all_aucs, result_path / 'all_aucs')
 
     print(f'Best validation AUROC: {best_auc}')
     print(f'{best_mini_batch=}, {best_h_dim1=}, {best_h_dim2=}, {best_h_dim3=}, {best_lr_e=}, {best_lr_m=}, '
@@ -184,7 +192,8 @@ def cv_and_train(run_test, random_search_iterations):
           f'{best_dropout_rate_clf=}, {best_weight_decay=}, {best_gamma=}, {best_epochs=}, {best_margin=}')
 
     all_aucs = np.array([all_aucs])
-    save_auroc_plots(all_aucs, result_path, 'rs')
+    save_auroc_plots(all_aucs, result_path)
+    np.save(all_aucs, result_path / 'all_aucs')
 
     # Test
     if run_test:
@@ -281,7 +290,9 @@ def cv_and_train(run_test, random_search_iterations):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--run_test', action='store_true')
+    parser.add_argument('--run_test', default=False, action='store_true')
+    parser.add_argument('--load_checkpoint', default=False, action='store_true')
     parser.add_argument('--random_search_iteration', default=1, type=int)
+    parser.add_argument('--experiment_name', required=True)
     args = parser.parse_args()
-    cv_and_train(args.run_test, args.random_search_iteration)
+    cv_and_train(args.run_test, args.random_search_iteration, args.load_checkpoint, args.experiment_name)
