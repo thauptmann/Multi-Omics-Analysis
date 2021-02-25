@@ -8,7 +8,8 @@ from ax import (
     SearchSpace,
     SimpleExperiment,
     save,
-    load
+    load,
+    FixedParameter
 )
 from ax.modelbridge.registry import Models
 
@@ -32,40 +33,8 @@ gamma_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 combination_list = [0, 1, 2, 3]
 depth_list = [1, 2, 3]
 
-moli_search_space = SearchSpace(
-    parameters=[
-        RangeParameter(name='mini_batch', lower=8, upper=64, parameter_type=ParameterType.INT),
-        RangeParameter(name="h_dim1", lower=8, upper=1024, parameter_type=ParameterType.INT),
-        RangeParameter(name="h_dim2", lower=8, upper=1024, parameter_type=ParameterType.INT),
-        RangeParameter(name="h_dim3", lower=8, upper=1024, parameter_type=ParameterType.INT),
-        RangeParameter(name="h_dim4", lower=8, upper=1024, parameter_type=ParameterType.INT),
-        RangeParameter(name="h_dim5", lower=8, upper=1024, parameter_type=ParameterType.INT),
-        RangeParameter(name="depth_1", lower=1, upper=3, parameter_type=ParameterType.INT),
-        RangeParameter(name="depth_2", lower=1, upper=3, parameter_type=ParameterType.INT),
-        RangeParameter(name="depth_3", lower=1, upper=3, parameter_type=ParameterType.INT),
-        RangeParameter(name="depth_4", lower=1, upper=3, parameter_type=ParameterType.INT),
-        RangeParameter(name="depth_5", lower=1, upper=3, parameter_type=ParameterType.INT),
-        RangeParameter(name="lr_e", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
-        RangeParameter(name="lr_m", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
-        RangeParameter(name="lr_c", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
-        RangeParameter(name="lr_cl", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
-        RangeParameter(name="lr_middle", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
-        RangeParameter(name="dropout_rate_e", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
-        RangeParameter(name="dropout_rate_m", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
-        RangeParameter(name="dropout_rate_c", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
-        RangeParameter(name="dropout_rate_clf", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
-        RangeParameter(name="dropout_rate_middle", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
-        RangeParameter(name='weight_decay', lower=0.001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
-        RangeParameter(name='gamma', lower=0.0, upper=0.6, parameter_type=ParameterType.FLOAT),
-        # RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
-        RangeParameter(name='epochs', lower=1, upper=2, parameter_type=ParameterType.INT),
-        RangeParameter(name='margin', lower=0.5, upper=2.5, parameter_type=ParameterType.FLOAT),
-        ChoiceParameter(name='combination', values=combination_list, parameter_type=ParameterType.INT)
-    ]
-)
 
-
-def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, experiment_name):
+def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, experiment_name, combination):
     random_seed = 42
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
@@ -85,6 +54,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet = \
         egfr_data.load_data(egfr_path)
 
+    moli_search_space = create_search_space(combination)
     # load or set up experiment with initial sobel runs
     if load_checkpoint & checkpoint_path.exists():
         print("Load checkpoint")
@@ -110,8 +80,8 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
             experiment.new_trial(generator_run=sobol.gen(1))
 
     best_arm = None
-    for i in range(len(experiment.trials.values()), search_iterations+1):
-        print(f"Running GP+EI optimization trial {i + 1}/{search_iterations}...")
+    for i in range(len(experiment.trials.values()), search_iterations + 1):
+        print(f"Running GP+EI optimization trial {i + 1 - sobol_iterations}/{search_iterations}...")
         # Reinitialize GP+EI model at each step with updated data.
         gpei = Models.BOTORCH(experiment=experiment, data=experiment.eval())
         generator_run = gpei.gen(1)
@@ -147,6 +117,49 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
 
 
+def create_search_space(combination):
+    if combination is None:
+        combination_parameter = ChoiceParameter(name='combination', values=combination_list,
+                                                parameter_type=ParameterType.INT)
+    else:
+        combination_parameter = FixedParameter(name='combination', value=combination,
+                                                parameter_type=ParameterType.INT)
+    return SearchSpace(
+        parameters=[
+            RangeParameter(name='mini_batch', lower=8, upper=64, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim1", lower=8, upper=1024, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim2", lower=8, upper=1024, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim3", lower=8, upper=1024, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim4", lower=8, upper=1024, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim5", lower=8, upper=1024, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_1", lower=1, upper=3, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_2", lower=1, upper=3, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_3", lower=1, upper=3, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_4", lower=1, upper=3, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_5", lower=1, upper=3, parameter_type=ParameterType.INT),
+            RangeParameter(name="lr_e", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="lr_m", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="lr_c", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="lr_cl", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="lr_middle", lower=0.00001, upper=0.1, log_scale=True,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="dropout_rate_e", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="dropout_rate_m", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="dropout_rate_c", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="dropout_rate_clf", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="dropout_rate_middle", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
+            RangeParameter(name='weight_decay', lower=0.001, upper=0.1, log_scale=True,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name='gamma', lower=0.0, upper=0.6, parameter_type=ParameterType.FLOAT),
+            # RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
+            combination_parameter,
+            RangeParameter(name='epochs', lower=1, upper=2, parameter_type=ParameterType.INT),
+            RangeParameter(name='margin', lower=0.5, upper=2.5, parameter_type=ParameterType.FLOAT),
+
+        ]
+    )
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--run_test', action='store_true')
@@ -154,5 +167,7 @@ if __name__ == '__main__':
     parser.add_argument('--sobol_iterations', default=5, type=int)
     parser.add_argument('--experiment_name', required=True)
     parser.add_argument('--load_checkpoint', default=False, action='store_true')
+    parser.add_argument('--combination', default=None, type=int)
     args = parser.parse_args()
-    bo_moli(args.search_iterations, args.run_test, args.sobol_iterations, args.load_checkpoint, args.experiment_name)
+    bo_moli(args.search_iterations, args.run_test, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
+            args.combination)
