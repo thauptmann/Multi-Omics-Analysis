@@ -1,33 +1,27 @@
-from ax.plot.trace import optimization_trace_single_method
 import numpy as np
 import plotly.graph_objects as go
 
 
 def save_auroc_plots(all_aucs, path, model_transitions=None):
-    all_auc_plot = optimization_trace_single_method(
-        y=all_aucs,
+
+    best_aucs = np.maximum.accumulate(all_aucs, axis=0)
+    layout = go.Layout(
         title="Model performance vs. # of iterations",
-        ylabel="AUROC",
-        model_transitions=model_transitions
+        title_x=0.5,
+        showlegend=True,
+        yaxis={"title": 'AUROC',
+               "range": (0.5, 1)},
+        xaxis={"title": "Iteration"},
     )
 
-    best_auc_plot = optimization_trace_single_method(
-        y=np.maximum.accumulate(all_aucs, axis=1),
-        title="Best model performance vs. # of iterations",
-        ylabel="AUROC",
-        model_transitions=model_transitions
-    )
-
+    x = list(range(1, len(all_aucs)+1))
     file_names = ('all', 'best')
-    plots = all_auc_plot, best_auc_plot
-    for plot, name in zip(plots, file_names):
-        data = plot[0]['data']
-        lay = plot[0]['layout']
-        fig = {
-            "data": data,
-            "layout": lay,
-        }
-        fig = go.Figure(fig)
-        fig.update_layout(yaxis_range=[0.5, 1])
-        fig.write_html(str(path / f'{name}_multi-omics.html'))
+    for y, name in zip((all_aucs, best_aucs), file_names):
+        scatter = go.Scatter(name="mean", mode="lines", x=x, y=y)
+        data = [scatter]
+
+        fig = go.Figure(layout=layout, data=data)
+        if model_transitions is not None:
+            fig.add_vline(x=model_transitions, line_dash='dot')
         fig.write_image(str(path / f'{name}_multi-omics.svg'))
+
