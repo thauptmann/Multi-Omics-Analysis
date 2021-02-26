@@ -155,6 +155,7 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
                 splits_left = np.ones(cv_splits - fold_number)
                 best_possible_result = np.mean(np.append(aucs_validate, splits_left))
                 if best_possible_result < best_auc:
+                    print("Experiment can't get better than the baseline. Skip next folds...")
                     break
             fold_number += 1
 
