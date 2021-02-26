@@ -74,6 +74,13 @@ class AdaptiveMoli(nn.Module):
             self.left_encoder = nn.Identity(output_sizes[0] + output_sizes[1] + output_sizes[2])
             self.classifier = Classifier(output_sizes[0] + output_sizes[1] + output_sizes[2], output_sizes[4],
                                          dropout_rates[3], depths[4])
+        elif combination == 4:
+            self.expression_encoder = nn.Identity(input_sizes[0], output_sizes[0], dropout_rates[0], depths[0])
+            self.mutation_encoder = nn.Identity(input_sizes[1], output_sizes[1], dropout_rates[1], depths[1])
+            self.cna_encoder = nn.Identity(input_sizes[2], output_sizes[2], dropout_rates[2], depths[2])
+            self.left_encoder = nn.Identity(output_sizes[0] + output_sizes[1] + output_sizes[2])
+            self.classifier = Classifier(output_sizes[0] + output_sizes[1] + output_sizes[2], output_sizes[4],
+                                         dropout_rates[3], depths[4])
 
     def forward(self, expression, mutation, cna):
         if self.combination == 0:
@@ -88,6 +95,10 @@ class AdaptiveMoli(nn.Module):
             left_out = self.cna_encoder(cna)
             middle_out = self.expression_encoder(expression)
             right_out = self.mutation_encoder(mutation)
+        elif self.combination == 3:
+            left_out = self.expression_encoder(expression)
+            middle_out = self.mutation_encoder(mutation)
+            right_out = self.cna_encoder(cna)
         else:
             left_out = self.expression_encoder(expression)
             middle_out = self.mutation_encoder(mutation)

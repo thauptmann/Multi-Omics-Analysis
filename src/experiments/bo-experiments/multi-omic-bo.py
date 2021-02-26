@@ -30,7 +30,7 @@ epoch_list = [10, 20, 50, 15, 30, 40, 60, 70, 80, 90, 100]
 drop_rate_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 weight_decay_list = [0.1, 0.01, 0.001, 0.0001]
 gamma_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
-combination_list = [0, 1, 2, 3]
+combination_list = [0, 1, 2, 3, 4]
 depth_list = [1, 2, 3]
 
 
@@ -51,8 +51,8 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
 
     data_path = Path('..', '..', '..', 'data')
     egfr_path = Path(data_path, 'EGFR_experiments_data')
-    GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet = \
-        egfr_data.load_data(egfr_path)
+    gdsc_e, gdsc_m, gdsc_c, gdsrc_r, pdx_e_erlo, pdx_m_erlo, pdx_c_erlo, pdx_r_erlo, pdx_e_cet, dpx_m_cet, \
+    pdx_c_cet, pdx_r_cet = egfr_data.load_data(egfr_path)
 
     moli_search_space = create_search_space(combination)
     # load or set up experiment with initial sobel runs
@@ -60,15 +60,15 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         print("Load checkpoint")
         experiment = load(str(checkpoint_path))
         experiment.evaluation_function = lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
-                                                                                                GDSCE, GDSCM, GDSCC,
-                                                                                                GDSCR, device)
+                                                                                                gdsc_e, gdsc_m, gdsc_c,
+                                                                                                gdsrc_r, device)
         print(f"Resuming with iteration {len(experiment.trials.values()) + 1}")
     else:
         experiment = SimpleExperiment(
             name="BO-MOLI",
             search_space=moli_search_space,
             evaluation_function=lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
-                                                                                       GDSCE, GDSCM, GDSCC, GDSCR,
+                                                                                       gdsc_e, gdsc_m, gdsc_c, gdsrc_r,
                                                                                        device),
             objective_name="auroc",
             minimize=False,
@@ -110,10 +110,10 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     save_auroc_plots(best_objectives, result_path, sobol_iterations)
 
     if run_test:
-        auc_train, auc_test_erlo, auc_test_cet = auto_moli_egfr.train_and_test(best_parameters, GDSCE, GDSCM, GDSCC,
-                                                                               GDSCR, PDXEerlo, PDXMerlo, PDXCerlo,
-                                                                               PDXRerlo, PDXEcet, PDXMcet, PDXCcet,
-                                                                               PDXRcet, device)
+        auc_train, auc_test_erlo, auc_test_cet = auto_moli_egfr.train_and_test(best_parameters, gdsc_e, gdsc_m, gdsc_c,
+                                                                               gdsrc_r, pdx_e_erlo, pdx_m_erlo, pdx_c_erlo,
+                                                                               pdx_r_erlo, pdx_e_cet, dpx_m_cet, pdx_c_cet,
+                                                                               pdx_r_cet, device)
         print(f'EGFR: AUROC Train = {auc_train}')
         print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
         print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
