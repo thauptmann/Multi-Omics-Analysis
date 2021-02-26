@@ -159,11 +159,8 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
             fold_number += 1
 
         auc_cv = np.mean(aucs_validate)
-
-        if iteration % 10 == 0:
-            save_auroc_plots(np.array([all_aucs]), result_path)
-
         all_aucs.append(auc_cv)
+
         first_iteration = False
         if auc_cv > best_auc:
             best_auc = auc_cv
@@ -184,16 +181,18 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
             best_epochs = epochs
             best_margin = margin
             print(f'New best validation AUROC: {best_auc}')
-            np.save(all_aucs, result_path / 'all_aucs')
+            np.save(result_path / 'all_aucs', all_aucs)
+
+            if iteration % 10 == 0:
+                save_auroc_plots(all_aucs, result_path)
 
     print(f'Best validation AUROC: {best_auc}')
     print(f'{best_mini_batch=}, {best_h_dim1=}, {best_h_dim2=}, {best_h_dim3=}, {best_lr_e=}, {best_lr_m=}, '
           f'{best_lr_c=}, {best_lr_cl=}, {best_dropout_rate_e=}, {best_dropout_rate_m=}, {best_dropout_rate_c=}, '
           f'{best_dropout_rate_clf=}, {best_weight_decay=}, {best_gamma=}, {best_epochs=}, {best_margin=}')
 
-    all_aucs = np.array([all_aucs])
     save_auroc_plots(all_aucs, result_path)
-    np.save(all_aucs, result_path / 'all_aucs')
+    np.save(result_path / 'all_aucs', all_aucs)
 
     # Test
     if run_test:

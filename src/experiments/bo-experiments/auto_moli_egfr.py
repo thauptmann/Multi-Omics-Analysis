@@ -40,8 +40,9 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, device):
     epochs = parameterization['epochs']
     margin = parameterization['margin']
 
-    skf = StratifiedKFold(n_splits=5)
     aucs_validate = []
+    cv_splits = 5
+    skf = StratifiedKFold(n_splits=cv_splits)
     for train_index, test_index in tqdm(skf.split(GDSCE, Y), total=skf.get_n_splits(), desc="k-fold"):
         x_train_e = GDSCE[train_index]
         x_train_m = GDSCM[train_index]
@@ -113,7 +114,10 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, device):
         # validate
         auc_validate = network_training_util.validate(test_loader, moli_model, device)
         aucs_validate.append(auc_validate)
-    return np.mean(aucs_validate)
+
+    mean = np.mean(aucs_validate)
+    sem = np.std(aucs_validate)
+    return {"auroc": (mean, sem)}
 
 
 def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo,
@@ -134,6 +138,7 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
     lr_m = parameterization['lr_m']
     lr_c = parameterization['lr_c']
     lr_cl = parameterization['lr_cl']
+    lr_middle = parameterization['lr_middle']
     dropout_rate_e = parameterization['dropout_rate_e']
     dropout_rate_m = parameterization['dropout_rate_m']
     dropout_rate_c = parameterization['dropout_rate_c']
@@ -185,9 +190,10 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
     moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
     moli_optimiser = torch.optim.Adagrad([
-        {'params': moli_model.left.parameters(), 'lr': lr_e},
-        {'params': moli_model.middle.parameters(), 'lr': lr_m},
-        {'params': moli_model.right.parameters(), 'lr': lr_c},
+        {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle},
+        {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
+        {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
+        {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c},
         {'params': moli_model.classifier.parameters(), 'lr': lr_cl, 'weight_decay': weight_decay},
     ])
 

@@ -70,18 +70,24 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
             evaluation_function=lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
                                                                                        GDSCE, GDSCM, GDSCC, GDSCR,
                                                                                        device),
-            objective_name="AUROC",
+            objective_name="auroc",
             minimize=False,
         )
 
         print(f"Running Sobol initialization trials...")
         sobol = Models.SOBOL(experiment.search_space, seed=random_seed)
         for i in range(sobol_iterations):
+            print(f"Running Sobol initialisation {i +1}/{sobol_iterations}")
             experiment.new_trial(generator_run=sobol.gen(1))
+            experiment.eval()
+        save(experiment, str(checkpoint_path))
 
     best_arm = None
+    gpei = Models.BOTORCH(experiment=experiment, data=experiment.eval())
+    generator_run = gpei.gen(1)
+    best_arm, _ = generator_run.best_arm_predictions
     for i in range(len(experiment.trials.values()), search_iterations + 1):
-        print(f"Running GP+EI optimization trial {i + 1 - sobol_iterations}/{search_iterations}...")
+        print(f"Running GP+EI optimization trial {i + 1} ...")
         # Reinitialize GP+EI model at each step with updated data.
         gpei = Models.BOTORCH(experiment=experiment, data=experiment.eval())
         generator_run = gpei.gen(1)
@@ -90,7 +96,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         save(experiment, str(checkpoint_path))
 
         if i % 10 == 0:
-            best_objectives = np.array([[trial.objective_mean for trial in experiment.trials.values()]])
+            best_objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
             save_auroc_plots(best_objectives, result_path, sobol_iterations)
             best_parameters = best_arm.parameters
             print(best_parameters)
@@ -101,17 +107,16 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     print(best_parameters)
     print("Done!")
 
-    best_objectives = np.array([[trial.objective_mean for trial in experiment.trials.values()]])
+    best_objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
     save(experiment, str(checkpoint_path))
-    np.save(best_objectives, result_path / 'best_objectives')
-    save_auroc_plots(best_objectives, result_path, sobol_iterations)
+    np.save(result_path / 'best_objectives', best_objectives)
+    save_auroc_plots(best_objectives, result_path, [sobol_iterations])
 
     if run_test:
         auc_train, auc_test_erlo, auc_test_cet = auto_moli_egfr.train_and_test(best_parameters, GDSCE, GDSCM, GDSCC,
                                                                                GDSCR, PDXEerlo, PDXMerlo, PDXCerlo,
                                                                                PDXRerlo, PDXEcet, PDXMcet, PDXCcet,
                                                                                PDXRcet, device)
-
         print(f'EGFR: AUROC Train = {auc_train}')
         print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
         print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
@@ -151,9 +156,8 @@ def create_search_space(combination):
             RangeParameter(name='weight_decay', lower=0.001, upper=0.1, log_scale=True,
                            parameter_type=ParameterType.FLOAT),
             RangeParameter(name='gamma', lower=0.0, upper=0.6, parameter_type=ParameterType.FLOAT),
-            # RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
+            RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
             combination_parameter,
-            RangeParameter(name='epochs', lower=1, upper=2, parameter_type=ParameterType.INT),
             RangeParameter(name='margin', lower=0.5, upper=2.5, parameter_type=ParameterType.FLOAT),
 
         ]
