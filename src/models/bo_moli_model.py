@@ -78,7 +78,7 @@ class AdaptiveMoli(nn.Module):
             self.expression_encoder = nn.Identity(input_sizes[0], output_sizes[0], dropout_rates[0], depths[0])
             self.mutation_encoder = nn.Identity(input_sizes[1], output_sizes[1], dropout_rates[1], depths[1])
             self.cna_encoder = nn.Identity(input_sizes[2], output_sizes[2], dropout_rates[2], depths[2])
-            self.left_encoder = nn.Identity(output_sizes[0] + output_sizes[1] + output_sizes[2])
+            self.left_encoder = nn.Identity(output_sizes[0] + output_sizes[1])
             self.classifier = Classifier(output_sizes[0] + output_sizes[1] + output_sizes[2], output_sizes[4],
                                          dropout_rates[3], depths[4])
 

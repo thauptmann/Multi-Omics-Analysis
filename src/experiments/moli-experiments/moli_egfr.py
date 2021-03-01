@@ -53,12 +53,10 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
     skf = StratifiedKFold(n_splits=cv_splits)
 
     if load_checkpoint:
-        first_iteration = False
         all_aucs = np.load(result_path / 'all_aucs')
         best_auc = max(all_aucs)
     else:
-        first_iteration = True
-        best_auc = 0
+        best_auc = 0.5
         all_aucs = []
 
     for iteration in tqdm.trange(len(all_aucs), random_search_iterations, desc='Random Search Iteration'):
@@ -151,7 +149,7 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
             aucs_validate.append(auc_validate)
 
             # check for break
-            if fold_number != cv_splits and not first_iteration:
+            if fold_number != cv_splits:
                 splits_left = np.ones(cv_splits - fold_number)
                 best_possible_result = np.mean(np.append(aucs_validate, splits_left))
                 if best_possible_result < best_auc:
@@ -162,7 +160,6 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
         auc_cv = np.mean(aucs_validate)
         all_aucs.append(auc_cv)
 
-        first_iteration = False
         if auc_cv > best_auc:
             best_auc = auc_cv
             best_mini_batch = mini_batch

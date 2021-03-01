@@ -61,7 +61,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         experiment = load(str(checkpoint_path))
         experiment.evaluation_function = lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
                                                                                                 gdsc_e, gdsc_m, gdsc_c,
-                                                                                                gdsrc_r, device)
+                                                                                                gdsrc_r, 0.5, device)
         print(f"Resuming with iteration {len(experiment.trials.values()) + 1}")
     else:
         experiment = SimpleExperiment(
@@ -69,7 +69,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
             search_space=moli_search_space,
             evaluation_function=lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
                                                                                        gdsc_e, gdsc_m, gdsc_c, gdsrc_r,
-                                                                                       device),
+                                                                                       0, device),
             objective_name="auroc",
             minimize=False,
         )
