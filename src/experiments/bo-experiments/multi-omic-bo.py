@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 import torch
+import pickle
 from ax import (
     ParameterType,
     RangeParameter,
@@ -50,9 +51,8 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     result_path.mkdir(parents=True, exist_ok=True)
 
     data_path = Path('..', '..', '..', 'data')
-    egfr_path = Path(data_path, 'EGFR_experiments_data')
-    gdsc_e, gdsc_m, gdsc_c, gdsrc_r, pdx_e_erlo, pdx_m_erlo, pdx_c_erlo, pdx_r_erlo, pdx_e_cet, dpx_m_cet, \
-    pdx_c_cet, pdx_r_cet = egfr_data.load_data(egfr_path)
+    gdsc_e, gdsc_m, gdsc_c, gdsc_r, pdx_e_erlo, pdx_m_erlo, pdx_c_erlo, pdx_r_erlo, pdx_e_cet, dpx_m_cet, \
+        pdx_c_cet, pdx_r_cet = egfr_data.load_data(data_path)
 
     moli_search_space = create_search_space(combination)
     # load or set up experiment with initial sobel runs
@@ -61,15 +61,17 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         experiment = load(str(checkpoint_path))
         experiment.evaluation_function = lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
                                                                                                 gdsc_e, gdsc_m, gdsc_c,
-                                                                                                gdsrc_r, 0.5, device)
+                                                                                                gdsc_r, 0.5, device)
         print(f"Resuming with iteration {len(experiment.trials.values()) + 1}")
+        best_parameters = pickle.load(open(result_path / 'best_parameters', 'rb'))
     else:
+        best_parameters = None
         experiment = SimpleExperiment(
             name="BO-MOLI",
             search_space=moli_search_space,
             evaluation_function=lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
-                                                                                       gdsc_e, gdsc_m, gdsc_c, gdsrc_r,
-                                                                                       0, device),
+                                                                                       gdsc_e, gdsc_m, gdsc_c, gdsc_r,
+                                                                                       0.5, device),
             objective_name="auroc",
             minimize=False,
         )
@@ -77,46 +79,48 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         print(f"Running Sobol initialization trials...")
         sobol = Models.SOBOL(experiment.search_space, seed=random_seed)
         for i in range(sobol_iterations):
-            print(f"Running Sobol initialisation {i +1}/{sobol_iterations}")
+            print(f"Running Sobol initialisation {i + 1}/{sobol_iterations}")
             experiment.new_trial(generator_run=sobol.gen(1))
             experiment.eval()
         save(experiment, str(checkpoint_path))
 
-    best_arm = None
     for i in range(len(experiment.trials.values()), search_iterations + 1):
         print(f"Running GP+EI optimization trial {i + 1} ...")
         # Reinitialize GP+EI model at each step with updated data.
-        gpei = Models.BOTORCH(experiment=experiment, data=experiment.eval())
-        generator_run = gpei.gen(1)
+        gp_ei = Models.BOTORCH(experiment=experiment, data=experiment.eval())
+        generator_run = gp_ei.gen(1)
         best_arm, _ = generator_run.best_arm_predictions
+        best_parameters = best_arm.parameters
         experiment.new_trial(generator_run=generator_run)
         save(experiment, str(checkpoint_path))
 
         if i % 10 == 0:
-            best_objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
-            save_auroc_plots(best_objectives, result_path, sobol_iterations)
-            best_parameters = best_arm.parameters
+            objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
+            save_auroc_plots(objectives, result_path, sobol_iterations)
             print(best_parameters)
 
-    best_parameters = best_arm.parameters
-
-    # save all results
     print(best_parameters)
     print("Done!")
 
-    best_objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
+    # save results
+    objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
     save(experiment, str(checkpoint_path))
-    np.save(result_path / 'best_objectives', best_objectives)
-    save_auroc_plots(best_objectives, result_path, sobol_iterations)
+    pickle.dump(objectives, open(result_path / 'objectives', "wb"))
+    pickle.dump(best_parameters, open(result_path / 'best_parameters', "wb"))
+    save_auroc_plots(objectives, result_path, sobol_iterations)
 
     if run_test:
-        auc_train, auc_test_erlo, auc_test_cet = auto_moli_egfr.train_and_test(best_parameters, gdsc_e, gdsc_m, gdsc_c,
-                                                                               gdsrc_r, pdx_e_erlo, pdx_m_erlo, pdx_c_erlo,
-                                                                               pdx_r_erlo, pdx_e_cet, dpx_m_cet, pdx_c_cet,
-                                                                               pdx_r_cet, device)
+        auc_train, auc_test_erlo, auc_test_cet, auc_test_both = auto_moli_egfr.train_and_test(best_parameters, gdsc_e,
+                                                                                              gdsc_m, gdsc_c, gdsc_r,
+                                                                                              pdx_e_erlo, pdx_m_erlo,
+                                                                                              pdx_c_erlo, pdx_r_erlo,
+                                                                                              pdx_e_cet, dpx_m_cet,
+                                                                                              pdx_c_cet, pdx_r_cet,
+                                                                                              device)
         print(f'EGFR: AUROC Train = {auc_train}')
         print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
         print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
+        print(f'EGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}')
 
 
 def create_search_space(combination):
@@ -125,20 +129,21 @@ def create_search_space(combination):
                                                 parameter_type=ParameterType.INT)
     else:
         combination_parameter = FixedParameter(name='combination', value=combination,
-                                                parameter_type=ParameterType.INT)
+                                               parameter_type=ParameterType.INT)
     return SearchSpace(
         parameters=[
-            RangeParameter(name='mini_batch', lower=8, upper=64, parameter_type=ParameterType.INT),
+            # RangeParameter(name='mini_batch', lower=8, upper=64, parameter_type=ParameterType.INT),
+            RangeParameter(name='mini_batch', lower=8, upper=32, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim1", lower=8, upper=1024, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim2", lower=8, upper=1024, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim3", lower=8, upper=1024, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim4", lower=8, upper=1024, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim5", lower=8, upper=1024, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_1", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_2", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_3", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_4", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_5", lower=1, upper=3, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_1", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_2", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_3", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_4", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_5", lower=1, upper=5, parameter_type=ParameterType.INT),
             RangeParameter(name="lr_e", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
             RangeParameter(name="lr_m", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
             RangeParameter(name="lr_c", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
@@ -153,7 +158,8 @@ def create_search_space(combination):
             RangeParameter(name='weight_decay', lower=0.001, upper=0.1, log_scale=True,
                            parameter_type=ParameterType.FLOAT),
             RangeParameter(name='gamma', lower=0.0, upper=0.6, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
+            # RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
+            RangeParameter(name='epochs', lower=1, upper=2, parameter_type=ParameterType.INT),
             combination_parameter,
             RangeParameter(name='margin', lower=0.5, upper=2.5, parameter_type=ParameterType.FLOAT),
 

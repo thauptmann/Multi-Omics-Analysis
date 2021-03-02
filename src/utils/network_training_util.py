@@ -16,15 +16,13 @@ def create_dataloader(x_expression, x_mutation, x_cna, y_response, mini_batch, p
 
 
 def train(train_loader, moli_model, moli_optimiser, triplet_selector, trip_criterion, bce_with_logits, device, gamma):
-    running_loss = 0
     y_true = []
     predictions = []
-
+    moli_model.train()
     for (data_e, data_m, data_c, target) in train_loader:
+        moli_optimiser.zero_grad()
         if torch.mean(target) != 0. and torch.mean(target) != 1.:
-            moli_model.train()
             y_true.extend(target)
-
             data_e = data_e.to(device)
             data_m = data_m.to(device)
             data_c = data_c.to(device)
@@ -42,26 +40,22 @@ def train(train_loader, moli_model, moli_optimiser, triplet_selector, trip_crite
             sigmoid = torch.nn.Sigmoid()
             prediction = sigmoid(prediction)
             predictions.extend(prediction.cpu().detach())
-
-            moli_optimiser.zero_grad()
-            running_loss = loss.item()
             loss.backward()
             moli_optimiser.step()
     auc = roc_auc_score(y_true, predictions)
-    return auc, running_loss
+    return auc
 
 
 def validate(data_loader, moli_model, device):
     y_true = []
     predictions = []
     moli_model.eval()
-    for (data_e, data_m, data_c, target) in data_loader:
-        validate_e = data_e.to(device)
-        validate_m = data_m.to(device)
-        validate_c = data_c.to(device)
-        y_true.extend(target)
-        with torch.no_grad():
-            moli_model.eval()
+    with torch.no_grad():
+        for (data_e, data_m, data_c, target) in data_loader:
+            validate_e = data_e.to(device)
+            validate_m = data_m.to(device)
+            validate_c = data_c.to(device)
+            y_true.extend(target)
             prediction, _ = moli_model.forward(validate_e, validate_m, validate_c)
             sigmoid = torch.nn.Sigmoid()
             prediction = sigmoid(prediction)

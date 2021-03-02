@@ -175,7 +175,7 @@ def main(drug, optimal_parameters):
 
     auc = 0
     for _ in trange(epochs):
-        auc, cost = network_training_util.train(train_loader, moli_model, moli_optimiser, triplet_selector,
+        auc = network_training_util.train(train_loader, moli_model, moli_optimiser, triplet_selector,
                                                 trip_criterion, cross_entropy, device, gamma)
     print(f'{drug}: AUROC Train = {auc}')
 

@@ -84,7 +84,7 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, best_auc, device):
         test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=mini_batch,
                                                   shuffle=False, num_workers=8, pin_memory=True)
 
-        n_samp_e, ie_dim = x_train_e.shape
+        n_sample_e, ie_dim = x_train_e.shape
         _, im_dim = x_train_m.shape
         _, ic_dim = x_train_c.shape
 
@@ -92,7 +92,7 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, best_auc, device):
 
         depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
         input_sizes = [ie_dim, im_dim, ic_dim]
-        dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_clf, dropout_rate_middle]
+        dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_middle, dropout_rate_clf]
         output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
         moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
@@ -108,9 +108,9 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, best_auc, device):
 
         bce_with_logits_loss = torch.nn.BCEWithLogitsLoss()
         for _ in trange(epochs, desc='Epoch'):
-            _, _ = network_training_util.train(train_loader, moli_model, moli_optimiser,
-                                               all_triplet_selector, trip_criterion, bce_with_logits_loss,
-                                               device, gamma)
+            _ = network_training_util.train(train_loader, moli_model, moli_optimiser,
+                                            all_triplet_selector, trip_criterion, bce_with_logits_loss,
+                                            device, gamma)
 
         # validate
         auc_validate = network_training_util.validate(test_loader, moli_model, device)
@@ -127,11 +127,12 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, best_auc, device):
 
     mean = np.mean(aucs_validate)
     sem = np.std(aucs_validate)
-    return {"auroc": (mean, sem)}
+    return (mean, sem)
 
 
 def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo,
-                                    PDXEcet, PDXMcet, PDXCcet, PDXRcet, device):
+                   PDXEcet, PDXMcet, PDXCcet, PDXRcet, device):
+    train_batch_size = 256
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -166,26 +167,23 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
     x_train_c = GDSCC
     y_train = GDSCR
 
-    x_test_eerlo = PDXEerlo
-    x_test_merlo = torch.FloatTensor(PDXMerlo)
-    x_test_cerlo = torch.FloatTensor(PDXCerlo)
-    ytserlo = PDXRerlo
+    x_test_e_erlo = PDXEerlo
+    x_test_m_erlo = torch.FloatTensor(PDXMerlo)
+    x_test_c_erlo = torch.FloatTensor(PDXCerlo)
+    y_test_erlo = PDXRerlo
 
-    x_test_ecet = PDXEcet
-    x_test_mcet = torch.FloatTensor(PDXMcet)
-    x_test_ccet = torch.FloatTensor(PDXCcet)
-    ytscet = PDXRcet
+    x_test_e_cet = PDXEcet
+    x_test_m_cet = torch.FloatTensor(PDXMcet)
+    x_test_c_cet = torch.FloatTensor(PDXCcet)
+    y_test_cet = PDXRcet
 
     train_scaler_gdsc = StandardScaler()
     x_train_e = train_scaler_gdsc.fit_transform(x_train_e)
+    x_test_e_cet = torch.FloatTensor(train_scaler_gdsc.transform(x_test_e_cet))
+    x_test_e_erlo = torch.FloatTensor(train_scaler_gdsc.transform(x_test_e_erlo))
 
-    x_test_ecet = train_scaler_gdsc.transform(x_test_ecet)
-    x_test_ecet = torch.FloatTensor(x_test_ecet)
-    x_test_eerlo = train_scaler_gdsc.transform(x_test_eerlo)
-    x_test_eerlo = torch.FloatTensor(x_test_eerlo)
-
-    ytscet = torch.FloatTensor(ytscet.astype(int))
-    ytserlo = torch.FloatTensor(ytserlo.astype(int))
+    y_test_cet = torch.FloatTensor(y_test_cet.astype(int))
+    y_test_erlo = torch.FloatTensor(y_test_erlo.astype(int))
 
     _, ie_dim = x_train_e.shape
     _, im_dim = x_train_m.shape
@@ -208,14 +206,8 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
     ])
 
     trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
-
     bce_with_logits_loss = torch.nn.BCEWithLogitsLoss()
 
-    scaler_gdsc = StandardScaler()
-    scaler_gdsc.fit(x_train_e)
-    x_train_e = scaler_gdsc.transform(x_train_e)
-    x_train_m = np.nan_to_num(x_train_m)
-    x_train_c = np.nan_to_num(x_train_c)
     class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
     weight = 1. / class_sample_count
     samples_weight = np.array([weight[t] for t in y_train])
@@ -230,23 +222,29 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
                                                shuffle=False,
                                                num_workers=8, sampler=sampler, pin_memory=True, drop_last=True)
 
-    test_dataset_erlo = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_eerlo),
-                                                       torch.FloatTensor(x_test_merlo),
-                                                       torch.FloatTensor(x_test_cerlo), torch.FloatTensor(ytserlo))
-    test_loader_erlo = torch.utils.data.DataLoader(dataset=test_dataset_erlo, batch_size=mini_batch,
+    test_dataset_erlo = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e_erlo),
+                                                       torch.FloatTensor(x_test_m_erlo),
+                                                       torch.FloatTensor(x_test_c_erlo), torch.FloatTensor(y_test_erlo))
+    test_loader_erlo = torch.utils.data.DataLoader(dataset=test_dataset_erlo, batch_size=train_batch_size,
                                                    shuffle=False, num_workers=8, pin_memory=True)
 
-    test_dataset_cet = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_ecet),
-                                                      torch.FloatTensor(x_test_mcet),
-                                                      torch.FloatTensor(x_test_ccet), torch.FloatTensor(ytscet))
-    test_loader_cet = torch.utils.data.DataLoader(dataset=test_dataset_cet, batch_size=mini_batch, shuffle=False,
+    test_dataset_cet = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e_cet),
+                                                      torch.FloatTensor(x_test_m_cet),
+                                                      torch.FloatTensor(x_test_c_cet), torch.FloatTensor(y_test_cet))
+    test_loader_cet = torch.utils.data.DataLoader(dataset=test_dataset_cet, batch_size=train_batch_size, shuffle=False,
                                                   num_workers=8, pin_memory=True)
+
+    test_dataset_both = torch.utils.data.ConcatDataset((test_dataset_cet, test_dataset_erlo))
+    test_loader_both = torch.utils.data.DataLoader(dataset=test_dataset_both, batch_size=train_batch_size,
+                                                   shuffle=False, num_workers=8, pin_memory=True)
+
     auc_train = 0
     for _ in range(epochs):
-        auc_train, cost_train = network_training_util.train(train_loader, moli_model, moli_optimiser,
-                                                            all_triplet_selector, trip_criterion,
-                                                            bce_with_logits_loss, device, gamma)
+        auc_train = network_training_util.train(train_loader, moli_model, moli_optimiser,
+                                                all_triplet_selector, trip_criterion,
+                                                bce_with_logits_loss, device, gamma)
 
     auc_test_erlo = network_training_util.validate(test_loader_erlo, moli_model, device)
     auc_test_cet = network_training_util.validate(test_loader_cet, moli_model, device)
-    return auc_train, auc_test_erlo, auc_test_cet
+    auc_test_both = network_training_util.validate(test_loader_both, moli_model, device)
+    return auc_train, auc_test_erlo, auc_test_cet, auc_test_both

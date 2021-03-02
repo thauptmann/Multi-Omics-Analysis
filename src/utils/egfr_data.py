@@ -4,35 +4,40 @@ from sklearn.feature_selection import VarianceThreshold
 from utils.network_training_util import read_and_transpose_csv
 
 
-def load_data(egfr_path):
-    GDSCE = read_and_transpose_csv(egfr_path / "GDSC_exprs.z.EGFRi.tsv")
-    GDSCM = pd.read_csv(egfr_path / "GDSC_mutations.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
+def load_data(data_path):
+    expression_path = data_path / 'exprs_homogenized'
+    mutation_path = data_path / 'SNA_binary'
+    cna_path = data_path / 'CNA_binary'
+    response_path = data_path / 'response'
+
+    GDSCE = read_and_transpose_csv(expression_path / "GDSC_exprs.EGFRi.eb_with.PDX_exprs.EGFRi.tsv")
+    GDSCM = pd.read_csv(mutation_path / "GDSC_mutations.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
     GDSCM = pd.DataFrame.transpose(GDSCM)
     GDSCM = GDSCM.loc[:, ~GDSCM.columns.duplicated()]
 
-    GDSCC = pd.read_csv(egfr_path / "GDSC_CNA.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
+    GDSCC = pd.read_csv(cna_path / "GDSC_CNA.EGFRi.tsv", sep="\t", index_col=0, decimal=".")
     GDSCC = pd.DataFrame.transpose(GDSCC)
     GDSCC = GDSCC.loc[:, ~GDSCC.columns.duplicated()]
 
-    PDXEerlo = pd.read_csv(egfr_path / "PDX_exprs.Erlotinib.eb_with.GDSC_exprs.Erlotinib.tsv",
+    PDXEerlo = pd.read_csv(expression_path / "PDX_exprs.Erlotinib.eb_with.GDSC_exprs.Erlotinib.tsv",
                            sep="\t", index_col=0, decimal=",")
     PDXEerlo = pd.DataFrame.transpose(PDXEerlo)
 
-    PDXMerlo = pd.read_csv(egfr_path / "PDX_mutations.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
+    PDXMerlo = pd.read_csv(mutation_path / "PDX_mutations.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
     PDXMerlo = pd.DataFrame.transpose(PDXMerlo)
 
-    PDXCerlo = pd.read_csv(egfr_path / "PDX_CNV.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
+    PDXCerlo = pd.read_csv(cna_path / "PDX_CNA.Erlotinib.tsv", sep="\t", index_col=0, decimal=",")
     PDXCerlo = pd.DataFrame.transpose(PDXCerlo)
     PDXCerlo = PDXCerlo.loc[:, ~PDXCerlo.columns.duplicated()]
 
-    PDXEcet = pd.read_csv(egfr_path / "PDX_exprs.Cetuximab.eb_with.GDSC_exprs.Cetuximab.tsv",
+    PDXEcet = pd.read_csv(expression_path / "PDX_exprs.Cetuximab.eb_with.GDSC_exprs.Cetuximab.tsv",
                           sep="\t", index_col=0, decimal=",")
     PDXEcet = pd.DataFrame.transpose(PDXEcet)
 
-    PDXMcet = pd.read_csv(egfr_path / "PDX_mutations.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
+    PDXMcet = pd.read_csv(mutation_path / "PDX_mutations.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
     PDXMcet = pd.DataFrame.transpose(PDXMcet)
 
-    PDXCcet = pd.read_csv(egfr_path / "PDX_CNV.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
+    PDXCcet = pd.read_csv(cna_path / "PDX_CNA.Cetuximab.tsv", sep="\t", index_col=0, decimal=",")
     PDXCcet = pd.DataFrame.transpose(PDXCcet)
     PDXCcet = PDXCcet.loc[:, ~PDXCcet.columns.duplicated()]
 
@@ -79,11 +84,11 @@ def load_data(egfr_path):
     GDSCM = GDSCM.loc[:, ls]
     GDSCC = GDSCC.loc[:, ls]
 
-    GDSCR = pd.read_csv(egfr_path / "GDSC_response.EGFRi.tsv",
+    GDSCR = pd.read_csv(response_path / "GDSC_response.EGFRi.tsv",
                         sep="\t", index_col=0, decimal=",")
-    PDXRcet = pd.read_csv(egfr_path / "PDX_response.Cetuximab.tsv",
+    PDXRcet = pd.read_csv(response_path / "PDX_response.Cetuximab.tsv",
                           sep="\t", index_col=0, decimal=",")
-    PDXRerlo = pd.read_csv(egfr_path / "PDX_response.Erlotinib.tsv",
+    PDXRerlo = pd.read_csv(response_path / "PDX_response.Erlotinib.tsv",
                            sep="\t", index_col=0, decimal=",")
 
     GDSCR.rename(mapper=str, axis='index', inplace=True)

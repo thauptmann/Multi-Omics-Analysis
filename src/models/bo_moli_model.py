@@ -55,31 +55,31 @@ class AdaptiveMoli(nn.Module):
         self.cna_encoder = AdaptiveEncoder(input_sizes[2], output_sizes[2], dropout_rates[2], depths[2])
 
         if combination == 0:
-            self.left_encoder = AdaptiveEncoder(output_sizes[0] + output_sizes[1], output_sizes[3], dropout_rates[4],
+            self.left_encoder = AdaptiveEncoder(output_sizes[0] + output_sizes[1], output_sizes[3], dropout_rates[3],
                                                 depths[3])
             self.classifier = Classifier(output_sizes[3] + output_sizes[2], output_sizes[4],
-                                         dropout_rates[3], depths[4])
+                                         dropout_rates[4], depths[4])
 
         elif combination == 1:
-            self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[1], output_sizes[3], dropout_rates[4],
+            self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[1], output_sizes[3], dropout_rates[3],
                                                 depths[3])
             self.classifier = Classifier(output_sizes[3] + output_sizes[0], output_sizes[4],
-                                         dropout_rates[3], depths[4])
+                                         dropout_rates[4], depths[4])
         elif combination == 2:
-            self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[0], output_sizes[3], dropout_rates[4],
+            self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[0], output_sizes[3], dropout_rates[3],
                                                 depths[3])
-            self.classifier = Classifier(output_sizes[3] + output_sizes[1], output_sizes[4], dropout_rates[3],
+            self.classifier = Classifier(output_sizes[3] + output_sizes[1], output_sizes[4], dropout_rates[4],
                                          depths[4])
         elif combination == 3:
             self.left_encoder = nn.Identity(output_sizes[0] + output_sizes[1] + output_sizes[2])
             self.classifier = Classifier(output_sizes[0] + output_sizes[1] + output_sizes[2], output_sizes[4],
-                                         dropout_rates[3], depths[4])
+                                         dropout_rates[4], depths[4])
         elif combination == 4:
-            self.expression_encoder = nn.Identity(input_sizes[0], output_sizes[0], dropout_rates[0], depths[0])
-            self.mutation_encoder = nn.Identity(input_sizes[1], output_sizes[1], dropout_rates[1], depths[1])
-            self.cna_encoder = nn.Identity(input_sizes[2], output_sizes[2], dropout_rates[2], depths[2])
-            self.left_encoder = nn.Identity(output_sizes[0] + output_sizes[1])
-            self.classifier = Classifier(output_sizes[0] + output_sizes[1] + output_sizes[2], output_sizes[4],
+            self.expression_encoder = nn.Identity(input_sizes[0])
+            self.mutation_encoder = nn.Identity(input_sizes[1])
+            self.cna_encoder = nn.Identity(input_sizes[2])
+            self.left_encoder = nn.Identity(input_sizes[0] + input_sizes[1])
+            self.classifier = Classifier(input_sizes[0] + input_sizes[1] + input_sizes[2], output_sizes[4],
                                          dropout_rates[3], depths[4])
 
     def forward(self, expression, mutation, cna):

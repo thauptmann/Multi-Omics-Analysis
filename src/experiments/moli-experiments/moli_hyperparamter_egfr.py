@@ -25,9 +25,8 @@ def main():
         pin_memory = False
 
     data_path = Path('..', '..', '..', 'data')
-    egfr_path = Path(data_path, 'EGFR_experiments_data')
     GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet = \
-        egfr_data.load_data(egfr_path)
+        egfr_data.load_data(data_path)
 
     mini_batch = 16
     h_dim1 = 32
