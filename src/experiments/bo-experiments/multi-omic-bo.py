@@ -35,10 +35,14 @@ combination_list = [0, 1, 2, 3, 4]
 depth_list = [1, 2, 3]
 
 
-def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, experiment_name, combination):
+def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, experiment_name, combination,
+            sampling_method):
     random_seed = 42
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
+
+    if sampling_method == 'sobol':
+        sobol_iterations = 0
 
     if torch.cuda.is_available():
         free_gpu_id = get_free_gpu()
@@ -86,19 +90,26 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
             experiment.eval()
         save(experiment, str(checkpoint_path))
 
-    for i in range(len(experiment.trials.values()), search_iterations + 1):
+    if sampling_method == 'sobol':
+        sobol = Models.SOBOL(experiment.search_space, seed=random_seed)
+
+    for i in range(len(experiment.trials.values()), search_iterations):
         print(f"Running GP+EI optimization trial {i + 1} ...")
+        # Reinitialize GP+EI model at each step with updated data.
+        if sampling_method == 'gp':
+            gp_ei = Models.BOTORCH(experiment=experiment, data=experiment.fetch_data())
+            generator_run = gp_ei.gen(1)
+        else:
+            generator_run = sobol.gen(1)
+        best_arm, _ = generator_run.best_arm_predictions
+        best_parameters = best_arm.parameters
+        experiment.new_trial(generator_run=generator_run)
+        experiment.eval()
         max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
         experiment.evaluation_function = lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
                                                                                                 gdsc_e, gdsc_m, gdsc_c,
                                                                                                 gdsc_r, max_objective,
                                                                                                 device)
-        # Reinitialize GP+EI model at each step with updated data.
-        gp_ei = Models.BOTORCH(experiment=experiment, data=experiment.eval())
-        generator_run = gp_ei.gen(1)
-        best_arm, _ = generator_run.best_arm_predictions
-        best_parameters = best_arm.parameters
-        experiment.new_trial(generator_run=generator_run)
         save(experiment, str(checkpoint_path))
 
         if i % 10 == 0:
@@ -180,6 +191,7 @@ if __name__ == '__main__':
     parser.add_argument('--experiment_name', required=True)
     parser.add_argument('--load_checkpoint', default=False, action='store_true')
     parser.add_argument('--combination', default=None, type=int)
+    parser.add_argument('--sampling_method', default='gp')
     args = parser.parse_args()
     bo_moli(args.search_iterations, args.run_test, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-            args.combination)
+            args.combination, args.sampling_method)
