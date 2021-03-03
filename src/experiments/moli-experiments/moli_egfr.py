@@ -187,7 +187,7 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
 
         _, ie_dim = x_train_e.shape
         _, im_dim = x_train_m.shape
-        _, ic_dim = x_train_m.shape
+        _, ic_dim = x_train_c.shape
 
         all_triplet_selector = AllTripletSelector()
         moli_model = Moli([ie_dim, im_dim, ic_dim],

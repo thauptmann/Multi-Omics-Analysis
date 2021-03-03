@@ -11,8 +11,6 @@ from utils import network_training_util
 
 
 def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, best_auc, device):
-    # reproducibility
-
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -108,9 +106,9 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, best_auc, device):
 
         bce_with_logits_loss = torch.nn.BCEWithLogitsLoss()
         for _ in trange(epochs, desc='Epoch'):
-            _ = network_training_util.train(train_loader, moli_model, moli_optimiser,
-                                            all_triplet_selector, trip_criterion, bce_with_logits_loss,
-                                            device, gamma)
+            network_training_util.train(train_loader, moli_model, moli_optimiser,
+                                        all_triplet_selector, trip_criterion, bce_with_logits_loss,
+                                        device, gamma)
 
         # validate
         auc_validate = network_training_util.validate(test_loader, moli_model, device)

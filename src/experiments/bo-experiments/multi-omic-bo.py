@@ -59,10 +59,12 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     if load_checkpoint & checkpoint_path.exists():
         print("Load checkpoint")
         experiment = load(str(checkpoint_path))
+        max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
         experiment.evaluation_function = lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
                                                                                                 gdsc_e, gdsc_m, gdsc_c,
-                                                                                                gdsc_r, 0.5, device)
-        print(f"Resuming with iteration {len(experiment.trials.values()) + 1}")
+                                                                                                gdsc_r, max_objective,
+                                                                                                device)
+        print(f"Resuming after iteration {len(experiment.trials.values())}")
         best_parameters = pickle.load(open(result_path / 'best_parameters', 'rb'))
     else:
         best_parameters = None
@@ -86,6 +88,11 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
 
     for i in range(len(experiment.trials.values()), search_iterations + 1):
         print(f"Running GP+EI optimization trial {i + 1} ...")
+        max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
+        experiment.evaluation_function = lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
+                                                                                                gdsc_e, gdsc_m, gdsc_c,
+                                                                                                gdsc_r, max_objective,
+                                                                                                device)
         # Reinitialize GP+EI model at each step with updated data.
         gp_ei = Models.BOTORCH(experiment=experiment, data=experiment.eval())
         generator_run = gp_ei.gen(1)
@@ -132,8 +139,7 @@ def create_search_space(combination):
                                                parameter_type=ParameterType.INT)
     return SearchSpace(
         parameters=[
-            # RangeParameter(name='mini_batch', lower=8, upper=64, parameter_type=ParameterType.INT),
-            RangeParameter(name='mini_batch', lower=8, upper=32, parameter_type=ParameterType.INT),
+            RangeParameter(name='mini_batch', lower=8, upper=64, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim1", lower=8, upper=1024, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim2", lower=8, upper=1024, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim3", lower=8, upper=1024, parameter_type=ParameterType.INT),
@@ -158,8 +164,7 @@ def create_search_space(combination):
             RangeParameter(name='weight_decay', lower=0.001, upper=0.1, log_scale=True,
                            parameter_type=ParameterType.FLOAT),
             RangeParameter(name='gamma', lower=0.0, upper=0.6, parameter_type=ParameterType.FLOAT),
-            # RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
-            RangeParameter(name='epochs', lower=1, upper=2, parameter_type=ParameterType.INT),
+            RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
             combination_parameter,
             RangeParameter(name='margin', lower=0.5, upper=2.5, parameter_type=ParameterType.FLOAT),
 
