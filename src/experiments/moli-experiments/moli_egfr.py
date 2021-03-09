@@ -39,6 +39,7 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
         pin_memory = False
 
     result_path = Path('..', '..', '..', 'results', 'egfr', 'random_search', experiment_name)
+    result_file = open(result_path / 'logs.txt', "a")
     result_path.mkdir(parents=True, exist_ok=True)
 
     data_path = Path('..', '..', '..', 'data')
@@ -150,11 +151,11 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
         if auc_cv > best_auc:
             best_auc = auc_cv
             best_parameterization = parameterization
-            print(f'New best validation AUROC: {best_auc}')
+            result_file.write(f'New best validation AUROC: {best_auc}\n')
             pickle.dump(best_parameterization, open(result_path / 'best_parameterization', "wb"))
 
-    print(f'Best validation AUROC: {best_auc}')
-    print(f'{best_parameterization=}')
+    result_file.write(f'Best validation AUROC: {best_auc}\n')
+    result_file.write(f'{best_parameterization=}\n')
 
     save_auroc_plots(all_aucs, result_path)
     pickle.dump(all_aucs, open(result_path / 'all_aucs', "wb"))
@@ -251,10 +252,11 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
         auc_test_cet = network_training_util.validate(test_loader_cet, moli_model, device)
         auc_test_both = network_training_util.validate(test_loader_both, moli_model, device)
 
-        print(f'EGFR: AUROC Train = {auc_train}')
-        print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
-        print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
-        print(f'EGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}')
+        result_file.write(f'EGFR: AUROC Train = {auc_train}\n')
+        result_file.write(f'EGFR Cetuximab: AUROC = {auc_test_cet}\n')
+        result_file.write(f'EGFR Erlotinib: AUROC = {auc_test_erlo}\n')
+        result_file.write(f'EGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}\n')
+        result_file.close()
 
 
 if __name__ == "__main__":

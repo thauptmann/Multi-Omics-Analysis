@@ -51,6 +51,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         device = torch.device("cpu")
 
     result_path = Path('..', '..', '..', 'results', 'egfr', 'bayesian_optimisation', experiment_name)
+    result_file = open(result_path / 'logs.txt', "a")
     checkpoint_path = result_path / 'checkpoint.json'
     result_path.mkdir(parents=True, exist_ok=True)
 
@@ -59,6 +60,8 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         pdx_c_cet, pdx_r_cet = egfr_data.load_data(data_path)
 
     moli_search_space = create_search_space(combination)
+    sobol = Models.SOBOL(moli_search_space, seed=random_seed)
+
     # load or set up experiment with initial sobel runs
     if load_checkpoint & checkpoint_path.exists():
         print("Load checkpoint")
@@ -83,15 +86,12 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         )
 
         print(f"Running Sobol initialization trials...")
-        sobol = Models.SOBOL(experiment.search_space, seed=random_seed)
         for i in range(sobol_iterations):
             print(f"Running Sobol initialisation {i + 1}/{sobol_iterations}")
             experiment.new_trial(generator_run=sobol.gen(1))
             experiment.eval()
         save(experiment, str(checkpoint_path))
-
-    if sampling_method == 'sobol':
-        sobol = Models.SOBOL(experiment.search_space, seed=random_seed)
+        save(experiment, str(checkpoint_path))
 
     for i in range(len(experiment.trials.values()), search_iterations):
         print(f"Running GP+EI optimization trial {i + 1} ...")
@@ -117,7 +117,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
             save_auroc_plots(objectives, result_path, sobol_iterations)
             print(best_parameters)
 
-    print(best_parameters)
+    result_file.write(best_parameters + '\n')
     print("Done!")
 
     # save results
@@ -135,10 +135,11 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
                                                                                               pdx_e_cet, dpx_m_cet,
                                                                                               pdx_c_cet, pdx_r_cet,
                                                                                               device)
-        print(f'EGFR: AUROC Train = {auc_train}')
-        print(f'EGFR Cetuximab: AUROC = {auc_test_cet}')
-        print(f'EGFR Erlotinib: AUROC = {auc_test_erlo}')
-        print(f'EGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}')
+        result_file.write(f'EGFR: AUROC Train = {auc_train}\n')
+        result_file.write(f'EGFR Cetuximab: AUROC = {auc_test_cet}\n')
+        result_file.write(f'EGFR Erlotinib: AUROC = {auc_test_erlo}\n')
+        result_file.write(f'EGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}\n')
+        result_file.close()
 
 
 def create_search_space(combination):
