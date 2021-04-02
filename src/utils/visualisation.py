@@ -24,4 +24,3 @@ def save_auroc_plots(all_aucs, path, model_transitions=None):
         if model_transitions is not None and model_transitions > 0:
             fig.add_vline(x=model_transitions, line_dash='dot')
         fig.write_image(str(path / f'{name}_multi-omics.svg'))
-
