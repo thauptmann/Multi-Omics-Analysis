@@ -51,9 +51,9 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         device = torch.device("cpu")
 
     result_path = Path('..', '..', '..', 'results', 'egfr', 'bayesian_optimisation', experiment_name)
+    result_path.mkdir(parents=True, exist_ok=True)
     result_file = open(result_path / 'logs.txt', "a")
     checkpoint_path = result_path / 'checkpoint.json'
-    result_path.mkdir(parents=True, exist_ok=True)
 
     data_path = Path('..', '..', '..', 'data')
     gdsc_e, gdsc_m, gdsc_c, gdsc_r, pdx_e_erlo, pdx_m_erlo, pdx_c_erlo, pdx_r_erlo, pdx_e_cet, dpx_m_cet, \
