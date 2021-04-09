@@ -117,7 +117,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
             save_auroc_plots(objectives, result_path, sobol_iterations)
             print(best_parameters)
 
-    result_file.write(best_parameters + '\n')
+    result_file.write(str(best_parameters) + '\n')
     print("Done!")
 
     # save results
