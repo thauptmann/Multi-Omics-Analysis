@@ -74,6 +74,8 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         print(f"Resuming after iteration {len(experiment.trials.values())}")
         if (result_path / 'best_parameters').exists():
             best_parameters = pickle.load(open(result_path / 'best_parameters', 'rb'))
+        else:
+            best_parameters = None
     else:
         best_parameters = None
         experiment = SimpleExperiment(
@@ -91,7 +93,6 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
             print(f"Running Sobol initialisation {i + 1}/{sobol_iterations}")
             experiment.new_trial(generator_run=sobol.gen(1))
             experiment.eval()
-        save(experiment, str(checkpoint_path))
         save(experiment, str(checkpoint_path))
 
     for i in range(len(experiment.trials.values()), search_iterations):
