@@ -72,7 +72,8 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
                                                                                                 gdsc_r, max_objective,
                                                                                                 device)
         print(f"Resuming after iteration {len(experiment.trials.values())}")
-        best_parameters = pickle.load(open(result_path / 'best_parameters', 'rb'))
+        if (result_path / 'best_parameters').exists():
+            best_parameters = pickle.load(open(result_path / 'best_parameters', 'rb'))
     else:
         best_parameters = None
         experiment = SimpleExperiment(
