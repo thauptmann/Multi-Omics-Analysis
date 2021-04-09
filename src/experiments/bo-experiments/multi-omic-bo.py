@@ -57,7 +57,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
 
     data_path = Path('..', '..', '..', 'data')
     gdsc_e, gdsc_m, gdsc_c, gdsc_r, pdx_e_erlo, pdx_m_erlo, pdx_c_erlo, pdx_r_erlo, pdx_e_cet, dpx_m_cet, \
-        pdx_c_cet, pdx_r_cet = egfr_data.load_data(data_path)
+    pdx_c_cet, pdx_r_cet = egfr_data.load_data(data_path)
 
     moli_search_space = create_search_space(combination)
     sobol = Models.SOBOL(moli_search_space, seed=random_seed)
@@ -153,34 +153,32 @@ def create_search_space(combination):
                                                parameter_type=ParameterType.INT)
     return SearchSpace(
         parameters=[
-            RangeParameter(name='mini_batch', lower=8, upper=32, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim1", lower=8, upper=512, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim2", lower=8, upper=512, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim3", lower=8, upper=512, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim4", lower=8, upper=512, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim5", lower=8, upper=512, parameter_type=ParameterType.INT),
+            RangeParameter(name='mini_batch', lower=8, upper=64, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim1", lower=8, upper=256, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim2", lower=8, upper=256, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim3", lower=8, upper=256, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim4", lower=8, upper=256, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim5", lower=8, upper=256, parameter_type=ParameterType.INT),
             RangeParameter(name="depth_1", lower=1, upper=4, parameter_type=ParameterType.INT),
             RangeParameter(name="depth_2", lower=1, upper=4, parameter_type=ParameterType.INT),
             RangeParameter(name="depth_3", lower=1, upper=4, parameter_type=ParameterType.INT),
             RangeParameter(name="depth_4", lower=1, upper=4, parameter_type=ParameterType.INT),
             RangeParameter(name="depth_5", lower=1, upper=4, parameter_type=ParameterType.INT),
-            RangeParameter(name="lr_e", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="lr_m", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="lr_c", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="lr_cl", lower=0.00001, upper=0.1, log_scale=True, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="lr_middle", lower=0.00001, upper=0.1, log_scale=True,
-                           parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="dropout_rate_e", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="dropout_rate_m", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="dropout_rate_c", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="dropout_rate_clf", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="dropout_rate_middle", lower=0.0, upper=0.8, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name='weight_decay', lower=0.001, upper=0.1, log_scale=True,
-                           parameter_type=ParameterType.FLOAT),
-            RangeParameter(name='gamma', lower=0.0, upper=0.6, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name="lr_e", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name="lr_m", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name="lr_c", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name="lr_cl", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name="lr_middle", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name="dropout_rate_e", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name="dropout_rate_m", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name="dropout_rate_c", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name="dropout_rate_clf", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name="dropout_rate_middle", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name='weight_decay', values=weight_decay_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name='gamma', values=gamma_list, parameter_type=ParameterType.FLOAT),
             RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
             combination_parameter,
-            RangeParameter(name='margin', lower=0.5, upper=2.5, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name='margin', values=margin_list, parameter_type=ParameterType.FLOAT),
 
         ]
     )
