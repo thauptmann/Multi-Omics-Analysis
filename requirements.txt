@@ -1,9 +1,10 @@
 scikit-learn~=0.24.1
 numpy~=1.20.0
 pandas~=1.2.1
-torch==1.8.0
-tqdm==4.59.0
+torch==1.8.1
+tqdm==4.60.0
 ax-platform~=0.1.20
 psutil
-plotly
+plotly~=4.14.3
 kaleido
+ax~=0.52.0

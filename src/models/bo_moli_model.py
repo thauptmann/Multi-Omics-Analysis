@@ -37,7 +37,7 @@ class Classifier(nn.Module):
                 nn.ReLU(),
                 nn.Dropout(dropout_rate))
             self.module_list.extend(dense)
-        self.module_list = torch.nn.Sequential(nn.Linear(input_size, 1))
+        self.module_list.extend(torch.nn.Sequential(nn.Linear(input_size, 1)))
 
     def forward(self, x):
         output = x
