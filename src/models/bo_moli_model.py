@@ -30,9 +30,15 @@ class Classifier(nn.Module):
     def __init__(self, input_size, output_size, dropout_rate, depth):
         super(Classifier, self).__init__()
         self.module_list = nn.ModuleList()
-        for i in range(depth):
-            dense = torch.nn.Sequential(
+        if depth > 1:
+            self.module_list.extend(torch.nn.Sequential(
                 nn.Linear(input_size, output_size),
+                nn.ReLU(),
+                nn.BatchNorm1d(output_size),
+                nn.Dropout(dropout_rate)))
+        for i in range(depth-2):
+            dense = torch.nn.Sequential(
+                nn.Linear(output_size, output_size),
                 nn.BatchNorm1d(output_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_rate))
