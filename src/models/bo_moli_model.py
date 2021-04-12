@@ -30,13 +30,12 @@ class Classifier(nn.Module):
     def __init__(self, input_size, output_size, dropout_rate, depth):
         super(Classifier, self).__init__()
         self.module_list = nn.ModuleList()
-        if depth > 1:
-            self.module_list.extend(torch.nn.Sequential(
-                nn.Linear(input_size, output_size),
-                nn.ReLU(),
-                nn.BatchNorm1d(output_size),
-                nn.Dropout(dropout_rate)))
-        for i in range(depth-2):
+        self.module_list.extend(torch.nn.Sequential(
+            nn.Linear(input_size, output_size),
+            nn.ReLU(),
+            nn.BatchNorm1d(output_size),
+            nn.Dropout(dropout_rate)))
+        for i in range(depth-1):
             dense = torch.nn.Sequential(
                 nn.Linear(output_size, output_size),
                 nn.BatchNorm1d(output_size),
@@ -56,9 +55,10 @@ class AdaptiveMoli(nn.Module):
     def __init__(self, input_sizes, output_sizes, dropout_rates, combination, depths):
         super(AdaptiveMoli, self).__init__()
         self.combination = combination
-        self.expression_encoder = AdaptiveEncoder(input_sizes[0], output_sizes[0], dropout_rates[0], depths[0])
-        self.mutation_encoder = AdaptiveEncoder(input_sizes[1], output_sizes[1], dropout_rates[1], depths[1])
-        self.cna_encoder = AdaptiveEncoder(input_sizes[2], output_sizes[2], dropout_rates[2], depths[2])
+        if combination != 4:
+            self.expression_encoder = AdaptiveEncoder(input_sizes[0], output_sizes[0], dropout_rates[0], depths[0])
+            self.mutation_encoder = AdaptiveEncoder(input_sizes[1], output_sizes[1], dropout_rates[1], depths[1])
+            self.cna_encoder = AdaptiveEncoder(input_sizes[2], output_sizes[2], dropout_rates[2], depths[2])
 
         if combination == 0:
             self.left_encoder = AdaptiveEncoder(output_sizes[0] + output_sizes[1], output_sizes[3], dropout_rates[3],
