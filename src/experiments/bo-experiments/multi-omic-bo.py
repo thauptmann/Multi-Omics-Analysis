@@ -153,7 +153,7 @@ def create_search_space(combination):
                                                parameter_type=ParameterType.INT)
     return SearchSpace(
         parameters=[
-            RangeParameter(name='mini_batch', lower=8, upper=50, parameter_type=ParameterType.INT),
+            RangeParameter(name='mini_batch', lower=8, upper=32, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim1", lower=8, upper=256, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim2", lower=8, upper=256, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim3", lower=8, upper=256, parameter_type=ParameterType.INT),
