@@ -9,9 +9,8 @@ def save_auroc_plots(all_aucs, path, model_transitions=None):
         title="Model performance vs. # of iterations",
         title_x=0.5,
         showlegend=True,
-        yaxis={"title": 'AUROC',
-               "range": (0.5, 1)},
-        xaxis={"title": "Iteration"},
+        yaxis={"title": 'AUROC'},
+        xaxis={"title": "Iteration"}
     )
 
     x = list(range(1, len(all_aucs)+1))
