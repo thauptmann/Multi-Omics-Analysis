@@ -113,7 +113,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
                                                                                                 device)
         save(experiment, str(checkpoint_path))
 
-        if i+1 % 10 == 0:
+        if i % 10 == 0:
             data = experiment.fetch_data()
             df = data.df
             best_arm_name = df.arm_name[df['mean'] == df['mean'].max()].values[0]
