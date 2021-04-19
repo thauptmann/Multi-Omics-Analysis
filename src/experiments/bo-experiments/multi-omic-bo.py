@@ -103,9 +103,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
             generator_run = gp_ei.gen(1)
         else:
             generator_run = sobol.gen(1)
-        if i > 0:
-            best_arm, _ = generator_run.best_arm_predictions
-            best_parameters = best_arm.parameters
+
         experiment.new_trial(generator_run=generator_run)
         experiment.eval()
         max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
@@ -116,6 +114,11 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         save(experiment, str(checkpoint_path))
 
         if i+1 % 10 == 0:
+            data = experiment.fetch_data()
+            df = data.df
+            best_arm_name = df.arm_name[df['mean'] == df['mean'].max()].values[0]
+            best_arm = experiment.arms_by_name[best_arm_name]
+            best_parameters = best_arm.parameters
             objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
             save_auroc_plots(objectives, result_path, sobol_iterations)
             print(best_parameters)
@@ -124,6 +127,11 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     print("Done!")
 
     # save results
+    data = experiment.fetch_data()
+    df = data.df
+    best_arm_name = df.arm_name[df['mean'] == df['mean'].max()].values[0]
+    best_arm = experiment.arms_by_name[best_arm_name]
+    best_parameters = best_arm.parameters
     objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
     save(experiment, str(checkpoint_path))
     pickle.dump(objectives, open(result_path / 'objectives', "wb"))
