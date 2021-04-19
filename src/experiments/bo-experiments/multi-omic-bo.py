@@ -103,8 +103,9 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
             generator_run = gp_ei.gen(1)
         else:
             generator_run = sobol.gen(1)
-        best_arm, _ = generator_run.best_arm_predictions
-        best_parameters = best_arm.parameters
+        if i > 0:
+            best_arm, _ = generator_run.best_arm_predictions
+            best_parameters = best_arm.parameters
         experiment.new_trial(generator_run=generator_run)
         experiment.eval()
         max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
