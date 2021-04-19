@@ -192,7 +192,7 @@ if __name__ == '__main__':
     parser.add_argument('--experiment_name', required=True)
     parser.add_argument('--load_checkpoint', default=False, action='store_true')
     parser.add_argument('--combination', default=None, type=int)
-    parser.add_argument('--sampling_method', default='gp')
+    parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol'])
     args = parser.parse_args()
     bo_moli(args.search_iterations, args.run_test, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
             args.combination, args.sampling_method)
