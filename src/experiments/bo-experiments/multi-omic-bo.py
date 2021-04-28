@@ -146,6 +146,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
                                                                                               pdx_e_cet, dpx_m_cet,
                                                                                               pdx_c_cet, pdx_r_cet,
                                                                                               device)
+        result_file.write(f'EGFR Validation = {max_objective}\n')
         result_file.write(f'EGFR: AUROC Train = {auc_train}\n')
         result_file.write(f'EGFR Cetuximab: AUROC = {auc_test_cet}\n')
         result_file.write(f'EGFR Erlotinib: AUROC = {auc_test_erlo}\n')
@@ -185,7 +186,7 @@ def create_search_space(combination):
             ChoiceParameter(name="dropout_rate_middle", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='weight_decay', values=weight_decay_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='gamma', values=gamma_list, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
+            RangeParameter(name='epochs', lower=1, upper=2, parameter_type=ParameterType.INT),
             combination_parameter,
             ChoiceParameter(name='margin', values=margin_list, parameter_type=ParameterType.FLOAT),
 
