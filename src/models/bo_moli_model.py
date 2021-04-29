@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 
 class AdaptiveEncoder(nn.Module):
@@ -77,14 +78,14 @@ class AdaptiveMoli(nn.Module):
             self.classifier = Classifier(output_sizes[3] + output_sizes[1], output_sizes[4], dropout_rates[4],
                                          depths[4])
         elif combination == 3:
-            self.left_encoder = nn.Identity(output_sizes[0] + output_sizes[1] + output_sizes[2])
+            self.left_encoder = nn.Identity()
             self.classifier = Classifier(output_sizes[0] + output_sizes[1] + output_sizes[2], output_sizes[4],
                                          dropout_rates[4], depths[4])
         elif combination == 4:
-            self.expression_encoder = nn.Identity(input_sizes[0])
-            self.mutation_encoder = nn.Identity(input_sizes[1])
-            self.cna_encoder = nn.Identity(input_sizes[2])
-            self.left_encoder = nn.Identity(input_sizes[0] + input_sizes[1])
+            self.expression_encoder = nn.Identity()
+            self.mutation_encoder = nn.Identity()
+            self.cna_encoder = nn.Identity()
+            self.left_encoder = nn.Identity()
             self.classifier = Classifier(input_sizes[0] + input_sizes[1] + input_sizes[2], output_sizes[4],
                                          dropout_rates[3], depths[4])
 
@@ -110,6 +111,8 @@ class AdaptiveMoli(nn.Module):
             middle_out = self.mutation_encoder(mutation)
             right_out = self.cna_encoder(cna)
         left_middle = torch.cat((left_out, middle_out), 1)
+        left_middle = F.normalize(left_middle, p=2, dim=0)
         left_middle_out = self.left_encoder(left_middle)
         left_middle_right = torch.cat((left_middle_out, right_out), 1)
+        left_middle_right = F.normalize(left_middle_right, p=2, dim=0)
         return self.classifier(left_middle_right), left_middle_right
