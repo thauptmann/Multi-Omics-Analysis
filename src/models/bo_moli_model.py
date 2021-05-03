@@ -87,7 +87,7 @@ class AdaptiveMoli(nn.Module):
             self.cna_encoder = nn.Identity()
             self.left_encoder = nn.Identity()
             self.classifier = Classifier(input_sizes[0] + input_sizes[1] + input_sizes[2], output_sizes[4],
-                                         dropout_rates[3], depths[4])
+                                         dropout_rates[4], depths[4])
 
     def forward(self, expression, mutation, cna):
         if self.combination == 0:
@@ -111,8 +111,6 @@ class AdaptiveMoli(nn.Module):
             middle_out = self.mutation_encoder(mutation)
             right_out = self.cna_encoder(cna)
         left_middle = torch.cat((left_out, middle_out), 1)
-        left_middle = F.normalize(left_middle, p=2, dim=0)
         left_middle_out = self.left_encoder(left_middle)
         left_middle_right = torch.cat((left_middle_out, right_out), 1)
-        left_middle_right = F.normalize(left_middle_right, p=2, dim=0)
         return self.classifier(left_middle_right), left_middle_right
