@@ -6,5 +6,6 @@ tqdm==4.60.0
 ax-platform~=0.1.20
 psutil
 plotly~=4.14.3
-kaleido
 ax~=0.52.0
+kaleido
+scipy~=1.6.3

@@ -12,6 +12,7 @@ from ax import (
     load,
     FixedParameter
 )
+from sklearn.model_selection import StratifiedShuffleSplit
 from ax.modelbridge.registry import Models
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
@@ -24,7 +25,7 @@ from utils import egfr_data
 from utils.visualisation import save_auroc_plots
 
 mini_batch_list = [8, 16, 32, 64]
-dim_list = [1024, 512, 256, 128, 64, 32, 16, 8]
+dim_list = [512, 256, 128, 64, 32, 16, 8]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.1, 0.01, 0.001, 0.0001, 0.00001]
 epoch_list = [10, 20, 50, 15, 30, 40, 60, 70, 80, 90, 100]
@@ -32,7 +33,7 @@ drop_rate_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 weight_decay_list = [0.1, 0.01, 0.001, 0.0001]
 gamma_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 combination_list = [0, 1, 2, 3, 4]
-depth_list = [1, 2, 3]
+depth_list = [1, 2, 3, 4]
 
 
 def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, experiment_name, combination,
@@ -56,8 +57,19 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     checkpoint_path = result_path / 'checkpoint.json'
 
     data_path = Path('..', '..', '..', 'data')
-    gdsc_e, gdsc_m, gdsc_c, gdsc_r, pdx_e_erlo, pdx_m_erlo, pdx_c_erlo, pdx_r_erlo, pdx_e_cet, dpx_m_cet, \
-    pdx_c_cet, pdx_r_cet = egfr_data.load_data(data_path)
+    gdsc_e, gdsc_m, gdsc_c, gdsc_r = egfr_data.load_data(data_path)
+    stratified_shuffle_splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.1)
+    train_index, test_index = next(stratified_shuffle_splitter.split(gdsc_e, gdsc_r))
+    x_train_e = gdsc_e[train_index]
+    x_train_m = gdsc_m[train_index]
+    x_train_c = gdsc_c[train_index]
+
+    x_test_e = gdsc_e[test_index]
+    x_test_m = gdsc_m[test_index]
+    x_test_c = gdsc_c[test_index]
+
+    y_train = gdsc_r[train_index]
+    y_test = gdsc_r[test_index]
 
     moli_search_space = create_search_space(combination)
     sobol = Models.SOBOL(moli_search_space, seed=random_seed)
@@ -68,8 +80,9 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         experiment = load(str(checkpoint_path))
         max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
         experiment.evaluation_function = lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
-                                                                                                gdsc_e, gdsc_m, gdsc_c,
-                                                                                                gdsc_r, max_objective,
+                                                                                                x_train_e, x_train_m,
+                                                                                                x_train_c,
+                                                                                                y_train, max_objective,
                                                                                                 device)
         print(f"Resuming after iteration {len(experiment.trials.values())}")
         if (result_path / 'best_parameters').exists():
@@ -82,7 +95,9 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
             name="BO-MOLI",
             search_space=moli_search_space,
             evaluation_function=lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
-                                                                                       gdsc_e, gdsc_m, gdsc_c, gdsc_r,
+                                                                                       x_train_e, x_train_m,
+                                                                                       x_train_c,
+                                                                                       y_train,
                                                                                        0.5, device),
             objective_name="auroc",
             minimize=False,
@@ -108,8 +123,9 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         experiment.eval()
         max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
         experiment.evaluation_function = lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
-                                                                                                gdsc_e, gdsc_m, gdsc_c,
-                                                                                                gdsc_r, max_objective,
+                                                                                                x_train_e, x_train_m,
+                                                                                                x_train_c,
+                                                                                                y_train, max_objective,
                                                                                                 device)
         save(experiment, str(checkpoint_path))
 
@@ -139,18 +155,17 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     save_auroc_plots(objectives, result_path, sobol_iterations)
 
     if run_test:
-        auc_train, auc_test_erlo, auc_test_cet, auc_test_both = auto_moli_egfr.train_and_test(best_parameters, gdsc_e,
-                                                                                              gdsc_m, gdsc_c, gdsc_r,
-                                                                                              pdx_e_erlo, pdx_m_erlo,
-                                                                                              pdx_c_erlo, pdx_r_erlo,
-                                                                                              pdx_e_cet, dpx_m_cet,
-                                                                                              pdx_c_cet, pdx_r_cet,
+        auc_train, auc_test = auto_moli_egfr.train_and_test(best_parameters,
+                                                                                              x_train_e, x_train_m,
+                                                                                              x_train_c,
+                                                                                              y_train,
+                                                                                              x_test_e, x_test_m,
+                                                                                              x_test_c,
+                                                                                              y_test,
                                                                                               device)
-        result_file.write(f'EGFR Validation = {max_objective}\n')
-        result_file.write(f'EGFR: AUROC Train = {auc_train}\n')
-        result_file.write(f'EGFR Cetuximab: AUROC = {auc_test_cet}\n')
-        result_file.write(f'EGFR Erlotinib: AUROC = {auc_test_erlo}\n')
-        result_file.write(f'EGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}\n')
+        result_file.write(f'EGFR Validation Auroc = {max_objective}\n')
+        result_file.write(f'EGFR Train Auroc = {auc_train}\n')
+        result_file.write(f'EGFR Test Auroc = {auc_test}\n')
         result_file.close()
 
 

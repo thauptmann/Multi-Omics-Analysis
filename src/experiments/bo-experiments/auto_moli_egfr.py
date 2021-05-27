@@ -128,8 +128,8 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, best_auc, device):
     return (mean, sem)
 
 
-def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo,
-                   PDXEcet, PDXMcet, PDXCcet, PDXRcet, device):
+def train_and_test(parameterization, x_train_e, x_train_m, x_train_c, y_train, x_test_e, x_test_m, x_test_c, y_test,
+                   device):
     train_batch_size = 256
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
@@ -160,28 +160,13 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
     torch.manual_seed(42)
     np.random.seed(42)
 
-    x_train_e = GDSCE
-    x_train_m = GDSCM
-    x_train_c = GDSCC
-    y_train = GDSCR
-
-    x_test_e_erlo = PDXEerlo
-    x_test_m_erlo = torch.FloatTensor(PDXMerlo)
-    x_test_c_erlo = torch.FloatTensor(PDXCerlo)
-    y_test_erlo = PDXRerlo
-
-    x_test_e_cet = PDXEcet
-    x_test_m_cet = torch.FloatTensor(PDXMcet)
-    x_test_c_cet = torch.FloatTensor(PDXCcet)
-    y_test_cet = PDXRcet
+    x_test_m = torch.FloatTensor(x_test_m)
+    x_test_c = torch.FloatTensor(x_test_c)
 
     train_scaler_gdsc = StandardScaler()
     x_train_e = train_scaler_gdsc.fit_transform(x_train_e)
-    x_test_e_cet = torch.FloatTensor(train_scaler_gdsc.transform(x_test_e_cet))
-    x_test_e_erlo = torch.FloatTensor(train_scaler_gdsc.transform(x_test_e_erlo))
-
-    y_test_cet = torch.FloatTensor(y_test_cet.astype(int))
-    y_test_erlo = torch.FloatTensor(y_test_erlo.astype(int))
+    x_test_e = torch.FloatTensor(train_scaler_gdsc.transform(x_test_e))
+    y_test = torch.FloatTensor(y_test.astype(int))
 
     _, ie_dim = x_train_e.shape
     _, im_dim = x_train_m.shape
@@ -220,21 +205,11 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
                                                shuffle=False,
                                                num_workers=8, sampler=sampler, pin_memory=True, drop_last=True)
 
-    test_dataset_erlo = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e_erlo),
-                                                       torch.FloatTensor(x_test_m_erlo),
-                                                       torch.FloatTensor(x_test_c_erlo), torch.FloatTensor(y_test_erlo))
-    test_loader_erlo = torch.utils.data.DataLoader(dataset=test_dataset_erlo, batch_size=train_batch_size,
-                                                   shuffle=False, num_workers=8, pin_memory=True)
-
-    test_dataset_cet = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e_cet),
-                                                      torch.FloatTensor(x_test_m_cet),
-                                                      torch.FloatTensor(x_test_c_cet), torch.FloatTensor(y_test_cet))
-    test_loader_cet = torch.utils.data.DataLoader(dataset=test_dataset_cet, batch_size=train_batch_size, shuffle=False,
-                                                  num_workers=8, pin_memory=True)
-
-    test_dataset_both = torch.utils.data.ConcatDataset((test_dataset_cet, test_dataset_erlo))
-    test_loader_both = torch.utils.data.DataLoader(dataset=test_dataset_both, batch_size=train_batch_size,
-                                                   shuffle=False, num_workers=8, pin_memory=True)
+    test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e),
+                                                  torch.FloatTensor(x_test_m),
+                                                  torch.FloatTensor(x_test_c), torch.FloatTensor(y_test))
+    test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
+                                              num_workers=8, pin_memory=True)
 
     auc_train = 0
     for _ in range(epochs):
@@ -242,7 +217,5 @@ def train_and_test(parameterization, GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMe
                                                 all_triplet_selector, trip_criterion,
                                                 bce_with_logits_loss, device, gamma)
 
-    auc_test_erlo = network_training_util.validate(test_loader_erlo, moli_model, device)
-    auc_test_cet = network_training_util.validate(test_loader_cet, moli_model, device)
-    auc_test_both = network_training_util.validate(test_loader_both, moli_model, device)
-    return auc_train, auc_test_erlo, auc_test_cet, auc_test_both
+    auc_test = network_training_util.validate(test_loader, moli_model, device)
+    return auc_train, auc_test
