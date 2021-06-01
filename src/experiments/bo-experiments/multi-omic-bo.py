@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 import torch
+import pandas as pd
 import pickle
 from ax import (
     ParameterType,
@@ -57,18 +58,17 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     checkpoint_path = result_path / 'checkpoint.json'
 
     data_path = Path('..', '..', '..', 'data')
-    gdsc_e, gdsc_m, gdsc_c, gdsc_r = egfr_data.load_data(data_path)
+    gdsc_e, gdsc_m, gdsc_c, gdsc_r, PDX_E_erlo, PDX_M_erlo, PDX_C_erlo, PDX_R_erlo, PDX_E_cet, PDX_M_cet, PDX_C_cet, \
+    PDX_R_cet = egfr_data.load_data(data_path)
     stratified_shuffle_splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.1)
     train_index, test_index = next(stratified_shuffle_splitter.split(gdsc_e, gdsc_r))
     x_train_e = gdsc_e[train_index]
     x_train_m = gdsc_m[train_index]
     x_train_c = gdsc_c[train_index]
-
+    y_train = gdsc_r[train_index]
     x_test_e = gdsc_e[test_index]
     x_test_m = gdsc_m[test_index]
     x_test_c = gdsc_c[test_index]
-
-    y_train = gdsc_r[train_index]
     y_test = gdsc_r[test_index]
 
     moli_search_space = create_search_space(combination)
@@ -155,17 +155,21 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     save_auroc_plots(objectives, result_path, sobol_iterations)
 
     if run_test:
-        auc_train, auc_test = auto_moli_egfr.train_and_test(best_parameters,
-                                                                                              x_train_e, x_train_m,
-                                                                                              x_train_c,
-                                                                                              y_train,
-                                                                                              x_test_e, x_test_m,
-                                                                                              x_test_c,
-                                                                                              y_test,
-                                                                                              device)
+        model, scaler = auto_moli_egfr.train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device)
+        auc_test = auto_moli_egfr.test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device)
+        auc_test_cet = auto_moli_egfr.test(model, scaler, PDX_E_cet, PDX_M_cet, PDX_C_cet, PDX_R_cet,  device)
+        auc_test_erlo = auto_moli_egfr.test(model, scaler, PDX_E_erlo, PDX_M_erlo, PDX_C_erlo, PDX_R_erlo,  device)
+        pdx_e_both = pd.concat(PDX_E_erlo + PDX_E_cet)
+        pdx_m_both = pd.concat(PDX_M_erlo, PDX_M_cet)
+        pdx_c_both = pd.concat(PDX_C_erlo, PDX_C_cet)
+        pdx_r_both = pd.concat(PDX_R_erlo, PDX_R_cet)
+        auc_test_both = auto_moli_egfr.test(model, scaler, pdx_e_both, pdx_m_both, pdx_c_both, pdx_r_both,  device)
+
         result_file.write(f'EGFR Validation Auroc = {max_objective}\n')
-        result_file.write(f'EGFR Train Auroc = {auc_train}\n')
         result_file.write(f'EGFR Test Auroc = {auc_test}\n')
+        result_file.write(f'EGFR Cetuximab: AUROC = {auc_test_cet}\n')
+        result_file.write(f'EGFR Erlotinib: AUROC = {auc_test_erlo}\n')
+        result_file.write(f'EGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}\n')
         result_file.close()
 
 

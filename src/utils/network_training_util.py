@@ -2,9 +2,6 @@ import torch.utils.data
 import torch.nn
 from sklearn.metrics import roc_auc_score
 import pandas as pd
-import warnings
-
-warnings.filterwarnings('ignore')
 
 
 def create_dataloader(x_expression, x_mutation, x_cna, y_response, mini_batch, pin_memory, sampler=None,

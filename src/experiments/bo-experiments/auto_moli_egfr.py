@@ -10,6 +10,10 @@ from siamese_triplet.utils import AllTripletSelector
 from utils import network_training_util
 
 
+torch.manual_seed(42)
+np.random.seed(42)
+
+
 def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, best_auc, device):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
@@ -128,9 +132,7 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, best_auc, device):
     return (mean, sem)
 
 
-def train_and_test(parameterization, x_train_e, x_train_m, x_train_c, y_train, x_test_e, x_test_m, x_test_c, y_test,
-                   device):
-    train_batch_size = 256
+def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -157,16 +159,9 @@ def train_and_test(parameterization, x_train_e, x_train_m, x_train_c, y_train, x
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
     margin = parameterization['margin']
-    torch.manual_seed(42)
-    np.random.seed(42)
-
-    x_test_m = torch.FloatTensor(x_test_m)
-    x_test_c = torch.FloatTensor(x_test_c)
 
     train_scaler_gdsc = StandardScaler()
     x_train_e = train_scaler_gdsc.fit_transform(x_train_e)
-    x_test_e = torch.FloatTensor(train_scaler_gdsc.transform(x_test_e))
-    y_test = torch.FloatTensor(y_test.astype(int))
 
     _, ie_dim = x_train_e.shape
     _, im_dim = x_train_m.shape
@@ -205,17 +200,25 @@ def train_and_test(parameterization, x_train_e, x_train_m, x_train_c, y_train, x
                                                shuffle=False,
                                                num_workers=8, sampler=sampler, pin_memory=True, drop_last=True)
 
+    for _ in range(epochs):
+        network_training_util.train(train_loader, moli_model, moli_optimiser,
+                                    all_triplet_selector, trip_criterion,
+                                    bce_with_logits_loss, device, gamma)
+    return moli_model, train_scaler_gdsc
+
+
+def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device):
+    x_test_e = torch.FloatTensor(scaler.transform(x_test_e))
+    y_test = torch.FloatTensor(test_y.astype(int))
+    train_batch_size = 256
+    x_test_m = torch.FloatTensor(x_test_m)
+    x_test_c = torch.FloatTensor(x_test_c)
+
     test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e),
                                                   torch.FloatTensor(x_test_m),
-                                                  torch.FloatTensor(x_test_c), torch.FloatTensor(y_test))
+                                                  torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
                                               num_workers=8, pin_memory=True)
-
-    auc_train = 0
-    for _ in range(epochs):
-        auc_train = network_training_util.train(train_loader, moli_model, moli_optimiser,
-                                                all_triplet_selector, trip_criterion,
-                                                bce_with_logits_loss, device, gamma)
-
     auc_test = network_training_util.validate(test_loader, moli_model, device)
-    return auc_train, auc_test
+
+    return auc_test
