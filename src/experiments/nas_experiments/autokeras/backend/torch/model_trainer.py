@@ -27,9 +27,9 @@ from copy import deepcopy
 from torch.utils.data import RandomSampler, DataLoader
 from tqdm import tqdm, trange
 
-from autokeras.constant import Constant
-from autokeras.nn.model_trainer import ModelTrainerBase
-from autokeras.text.pretrained_bert.optimization import BertAdam, warmup_linear
+from experiments.nas_experiments.autokeras.constant import Constant
+from experiments.nas_experiments.autokeras.nn.model_trainer import ModelTrainerBase
+from experiments.nas_experiments.autokeras.text.pretrained_bert.optimization import BertAdam, warmup_linear
 
 
 def get_device():
@@ -75,7 +75,7 @@ class ModelTrainer(ModelTrainerBase):
         """Train the model.
         Train the model with max_iter_num or max_no_improvement_num is met.
         Args:
-            lr: learning rate of the traininig
+            lr: learning rate of the training
             timeout: timeout in seconds
             max_iter_num: An integer. The maximum number of epochs to train the model.
                 The training will stop when this number is reached.
@@ -101,12 +101,11 @@ class ModelTrainer(ModelTrainerBase):
             lr=lr,
             momentum=0.9,
             weight_decay=3e-4)
-        # self.optimizer = torch.optim.Adam(self.model.parameters())
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, max_iter_num)
 
         for epoch in range(max_iter_num):
-            self.scheduler.step()
             self._train()
+            self.scheduler.step()
             test_loss, metric_value = self._test()
             self.current_metric_value = metric_value
             test_metric_value_list.append(metric_value)
@@ -140,7 +139,9 @@ class ModelTrainer(ModelTrainerBase):
         for batch_idx, (inputs, targets) in enumerate(deepcopy(loader)):
             if time.time() >= self._timeout:
                 raise TimeoutError
-            inputs, targets = inputs.to(self.device), targets.to(self.device)
+            inputs = inputs.to(self.device)
+            targets = targets.to(self.device)
+            targets = targets.unsqueeze(1)
             self.optimizer.zero_grad()
             outputs = self.model(inputs)
             loss = self.loss_function(outputs, targets)

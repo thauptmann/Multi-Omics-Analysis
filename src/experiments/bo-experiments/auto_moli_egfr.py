@@ -209,7 +209,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
 
 def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device):
     x_test_e = torch.FloatTensor(scaler.transform(x_test_e))
-    y_test = torch.FloatTensor(test_y.astype(int))
+    test_y = torch.FloatTensor(test_y.astype(int))
     train_batch_size = 256
     x_test_m = torch.FloatTensor(x_test_m)
     x_test_c = torch.FloatTensor(x_test_c)

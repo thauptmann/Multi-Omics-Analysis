@@ -9,8 +9,8 @@ import math
 from scipy.linalg import cholesky, cho_solve, solve_triangular, LinAlgError
 from sklearn.metrics.pairwise import rbf_kernel
 
-from custom_queue import Queue
-from net_transformer import transform
+from .custom_queue import Queue
+from .net_transformer import transform
 from experiments.nas_experiments.autokeras.nn.layers import is_layer, LayerType
 from experiments.nas_experiments.autokeras.constant import Constant
 
@@ -303,9 +303,9 @@ class BayesianOptimizer:
         target_graph = None
         father_id = None
         descriptors = deepcopy(descriptors)
-        elem_class = Elem
-        if self.metric.higher_better():
-            elem_class = ReverseElem
+        # elem_class = Elem
+        # if self.metric.higher_better():
+        elem_class = ReverseElem
 
         # Initialize the priority queue.
         pq = PriorityQueue()
@@ -366,9 +366,9 @@ class BayesianOptimizer:
         return mean - self.beta * std
 
     def _get_init_opt_acq_value(self):
-        if self.metric.higher_better():
-            return -np.inf
-        return np.inf
+        # if self.metric.higher_better():
+        return -np.inf
+        # return np.inf
 
     def _accept_new_acq_value(self, opt_acq, temp_acq_value):
         if temp_acq_value > opt_acq and self.metric.higher_better():

@@ -1,6 +1,6 @@
 import numpy as np
 
-from layers import StubDense, get_n_dim, get_conv_class, get_batch_norm_class
+from .layers import StubDense, get_n_dim, get_conv_class, get_batch_norm_class
 
 from experiments.nas_experiments.autokeras.constant import Constant
 

@@ -163,10 +163,12 @@ class Searcher(ABC):
     def mp_search(self, graph, other_info, model_id, train_data, test_data):
         ctx = mp.get_context()
         q = ctx.Queue()
-        p = ctx.Process(target=train, args=(q, graph, train_data, test_data, self.trainer_args,
-                                            self.metric, self.loss, self.verbose, self.path))
+        #p = ctx.Process(target=train, args=(q, graph, train_data, test_data, self.trainer_args,
+       #                                     self.metric, self.loss, self.verbose, self.path))
+        train(None, graph, train_data, test_data, self.trainer_args,
+                                             self.metric, self.loss, self.verbose, self.path)
         try:
-            p.start()
+            #p.start()
             search_results = self._search_common(q)
             metric_value, loss, graph = q.get(block=True)
             if time.time() >= self._timeout:
@@ -182,9 +184,10 @@ class Searcher(ABC):
         except (TimeoutError, queue.Empty) as e:
             raise TimeoutError from e
         finally:
+            pass
             # terminate and join the subprocess to prevent any resource leak
-            p.terminate()
-            p.join()
+           # p.terminate()
+           # p.join()
 
     def _search_common(self, mp_queue=None):
         search_results = []
@@ -299,14 +302,14 @@ class BayesianSearcher(Searcher):
 
         """
         remaining_time = self._timeout - time.time()
-        generated_graph, new_father_id = self.optimizer.generate(self.descriptors,
+        generated_graph, new_parent_id = self.optimizer.generate(self.descriptors,
                                                                  remaining_time, multiprocessing_queue)
-        if new_father_id is None:
-            new_father_id = 0
+        if new_parent_id is None:
+            new_parent_id = 0
             generated_graph = self.generators[0](self.n_classes, self.input_shapes). \
                 generate(self.default_model_len, self.default_model_width)
 
-        return [(generated_graph, new_father_id)]
+        return [(generated_graph, new_parent_id)]
 
     def update(self, other_info, model_id, graph, metric_value):
         """ Update the controller with evaluation result of a neural architecture.
@@ -317,22 +320,23 @@ class BayesianSearcher(Searcher):
             graph: An instance of Graph. The trained neural architecture.
             metric_value: The final evaluated metric value.
         """
-        father_id = other_info
+        parent_id = other_info
         self.optimizer.fit([graph.extract_descriptor()], [metric_value])
-        self.optimizer.add_child(father_id, model_id)
+        self.optimizer.add_child(parent_id, model_id)
 
 
 def train(q, graph, train_data, test_data, trainer_args, metric, loss, verbose, path):
     """Train the neural architecture."""
     try:
         model = graph.produce_model()
-        loss, metric_value = Backend.get_model_trainer(model=model,
-                                                       path=path,
-                                                       train_data=train_data,
-                                                       test_data=test_data,
-                                                       metric=metric,
-                                                       loss_function=loss,
-                                                       verbose=verbose).train_model(**trainer_args)
+        model_trainer = Backend.get_model_trainer(model=model,
+                                                  path=path,
+                                                  train_data=train_data,
+                                                  test_data=test_data,
+                                                  metric=metric,
+                                                  loss_function=loss,
+                                                  verbose=verbose)
+        loss, metric_value = model_trainer.train_model(**trainer_args)
         model.set_weight_to_graph()
         if q:
             q.put((metric_value, loss, model.graph))

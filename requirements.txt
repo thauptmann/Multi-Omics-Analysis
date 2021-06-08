@@ -2,10 +2,10 @@ scikit-learn~=0.24.1
 numpy~=1.20.0
 pandas~=1.2.1
 torch==1.8.1
-tqdm==4.60.0
+tqdm==4.61.0
 ax-platform~=0.1.20
 psutil
 plotly~=4.14.3
 ax~=0.52.0
-kaleido
 scipy~=1.6.3
+torchmetrics~=0.3.2
