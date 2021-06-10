@@ -229,7 +229,7 @@ class DenseNetGenerator(NetworkGenerator):
         # DenseNet Constant
         self.num_init_features = 64
         self.growth_rate = 32
-        self.block_config = (6, 12, 24, 16)
+        self.block_config = (6,)
         self.drop_rate = 0.1
 
         # Stub layers

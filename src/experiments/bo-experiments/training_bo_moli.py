@@ -8,7 +8,7 @@ from tqdm import trange, tqdm
 from models.bo_moli_model import AdaptiveMoli
 from siamese_triplet.utils import AllTripletSelector
 from utils import network_training_util
-
+from utils.network_training_util import BceWithTripletsToss
 
 torch.manual_seed(42)
 np.random.seed(42)
@@ -108,10 +108,10 @@ def train_evaluate(parameterization, GDSCE, GDSCM, GDSCC, Y, best_auc, device):
 
         trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
 
-        bce_with_logits_loss = torch.nn.BCEWithLogitsLoss()
+        bce_with_triplet_loss = BceWithTripletsToss(parameterization['gamma'], all_triplet_selector, trip_criterion)
         for _ in trange(epochs, desc='Epoch'):
             network_training_util.train(train_loader, moli_model, moli_optimiser,
-                                        all_triplet_selector, trip_criterion, bce_with_logits_loss,
+                                        bce_with_triplet_loss,
                                         device, gamma)
 
         # validate
@@ -184,8 +184,6 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     ])
 
     trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
-    bce_with_logits_loss = torch.nn.BCEWithLogitsLoss()
-
     class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
     weight = 1. / class_sample_count
     samples_weight = np.array([weight[t] for t in y_train])
@@ -199,11 +197,10 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=mini_batch,
                                                shuffle=False,
                                                num_workers=8, sampler=sampler, pin_memory=True, drop_last=True)
-
+    bce_with_triplet_loss = BceWithTripletsToss(parameterization['gamma'], all_triplet_selector, trip_criterion)
     for _ in range(epochs):
         network_training_util.train(train_loader, moli_model, moli_optimiser,
-                                    all_triplet_selector, trip_criterion,
-                                    bce_with_logits_loss, device, gamma)
+                                    bce_with_triplet_loss, device, gamma)
     return moli_model, train_scaler_gdsc
 
 

@@ -20,6 +20,9 @@ class Constant:
     MAX_LAYER_WIDTH = 4096
     MAX_LAYERS = 200
 
+    # Network morphism
+    NOISE_RATIO = 1e-4
+
     # Grid Dimensions
     LENGTH_DIM = 0
     WIDTH_DIM = 1
@@ -29,7 +32,6 @@ class Constant:
     DEFAULT_WIDTH_SEARCH = [64, 128, 256]
 
     # Model Defaults
-
     DENSE_DROPOUT_RATE = 0.5
     CONV_DROPOUT_RATE = 0.25
     MLP_DROPOUT_RATE = 0.25
@@ -42,7 +44,6 @@ class Constant:
     POOLING_KERNEL_SIZE = 2
 
     # ModelTrainer
-
     DATA_AUGMENTATION = True
     MAX_ITER_NUM = 200
     MIN_LOSS_DEC = 1e-4
@@ -52,12 +53,10 @@ class Constant:
     SEARCH_MAX_ITER = 200
 
     # Text Classifier
-
     BERT_TRAINER_EPOCHS = 4
     BERT_TRAINER_BATCH_SIZE = 32
 
     # text preprocessor
-
     EMBEDDING_DIM = 100
     MAX_SEQUENCE_LENGTH = 400
     MAX_NB_WORDS = 5000
@@ -75,11 +74,9 @@ class Constant:
         GoogleDriveFile(google_drive_id='1YKoGj-e4zoyTabt5dYpgEPe-PAmjOTDV', local_name='mbbc.pth')
 
     # Image Resize
-
     MAX_IMAGE_SIZE = 128 * 128
 
     # SYS Constant
-
     SYS_LINUX = 'linux'
     SYS_WINDOWS = 'windows'
     SYS_GOOGLE_COLAB = 'goog_colab'

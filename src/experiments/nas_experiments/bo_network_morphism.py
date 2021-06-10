@@ -3,16 +3,16 @@ import sys
 from pathlib import Path
 
 from torch.utils.data import DataLoader
-
-from experiments.nas_experiments.autokeras.nn.metric import Accuracy
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+from experiments.nas_experiments.autokeras.nn.metric import Accuracy, Auroc
 import torch
-import torchmetrics
 import numpy as np
 from sklearn.model_selection import StratifiedShuffleSplit
 
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+
 from utils.choose_gpu import get_free_gpu
 from utils import egfr_data
+from utils.network_training_util import BceWithTripletsToss
 from autokeras.search import BayesianSearcher
 from autokeras.nn.generator import DenseNetGenerator
 
@@ -56,18 +56,20 @@ def bo_network_morphism_moli(search_iterations, run_test, sobol_iterations, load
     path.mkdir(parents=True, exist_ok=True)
     train_data = torch.Tensor(np.concatenate([x_train_e, x_train_m, x_train_c], axis=1))
     test_data = torch.Tensor(np.concatenate([x_test_e, x_test_m, x_test_c], axis=1))
-    bce_with_logits_loss = torch.nn.BCEWithLogitsLoss()
-    auroc_metric = torchmetrics.AUROC()
+    loss = BceWithTripletsToss()
+    auroc_metric = Auroc
     batch_size = 32
     train_dataset = torch.utils.data.TensorDataset(train_data, torch.Tensor(y_train))
     test_dataset = torch.utils.data.TensorDataset(test_data, torch.Tensor(y_test))
-    train_data_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    train_data_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
     test_data_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
     dense_generator = [DenseNetGenerator]
-    searcher = BayesianSearcher(1, train_data.shape, path, auroc_metric, bce_with_logits_loss, verbose=True,
+    searcher = BayesianSearcher(1, train_data.shape, path, auroc_metric, loss, verbose=True,
                                 generators=dense_generator, skip_conn=False)
     for _ in range(search_iterations):
         searcher.search(train_data_loader, test_data_loader)
+    best_model = searcher.load_best_model()
+
     # for i in range(search_iterations):
         # model = get_next_model()
         # validation_auroc = train_model(model, x_train_e, x_train_m, x_train_c, y_train, early_stopping=True)

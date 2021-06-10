@@ -19,6 +19,7 @@ from utils import egfr_data
 from utils.visualisation import save_auroc_plots
 from siamese_triplet.utils import AllTripletSelector
 from utils import random_parameterization
+from utils.network_training_util import BceWithTripletsToss
 
 
 def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment_name):
@@ -125,10 +126,10 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
 
             trip_criterion = torch.nn.TripletMarginLoss(margin=parameterization['margin'], p=2)
 
-            bce_loss = torch.nn.BCEWithLogitsLoss()
+            bce_with_triplet_loss = BceWithTripletsToss(parameterization['gamma'], all_triplet_selector, trip_criterion)
             for _ in tqdm.trange(parameterization['epochs'], desc='Epoch'):
                 network_training_util.train(train_loader, moli_model, moli_optimiser,
-                                            all_triplet_selector, trip_criterion, bce_loss,
+                                            bce_with_triplet_loss,
                                             device, parameterization['gamma'])
 
             # validate
@@ -243,10 +244,10 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
                                                        batch_size=test_batch_size,
                                                        shuffle=False, num_workers=8, pin_memory=pin_memory)
         auc_train = 0
+        bce_with_triplet_loss
         for _ in range(best_parameterization['epochs']):
             auc_train = network_training_util.train(train_loader, moli_model, moli_optimiser,
-                                                    all_triplet_selector, trip_criterion,
-                                                    bce_loss, device, best_parameterization['gamma'])
+                                                    bce_with_triplet_loss, device, best_parameterization['gamma'])
 
         auc_test_erlo = network_training_util.validate(test_loader_erlo, moli_model, device)
         auc_test_cet = network_training_util.validate(test_loader_cet, moli_model, device)

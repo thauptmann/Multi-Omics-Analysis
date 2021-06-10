@@ -303,10 +303,11 @@ class BayesianOptimizer:
         target_graph = None
         father_id = None
         descriptors = deepcopy(descriptors)
-        # elem_class = Elem
-        # if self.metric.higher_better():
-        elem_class = ReverseElem
 
+        if self.metric.higher_better():
+            elem_class = ReverseElem
+        else:
+            elem_class = Elem
         # Initialize the priority queue.
         pq = PriorityQueue()
         temp_list = []
@@ -366,9 +367,10 @@ class BayesianOptimizer:
         return mean - self.beta * std
 
     def _get_init_opt_acq_value(self):
-        # if self.metric.higher_better():
-        return -np.inf
-        # return np.inf
+        if self.metric.higher_better():
+            return -np.inf
+        else:
+            return np.inf
 
     def _accept_new_acq_value(self, opt_acq, temp_acq_value):
         if temp_acq_value > opt_acq and self.metric.higher_better():

@@ -163,14 +163,15 @@ class Searcher(ABC):
     def mp_search(self, graph, other_info, model_id, train_data, test_data):
         ctx = mp.get_context()
         q = ctx.Queue()
-        #p = ctx.Process(target=train, args=(q, graph, train_data, test_data, self.trainer_args,
-       #                                     self.metric, self.loss, self.verbose, self.path))
-        train(None, graph, train_data, test_data, self.trainer_args,
-                                             self.metric, self.loss, self.verbose, self.path)
+        search_results_q = ctx.Queue()
+        p = ctx.Process(target=self._generate_search_results, args=(q, search_results_q))
         try:
-            #p.start()
-            search_results = self._search_common(q)
+            p.start()
+            train(q, graph, train_data, test_data, self.trainer_args,
+                  self.metric, self.loss, self.verbose, self.path)
             metric_value, loss, graph = q.get(block=True)
+            results = search_results_q.get(block=True)
+            search_results = self._search_common(results)
             if time.time() >= self._timeout:
                 raise TimeoutError
             if self.verbose and search_results:
@@ -180,26 +181,25 @@ class Searcher(ABC):
             if metric_value is not None:
                 self.add_model(metric_value, loss, graph, model_id)
                 self.update(other_info, model_id, graph, metric_value)
-
         except (TimeoutError, queue.Empty) as e:
             raise TimeoutError from e
         finally:
-            pass
-            # terminate and join the subprocess to prevent any resource leak
-           # p.terminate()
-           # p.join()
+            p.terminate()
 
-    def _search_common(self, mp_queue=None):
-        search_results = []
+    def _generate_search_results(self, mp_queue=None, search_result_queue=None):
         if not self.training_queue:
             results = self.generate(mp_queue)
-            for (generated_graph, generated_other_info) in results:
-                new_model_id = self.model_count
-                self.model_count += 1
-                self.training_queue.append((generated_graph, generated_other_info, new_model_id))
-                self.descriptors.append(generated_graph.extract_descriptor())
-                search_results.append((generated_graph, generated_other_info, new_model_id))
-            self.neighbour_history = []
+            search_result_queue.put(results)
+
+    def _search_common(self, results):
+        search_results = []
+        for (generated_graph, generated_other_info) in results:
+            new_model_id = self.model_count
+            self.model_count += 1
+            self.training_queue.append((generated_graph, generated_other_info, new_model_id))
+            self.descriptors.append(generated_graph.extract_descriptor())
+            search_results.append((generated_graph, generated_other_info, new_model_id))
+        self.neighbour_history = []
 
         return search_results
 
@@ -323,6 +323,8 @@ class BayesianSearcher(Searcher):
         parent_id = other_info
         self.optimizer.fit([graph.extract_descriptor()], [metric_value])
         self.optimizer.add_child(parent_id, model_id)
+
+
 
 
 def train(q, graph, train_data, test_data, trainer_args, metric, loss, verbose, path):

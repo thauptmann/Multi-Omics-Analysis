@@ -17,19 +17,15 @@
 
 import sys
 import time
-
-import numpy as np
+from copy import deepcopy
 from functools import reduce
-
 import os
 import torch
-from copy import deepcopy
-from torch.utils.data import RandomSampler, DataLoader
-from tqdm import tqdm, trange
+from torch import nn
+from tqdm import tqdm
 
 from experiments.nas_experiments.autokeras.constant import Constant
 from experiments.nas_experiments.autokeras.nn.model_trainer import ModelTrainerBase
-from experiments.nas_experiments.autokeras.text.pretrained_bert.optimization import BertAdam, warmup_linear
 
 
 def get_device():
@@ -130,13 +126,11 @@ class ModelTrainer(ModelTrainerBase):
         self.model.train()
         loader = self.train_loader
         self.current_epoch += 1
-
         if self.verbose:
             progress_bar = self.init_progress_bar(len(loader))
         else:
             progress_bar = None
-
-        for batch_idx, (inputs, targets) in enumerate(deepcopy(loader)):
+        for (inputs, targets) in loader:
             if time.time() >= self._timeout:
                 raise TimeoutError
             inputs = inputs.to(self.device)
@@ -148,8 +142,7 @@ class ModelTrainer(ModelTrainerBase):
             loss.backward()
             self.optimizer.step()
             if self.verbose:
-                if batch_idx % 10 == 0:
-                    progress_bar.update(10)
+                progress_bar.update(1)
         if self.verbose:
             progress_bar.close()
 
@@ -167,26 +160,29 @@ class ModelTrainer(ModelTrainerBase):
             progress_bar = None
 
         with torch.no_grad():
-            for batch_idx, (inputs, targets) in enumerate(deepcopy(loader)):
+            for (inputs, targets) in loader:
                 if time.time() >= self._timeout:
                     raise TimeoutError
-                inputs, targets = inputs.to(self.device), targets.to(self.device)
-                outputs = self.model(inputs)
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
+                targets = targets.unsqueeze(1)
+                predictions = self.model(inputs)
+                sigmoid = nn.Sigmoid()
+                predicted_probabilities = sigmoid(predictions)
                 # cast tensor to float
-                test_loss += float(self.loss_function(outputs, targets))
-
-                all_predicted.append(outputs.cpu().numpy())
-                all_targets.append(targets.cpu().numpy())
+                test_loss += float(self.loss_function(predictions, targets))
+                all_predicted.append(predicted_probabilities.cpu())
+                all_targets.append(targets.cpu())
                 if self.verbose:
-                    if batch_idx % 10 == 0:
-                        progress_bar.update(10)
+                    progress_bar.update(1)
 
         if self.verbose:
             progress_bar.close()
 
-        all_predicted = reduce(lambda x, y: np.concatenate((x, y)), all_predicted)
-        all_targets = reduce(lambda x, y: np.concatenate((x, y)), all_targets)
-        return test_loss, self.metric.compute(all_predicted, all_targets)
+        all_predicted = reduce(lambda x, y: torch.cat((x, y)), all_predicted)
+        all_targets = reduce(lambda x, y: torch.cat((x, y)), all_targets)
+
+        return test_loss, self.metric.compute(all_predicted, all_targets).numpy()
 
     def _save_model(self):
         torch.save(self.model.state_dict(), self.temp_model_path)
@@ -259,131 +255,3 @@ class EarlyStop:
             self._done = True
 
         return True
-
-
-class BERTTrainer(ModelTrainerBase):
-    """A ModelTrainer for the Google AI's BERT model. Currently supports only classification task.
-
-    Attributes:
-        model: Type of BERT model to be used for the task. E.g:- Uncased, Cased, etc.
-        output_model_file: File location to save the trained model.
-        num_labels: Number of output labels for the classification task.
-    """
-
-    def __init__(self, train_data, model, output_model_file, loss_function=None):
-        """Initialize the BERTTrainer.
-
-        Args:
-            train_data: the training data.
-            model: Type of BERT model to be used for the task. E.g:- Uncased, Cased, etc.
-            output_model_file: File location to save the trained model.
-            num_labels: Number of output labels for the classification task.
-            loss_function: The loss function for the classifier.
-        """
-        super().__init__(loss_function, train_data, verbose=True)
-
-        self.train_data = train_data
-        self.model = model
-        self.output_model_file = output_model_file
-
-        # Training params
-        self.global_step = 0
-        self.gradient_accumulation_steps = 1
-        self.learning_rate = 5e-5
-        self.nb_tr_steps = 1
-        self.num_train_epochs = Constant.BERT_TRAINER_EPOCHS
-        self.tr_loss = 0
-        self.train_batch_size = Constant.BERT_TRAINER_BATCH_SIZE
-        self.warmup_proportion = 0.1
-        self.train_data_size = self.train_data.__len__()
-        self.num_train_steps = int(self.train_data_size /
-                                   self.train_batch_size /
-                                   self.gradient_accumulation_steps *
-                                   self.num_train_epochs)
-
-    def train_model(self,
-                    max_iter_num=None,
-                    max_no_improvement_num=None,
-                    timeout=None):
-        """Train the model.
-
-        Train the model with max_iter_num.
-
-        Args:
-            timeout: timeout in seconds
-            max_iter_num: An integer. The maximum number of epochs to train the model.
-            max_no_improvement_num: An integer. The maximum number of epochs when the loss value doesn't decrease.
-
-        Returns:
-            Training loss.
-        """
-        if max_iter_num is not None:
-            self.num_train_epochs = max_iter_num
-
-        self.model.to(self.device)
-
-        # Prepare optimizer
-        param_optimizer = list(self.model.named_parameters())
-        no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
-        optimizer_grouped_parameters = [
-            {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},
-            {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
-        ]
-
-        # Add bert adam
-        optimizer = BertAdam(optimizer_grouped_parameters,
-                             lr=self.learning_rate,
-                             warmup=self.warmup_proportion,
-                             t_total=self.num_train_steps)
-
-        train_sampler = RandomSampler(self.train_data)
-        train_dataloader = DataLoader(self.train_data, sampler=train_sampler, batch_size=self.train_batch_size)
-
-        if self.verbose:
-            print("***** Running training *****")
-            print("Num examples = %d", self.train_data_size)
-            print("Batch size = %d", self.train_batch_size)
-            print("Num steps = %d", self.num_train_steps)
-
-        self.model.train()
-        for _ in trange(int(self.num_train_epochs), desc="Epoch"):
-            tr_loss = self._train(optimizer, train_dataloader)
-
-        if self.verbose:
-            print("Training loss = %d", tr_loss)
-
-        self._save_model()
-        return tr_loss
-
-    def _train(self, optimizer, dataloader):
-        """ Actual training is performed here."""
-        tr_loss = 0
-        nb_tr_examples, nb_tr_steps = 0, 0
-        for step, batch in enumerate(tqdm(dataloader, desc="Iteration")):
-            batch = tuple(t.to(self.device) for t in batch)
-            input_ids, input_mask, segment_ids, label_ids = batch
-            loss = self.model(input_ids, segment_ids, input_mask, label_ids)
-            if self.gradient_accumulation_steps > 1:
-                loss = loss / self.gradient_accumulation_steps
-
-            loss.backward()
-
-            tr_loss += loss.item()
-            nb_tr_examples += input_ids.size(0)
-            nb_tr_steps += 1
-            if (step + 1) % self.gradient_accumulation_steps == 0:
-                # modify learning rate with special warm up BERT uses
-                lr_this_step = self.learning_rate * warmup_linear(self.global_step / self.num_train_steps,
-                                                                  self.warmup_proportion)
-                for param_group in optimizer.param_groups:
-                    param_group['lr'] = lr_this_step
-                optimizer.step()
-                optimizer.zero_grad()
-                self.global_step += 1
-
-        return tr_loss
-
-    def _save_model(self):
-        """Save the trained model to disk."""
-        model_to_save = self.model.module if hasattr(self.model, 'module') else self.model  # Only save the model
-        torch.save(model_to_save.state_dict(), self.output_model_file)

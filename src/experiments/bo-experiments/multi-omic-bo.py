@@ -21,7 +21,7 @@ from utils.choose_gpu import get_free_gpu
 import argparse
 from pathlib import Path
 import numpy as np
-import auto_moli_egfr
+from training_bo_moli import train_evaluate, train_final, test
 from utils import egfr_data
 from utils.visualisation import save_auroc_plots
 
@@ -79,7 +79,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         print("Load checkpoint")
         experiment = load(str(checkpoint_path))
         max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
-        experiment.evaluation_function = lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
+        experiment.evaluation_function = lambda parameterization: train_evaluate(parameterization,
                                                                                                 x_train_e, x_train_m,
                                                                                                 x_train_c,
                                                                                                 y_train, max_objective,
@@ -94,7 +94,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         experiment = SimpleExperiment(
             name="BO-MOLI",
             search_space=moli_search_space,
-            evaluation_function=lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
+            evaluation_function=lambda parameterization: train_evaluate(parameterization,
                                                                                        x_train_e, x_train_m,
                                                                                        x_train_c,
                                                                                        y_train,
@@ -122,7 +122,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         experiment.new_trial(generator_run=generator_run)
         experiment.eval()
         max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
-        experiment.evaluation_function = lambda parameterization: auto_moli_egfr.train_evaluate(parameterization,
+        experiment.evaluation_function = lambda parameterization: train_evaluate(parameterization,
                                                                                                 x_train_e, x_train_m,
                                                                                                 x_train_c,
                                                                                                 y_train, max_objective,
@@ -155,15 +155,15 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     save_auroc_plots(objectives, result_path, sobol_iterations)
 
     if run_test:
-        model, scaler = auto_moli_egfr.train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device)
-        auc_test = auto_moli_egfr.test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device)
-        auc_test_cet = auto_moli_egfr.test(model, scaler, PDX_E_cet, PDX_M_cet, PDX_C_cet, PDX_R_cet,  device)
-        auc_test_erlo = auto_moli_egfr.test(model, scaler, PDX_E_erlo, PDX_M_erlo, PDX_C_erlo, PDX_R_erlo,  device)
+        model, scaler = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device)
+        auc_test = test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device)
+        auc_test_cet = test(model, scaler, PDX_E_cet, PDX_M_cet, PDX_C_cet, PDX_R_cet,  device)
+        auc_test_erlo = test(model, scaler, PDX_E_erlo, PDX_M_erlo, PDX_C_erlo, PDX_R_erlo,  device)
         pdx_e_both = pd.concat(PDX_E_erlo + PDX_E_cet)
         pdx_m_both = pd.concat(PDX_M_erlo, PDX_M_cet)
         pdx_c_both = pd.concat(PDX_C_erlo, PDX_C_cet)
         pdx_r_both = pd.concat(PDX_R_erlo, PDX_R_cet)
-        auc_test_both = auto_moli_egfr.test(model, scaler, pdx_e_both, pdx_m_both, pdx_c_both, pdx_r_both,  device)
+        auc_test_both = test(model, scaler, pdx_e_both, pdx_m_both, pdx_c_both, pdx_r_both,  device)
 
         result_file.write(f'EGFR Validation Auroc = {max_objective}\n')
         result_file.write(f'EGFR Test Auroc = {auc_test}\n')
