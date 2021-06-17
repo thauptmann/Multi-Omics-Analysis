@@ -39,11 +39,7 @@ batch_size_list = [32, 64, 128]
 
 
 def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, experiment_name, combination,
-            sampling_method):
-    random_seed = 42
-    torch.manual_seed(random_seed)
-    np.random.seed(random_seed)
-
+            sampling_method, variance_iterations):
     if sampling_method == 'sobol':
         sobol_iterations = 0
 
@@ -73,105 +69,114 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
     y_test = gdsc_r[test_index]
 
     moli_search_space = create_search_space(combination)
-    sobol = Models.SOBOL(moli_search_space, seed=random_seed)
 
-    # load or set up experiment with initial sobel runs
-    if load_checkpoint & checkpoint_path.exists():
-        print("Load checkpoint")
-        experiment = load(str(checkpoint_path))
-        max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
-        experiment.evaluation_function = lambda parameterization: train_evaluate(parameterization,
-                                                                                                x_train_e, x_train_m,
-                                                                                                x_train_c,
-                                                                                                y_train, max_objective,
-                                                                                                device)
-        print(f"Resuming after iteration {len(experiment.trials.values())}")
-        if (result_path / 'best_parameters').exists():
-            best_parameters = pickle.load(open(result_path / 'best_parameters', 'rb'))
+    if variance_iterations:
+        random_seeds = [42]
+    else:
+        random_seeds = [42, 72, 69, 46, 34]
+    for iteration_number, random_seed in enumerate(random_seeds):
+        result_file.write(f'Iteration {iteration_number} with seed {random_seed}: \n')
+        torch.manual_seed(random_seed)
+        np.random.seed(random_seed)
+        sobol = Models.SOBOL(moli_search_space, seed=random_seed)
+
+        # load or set up experiment with initial sobel runs
+        if load_checkpoint & checkpoint_path.exists():
+            print("Load checkpoint")
+            experiment = load(str(checkpoint_path))
+            max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
+            experiment.evaluation_function = lambda parameterization: train_evaluate(parameterization,
+                                                                                     x_train_e, x_train_m,
+                                                                                     x_train_c,
+                                                                                     y_train, max_objective,
+                                                                                     device)
+            print(f"Resuming after iteration {len(experiment.trials.values())}")
+            if (result_path / 'best_parameters').exists():
+                best_parameters = pickle.load(open(result_path / 'best_parameters', 'rb'))
+            else:
+                best_parameters = None
         else:
             best_parameters = None
-    else:
-        best_parameters = None
-        experiment = SimpleExperiment(
-            name="BO-MOLI",
-            search_space=moli_search_space,
-            evaluation_function=lambda parameterization: train_evaluate(parameterization,
-                                                                                       x_train_e, x_train_m,
-                                                                                       x_train_c,
-                                                                                       y_train,
-                                                                                       0.5, device),
-            objective_name="auroc",
-            minimize=False,
-        )
+            experiment = SimpleExperiment(
+                name="BO-MOLI",
+                search_space=moli_search_space,
+                evaluation_function=lambda parameterization: train_evaluate(parameterization,
+                                                                            x_train_e, x_train_m,
+                                                                            x_train_c,
+                                                                            y_train,
+                                                                            0.5, device),
+                objective_name="auroc",
+                minimize=False,
+            )
 
-        print(f"Running Sobol initialization trials...")
-        for i in range(sobol_iterations):
-            print(f"Running Sobol initialisation {i + 1}/{sobol_iterations}")
-            experiment.new_trial(generator_run=sobol.gen(1))
+            print(f"Running Sobol initialization trials...")
+            for i in range(sobol_iterations):
+                print(f"Running Sobol initialisation {i + 1}/{sobol_iterations}")
+                experiment.new_trial(generator_run=sobol.gen(1))
+                experiment.eval()
+            save(experiment, str(checkpoint_path))
+
+        for i in range(len(experiment.trials.values()), search_iterations):
+            print(f"Running GP+EI optimization trial {i + 1} ...")
+            # Reinitialize GP+EI model at each step with updated data.
+            if sampling_method == 'gp':
+                gp_ei = Models.BOTORCH(experiment=experiment, data=experiment.fetch_data())
+                generator_run = gp_ei.gen(1)
+            else:
+                generator_run = sobol.gen(1)
+
+            experiment.new_trial(generator_run=generator_run)
             experiment.eval()
+            max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
+            experiment.evaluation_function = lambda parameterization: train_evaluate(parameterization,
+                                                                                     x_train_e, x_train_m,
+                                                                                     x_train_c,
+                                                                                     y_train, max_objective,
+                                                                                     device)
+            save(experiment, str(checkpoint_path))
+
+            if i % 10 == 0:
+                data = experiment.fetch_data()
+                df = data.df
+                best_arm_name = df.arm_name[df['mean'] == df['mean'].max()].values[0]
+                best_arm = experiment.arms_by_name[best_arm_name]
+                best_parameters = best_arm.parameters
+                objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
+                save_auroc_plots(objectives, result_path, sobol_iterations)
+                print(best_parameters)
+
+        result_file.write(str(best_parameters) + '\n')
+        print("Done!")
+
+        # save results
+        data = experiment.fetch_data()
+        df = data.df
+        best_arm_name = df.arm_name[df['mean'] == df['mean'].max()].values[0]
+        best_arm = experiment.arms_by_name[best_arm_name]
+        best_parameters = best_arm.parameters
+        objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
         save(experiment, str(checkpoint_path))
+        pickle.dump(objectives, open(result_path / 'objectives', "wb"))
+        pickle.dump(best_parameters, open(result_path / 'best_parameters', "wb"))
+        save_auroc_plots(objectives, result_path, sobol_iterations)
 
-    for i in range(len(experiment.trials.values()), search_iterations):
-        print(f"Running GP+EI optimization trial {i + 1} ...")
-        # Reinitialize GP+EI model at each step with updated data.
-        if sampling_method == 'gp':
-            gp_ei = Models.BOTORCH(experiment=experiment, data=experiment.fetch_data())
-            generator_run = gp_ei.gen(1)
-        else:
-            generator_run = sobol.gen(1)
+        if run_test:
+            model, scaler = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device)
+            auc_test = test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device)
+            auc_test_cet = test(model, scaler, PDX_E_cet, PDX_M_cet, PDX_C_cet, PDX_R_cet, device)
+            auc_test_erlo = test(model, scaler, PDX_E_erlo, PDX_M_erlo, PDX_C_erlo, PDX_R_erlo, device)
+            pdx_e_both = pd.concat(PDX_E_erlo + PDX_E_cet)
+            pdx_m_both = pd.concat(PDX_M_erlo, PDX_M_cet)
+            pdx_c_both = pd.concat(PDX_C_erlo, PDX_C_cet)
+            pdx_r_both = pd.concat(PDX_R_erlo, PDX_R_cet)
+            auc_test_both = test(model, scaler, pdx_e_both, pdx_m_both, pdx_c_both, pdx_r_both, device)
 
-        experiment.new_trial(generator_run=generator_run)
-        experiment.eval()
-        max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
-        experiment.evaluation_function = lambda parameterization: train_evaluate(parameterization,
-                                                                                                x_train_e, x_train_m,
-                                                                                                x_train_c,
-                                                                                                y_train, max_objective,
-                                                                                                device)
-        save(experiment, str(checkpoint_path))
-
-        if i % 10 == 0:
-            data = experiment.fetch_data()
-            df = data.df
-            best_arm_name = df.arm_name[df['mean'] == df['mean'].max()].values[0]
-            best_arm = experiment.arms_by_name[best_arm_name]
-            best_parameters = best_arm.parameters
-            objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
-            save_auroc_plots(objectives, result_path, sobol_iterations)
-            print(best_parameters)
-
-    result_file.write(str(best_parameters) + '\n')
-    print("Done!")
-
-    # save results
-    data = experiment.fetch_data()
-    df = data.df
-    best_arm_name = df.arm_name[df['mean'] == df['mean'].max()].values[0]
-    best_arm = experiment.arms_by_name[best_arm_name]
-    best_parameters = best_arm.parameters
-    objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
-    save(experiment, str(checkpoint_path))
-    pickle.dump(objectives, open(result_path / 'objectives', "wb"))
-    pickle.dump(best_parameters, open(result_path / 'best_parameters', "wb"))
-    save_auroc_plots(objectives, result_path, sobol_iterations)
-
-    if run_test:
-        model, scaler = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device)
-        auc_test = test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device)
-        auc_test_cet = test(model, scaler, PDX_E_cet, PDX_M_cet, PDX_C_cet, PDX_R_cet,  device)
-        auc_test_erlo = test(model, scaler, PDX_E_erlo, PDX_M_erlo, PDX_C_erlo, PDX_R_erlo,  device)
-        pdx_e_both = pd.concat(PDX_E_erlo + PDX_E_cet)
-        pdx_m_both = pd.concat(PDX_M_erlo, PDX_M_cet)
-        pdx_c_both = pd.concat(PDX_C_erlo, PDX_C_cet)
-        pdx_r_both = pd.concat(PDX_R_erlo, PDX_R_cet)
-        auc_test_both = test(model, scaler, pdx_e_both, pdx_m_both, pdx_c_both, pdx_r_both,  device)
-
-        result_file.write(f'EGFR Validation Auroc = {max_objective}\n')
-        result_file.write(f'EGFR Test Auroc = {auc_test}\n')
-        result_file.write(f'EGFR Cetuximab: AUROC = {auc_test_cet}\n')
-        result_file.write(f'EGFR Erlotinib: AUROC = {auc_test_erlo}\n')
-        result_file.write(f'EGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}\n')
-        result_file.close()
+            result_file.write(f'EGFR Validation Auroc = {max_objective}\n')
+            result_file.write(f'EGFR Test Auroc = {auc_test}\n')
+            result_file.write(f'EGFR Cetuximab: AUROC = {auc_test_cet}\n')
+            result_file.write(f'EGFR Erlotinib: AUROC = {auc_test_erlo}\n')
+            result_file.write(f'EGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}\n')
+            result_file.close()
 
 
 def create_search_space(combination):
@@ -223,6 +228,7 @@ if __name__ == '__main__':
     parser.add_argument('--load_checkpoint', default=False, action='store_true')
     parser.add_argument('--combination', default=None, type=int)
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol'])
+    parser.add_argument('--calvariance', default=1, type=int)
     args = parser.parse_args()
     bo_moli(args.search_iterations, args.run_test, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-            args.combination, args.sampling_method)
+            args.combination, args.sampling_method, args.variance_iterations)
