@@ -8,7 +8,7 @@ from experiments.nas_experiments.autokeras.nn.metric import Accuracy, Auroc
 import torch
 import numpy as np
 from sklearn.model_selection import StratifiedShuffleSplit
-
+from siamese_triplet.utils import AllTripletSelector
 
 from utils.choose_gpu import get_free_gpu
 from utils import egfr_data
@@ -56,7 +56,11 @@ def bo_network_morphism_moli(search_iterations, run_test, sobol_iterations, load
     path.mkdir(parents=True, exist_ok=True)
     train_data = torch.Tensor(np.concatenate([x_train_e, x_train_m, x_train_c], axis=1))
     test_data = torch.Tensor(np.concatenate([x_test_e, x_test_m, x_test_c], axis=1))
-    loss = BceWithTripletsToss()
+    gamma = 0.2
+    all_triplet_selector = AllTripletSelector()
+    margin = 1
+    trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
+    loss = BceWithTripletsToss(gamma, all_triplet_selector, trip_criterion)
     auroc_metric = Auroc
     batch_size = 32
     train_dataset = torch.utils.data.TensorDataset(train_data, torch.Tensor(y_train))

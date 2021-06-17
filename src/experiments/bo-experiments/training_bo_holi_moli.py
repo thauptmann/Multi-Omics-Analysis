@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
 
-from models.bo_moli_model import AdaptiveMoli
+from models.bo_holi_moli_model import AdaptiveMoli
 from siamese_triplet.utils import AllTripletSelector
 from utils import network_training_util
 from utils.network_training_util import BceWithTripletsToss

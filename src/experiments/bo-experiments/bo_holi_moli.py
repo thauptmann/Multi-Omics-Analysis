@@ -21,7 +21,7 @@ from utils.choose_gpu import get_free_gpu
 import argparse
 from pathlib import Path
 import numpy as np
-from training_bo_moli import train_evaluate, train_final, test
+from training_bo_holi_moli import train_evaluate, train_final, test
 from utils import egfr_data
 from utils.visualisation import save_auroc_plots
 
@@ -35,6 +35,7 @@ weight_decay_list = [0.1, 0.01, 0.001, 0.0001]
 gamma_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 combination_list = [0, 1, 2, 3, 4]
 depth_list = [1, 2, 3, 4]
+batch_size_list = [32, 64, 128]
 
 
 def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, experiment_name, combination,
@@ -182,7 +183,7 @@ def create_search_space(combination):
                                                parameter_type=ParameterType.INT)
     return SearchSpace(
         parameters=[
-            RangeParameter(name='mini_batch', lower=8, upper=32, parameter_type=ParameterType.INT),
+            ChoiceParameter(name='mini_batch', values=batch_size_list, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim1", lower=8, upper=256, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim2", lower=8, upper=256, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim3", lower=8, upper=256, parameter_type=ParameterType.INT),

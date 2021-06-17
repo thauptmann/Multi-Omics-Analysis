@@ -27,7 +27,7 @@ def train(train_loader, moli_model, moli_optimiser, bce_with_triplets_loss, devi
 
             prediction, zt = moli_model.forward(data_e, data_m, data_c)
             if gamma > 0:
-                loss = bce_with_triplets_loss(prediction, target, zt)
+                loss = bce_with_triplets_loss((prediction, zt), target)
             else:
                 bce_with_logits_loss = torch.nn.BCEWithLogitsLoss()
                 target = target.view(-1, 1)
@@ -70,7 +70,8 @@ class BceWithTripletsToss:
         self.bce_with_logits = torch.nn.BCEWithLogitsLoss()
         super(BceWithTripletsToss, self).__init__()
 
-    def __call__(self, prediction, target, zt):
+    def __call__(self, predictions, target, ):
+        prediction, zt = predictions
         triplets = self.triplet_selector.get_triplets(zt, target)
         target = target.view(-1, 1)
         loss = self.gamma * self.trip_criterion(zt[triplets[:, 0], :], zt[triplets[:, 1], :],
