@@ -74,6 +74,12 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
         random_seeds = [42]
     else:
         random_seeds = [42, 72, 69, 46, 34]
+
+    max_objective_list = []
+    auc_test_list = []
+    auc_test_cet_list = []
+    auc_test_erlo_list = []
+    auc_test_both_list = []
     for iteration_number, random_seed in enumerate(random_seeds):
         result_file.write(f'Iteration {iteration_number} with seed {random_seed}: \n')
         torch.manual_seed(random_seed)
@@ -145,7 +151,7 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
                 save_auroc_plots(objectives, result_path, sobol_iterations)
                 print(best_parameters)
 
-        result_file.write(str(best_parameters) + '\n')
+        result_file.write(f'\t{str(best_parameters)}\n')
         print("Done!")
 
         # save results
@@ -171,12 +177,34 @@ def bo_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, expe
             pdx_r_both = pd.concat(PDX_R_erlo, PDX_R_cet)
             auc_test_both = test(model, scaler, pdx_e_both, pdx_m_both, pdx_c_both, pdx_r_both, device)
 
-            result_file.write(f'EGFR Validation Auroc = {max_objective}\n')
-            result_file.write(f'EGFR Test Auroc = {auc_test}\n')
-            result_file.write(f'EGFR Cetuximab: AUROC = {auc_test_cet}\n')
-            result_file.write(f'EGFR Erlotinib: AUROC = {auc_test_erlo}\n')
-            result_file.write(f'EGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}\n')
-            result_file.close()
+            result_file.write(f'\tEGFR Validation Auroc = {max_objective}\n')
+            result_file.write(f'\tEGFR Test Auroc = {auc_test}\n')
+            result_file.write(f'\tEGFR Cetuximab: AUROC = {auc_test_cet}\n')
+            result_file.write(f'\tEGFR Erlotinib: AUROC = {auc_test_erlo}\n')
+            result_file.write(f'\tEGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}\n')
+            max_objective_list.append(max_objective)
+            auc_test_list.append(auc_test)
+            auc_test_cet_list.append(auc_test_cet)
+            auc_test_erlo_list.append(auc_test_erlo)
+            auc_test_both_list.append(auc_test_both)
+
+    result_dict = {
+        'validation': max_objective_list,
+        'test': auc_test_list,
+        'cetuximab': auc_test_cet_list,
+        'erlotinib': auc_test_erlo_list,
+        'both': auc_test_both_list
+    }
+    calculate_mean_and_std_auc(result_dict, result_file)
+    result_file.close()
+
+
+def calculate_mean_and_std_auc(result_dict, result_file):
+    for result_name, result_value in result_dict.items():
+        mean = np.mean(result_value)
+        std = np.std(result_value)
+        result_file.write(f'{result_name} mean: {mean}')
+        result_file.write(f'{result_name} std: {std}')
 
 
 def create_search_space(combination):
@@ -214,21 +242,20 @@ def create_search_space(combination):
             RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
             combination_parameter,
             ChoiceParameter(name='margin', values=margin_list, parameter_type=ParameterType.FLOAT),
-
         ]
     )
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--run_test', action='store_true')
+    parser.add_argument('--no_test', action='store_false', default=True, type=bool)
     parser.add_argument('--search_iterations', default=1, type=int)
     parser.add_argument('--sobol_iterations', default=5, type=int)
     parser.add_argument('--experiment_name', required=True)
     parser.add_argument('--load_checkpoint', default=False, action='store_true')
     parser.add_argument('--combination', default=None, type=int)
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol'])
-    parser.add_argument('--calvariance', default=1, type=int)
+    parser.add_argument('--variance', action='store_true', default=False, type=bool)
     args = parser.parse_args()
     bo_moli(args.search_iterations, args.run_test, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
             args.combination, args.sampling_method, args.variance_iterations)
