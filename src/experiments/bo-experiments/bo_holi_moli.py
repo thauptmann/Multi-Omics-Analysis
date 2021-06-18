@@ -25,7 +25,7 @@ from training_bo_holi_moli import train_evaluate, train_final, test
 from utils import egfr_data
 from utils.visualisation import save_auroc_plots
 
-mini_batch_list = [8, 16, 32, 64]
+mini_batch_list = [32, 64, 128]
 dim_list = [512, 256, 128, 64, 32, 16, 8]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.1, 0.01, 0.001, 0.0001, 0.00001]
@@ -198,7 +198,7 @@ def create_search_space(combination):
             ChoiceParameter(name="dropout_rate", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='weight_decay', values=weight_decay_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='gamma', values=gamma_list, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
+            RangeParameter(name='epochs', lower=20, upper=100, parameter_type=ParameterType.INT),
             combination_parameter,
             ChoiceParameter(name='margin', values=margin_list, parameter_type=ParameterType.FLOAT),
 
