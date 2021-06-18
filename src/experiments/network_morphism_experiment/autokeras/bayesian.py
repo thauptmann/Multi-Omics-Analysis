@@ -11,8 +11,8 @@ from sklearn.metrics.pairwise import rbf_kernel
 
 from .custom_queue import Queue
 from .net_transformer import transform
-from experiments.nas_experiments.autokeras.nn.layers import is_layer, LayerType
-from experiments.nas_experiments.autokeras.constant import Constant
+from experiments.network_morphism_experiment.autokeras.nn.layers import is_layer, LayerType
+from experiments.network_morphism_experiment.autokeras.constant import Constant
 
 
 def layer_distance(a, b):

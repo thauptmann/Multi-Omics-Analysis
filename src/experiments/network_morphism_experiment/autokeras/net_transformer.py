@@ -1,11 +1,11 @@
 from copy import deepcopy
 from random import randrange, sample
 
-from experiments.nas_experiments.autokeras.nn.graph import NetworkDescriptor
+from experiments.network_morphism_experiment.autokeras.nn.graph import NetworkDescriptor
 
-from experiments.nas_experiments.autokeras.nn.layers import is_layer, StubDense, get_dropout_class, StubReLU, get_conv_class, \
+from experiments.network_morphism_experiment.autokeras.nn.layers import is_layer, StubDense, get_dropout_class, StubReLU, get_conv_class, \
     get_batch_norm_class, get_pooling_class, LayerType
-from experiments.nas_experiments.autokeras.constant import Constant
+from experiments.network_morphism_experiment.autokeras.constant import Constant
 
 
 def to_wider_graph(graph):

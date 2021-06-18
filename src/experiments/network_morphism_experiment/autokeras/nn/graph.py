@@ -4,7 +4,7 @@ from queue import Queue
 
 import numpy as np
 
-from experiments.nas_experiments.autokeras.backend import Backend
+from experiments.network_morphism_experiment.autokeras.backend import Backend
 from .layer_transformer import wider_bn, wider_next_conv, wider_next_dense, wider_pre_dense, \
     wider_pre_conv, add_noise, init_dense_weight, init_conv_weight, init_bn_weight
 from .layers import StubConcatenate, StubAdd, is_layer, layer_width, \

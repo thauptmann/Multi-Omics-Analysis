@@ -2,7 +2,7 @@ import numpy as np
 
 from .layers import StubDense, get_n_dim, get_conv_class, get_batch_norm_class
 
-from experiments.nas_experiments.autokeras.constant import Constant
+from experiments.network_morphism_experiment.autokeras.constant import Constant
 
 
 def wider_pre_dense(layer, n_add, weighted=True):

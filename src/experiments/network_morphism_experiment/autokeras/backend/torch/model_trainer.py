@@ -24,8 +24,8 @@ import torch
 from torch import nn
 from tqdm import tqdm
 
-from experiments.nas_experiments.autokeras.constant import Constant
-from experiments.nas_experiments.autokeras.nn.model_trainer import ModelTrainerBase
+from experiments.network_morphism_experiment.autokeras.constant import Constant
+from experiments.network_morphism_experiment.autokeras.nn.model_trainer import ModelTrainerBase
 
 
 def get_device():

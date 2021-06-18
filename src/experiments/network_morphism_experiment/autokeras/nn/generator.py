@@ -1,8 +1,8 @@
 from abc import abstractmethod
 
-from experiments.nas_experiments.autokeras.constant import Constant
-from experiments.nas_experiments.autokeras.nn.graph import Graph
-from experiments.nas_experiments.autokeras.nn.layers import StubAdd, StubDense, StubReLU, get_conv_class, \
+from experiments.network_morphism_experiment.autokeras.constant import Constant
+from experiments.network_morphism_experiment.autokeras.nn.graph import Graph
+from experiments.network_morphism_experiment.autokeras.nn.layers import StubAdd, StubDense, StubReLU, get_conv_class, \
     get_dropout_class, \
     get_global_avg_pooling_class, get_pooling_class, get_avg_pooling_class, get_batch_norm_class, StubDropout1d, \
     StubConcatenate

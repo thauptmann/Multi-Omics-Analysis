@@ -4,7 +4,7 @@ from pathlib import Path
 
 from torch.utils.data import DataLoader
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-from experiments.nas_experiments.autokeras.nn.metric import Accuracy, Auroc
+from experiments.network_morphism_experiment.autokeras.nn.metric import Accuracy, Auroc
 import torch
 import numpy as np
 from sklearn.model_selection import StratifiedShuffleSplit

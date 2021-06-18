@@ -4,7 +4,7 @@ from copy import deepcopy
 from torch import nn
 from torch.nn import functional
 
-from experiments.nas_experiments.autokeras.nn.layers import StubAdd, StubConcatenate, StubConv1d, StubConv2d, StubConv3d, \
+from experiments.network_morphism_experiment.autokeras.nn.layers import StubAdd, StubConcatenate, StubConv1d, StubConv2d, StubConv3d, \
     StubDropout1d, StubDropout2d, StubDropout3d, StubGlobalPooling1d, StubGlobalPooling2d, StubGlobalPooling3d, \
     StubPooling1d, StubPooling2d, StubPooling3d, StubBatchNormalization1d, StubBatchNormalization2d, \
     StubBatchNormalization3d, StubSoftmax, StubReLU, StubFlatten, StubDense, StubAvgPooling1d, StubAvgPooling2d, \

@@ -1,4 +1,4 @@
-from experiments.nas_experiments.autokeras.constant import Constant
+from experiments.network_morphism_experiment.autokeras.constant import Constant
 
 
 class StubLayer:

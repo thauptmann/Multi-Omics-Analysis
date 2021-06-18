@@ -10,10 +10,10 @@ import torch.multiprocessing as mp
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from experiments.nas_experiments.autokeras.backend import Backend
-from experiments.nas_experiments.autokeras.bayesian import BayesianOptimizer
-from experiments.nas_experiments.autokeras.constant import Constant
-from experiments.nas_experiments.autokeras.utils import pickle_to_file, pickle_from_file, verbose_print
+from experiments.network_morphism_experiment.autokeras.backend import Backend
+from experiments.network_morphism_experiment.autokeras.bayesian import BayesianOptimizer
+from experiments.network_morphism_experiment.autokeras.constant import Constant
+from experiments.network_morphism_experiment.autokeras.utils import pickle_to_file, pickle_from_file, verbose_print
 
 
 class Searcher(ABC):

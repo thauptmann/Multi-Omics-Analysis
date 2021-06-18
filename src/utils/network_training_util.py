@@ -3,6 +3,8 @@ import torch.nn
 from sklearn.metrics import roc_auc_score
 import pandas as pd
 
+sigmoid = torch.nn.Sigmoid()
+
 
 def create_dataloader(x_expression, x_mutation, x_cna, y_response, mini_batch, pin_memory, sampler=None,
                       drop_last=False):
@@ -52,14 +54,13 @@ def validate(data_loader, moli_model, device):
             validate_e = data_e.to(device)
             validate_m = data_m.to(device)
             validate_c = data_c.to(device)
-            y_true.extend(target)
-            prediction, _ = moli_model.forward(validate_e, validate_m, validate_c)
-            sigmoid = torch.nn.Sigmoid()
-            prediction = sigmoid(prediction)
-            predictions.extend(prediction.cpu().detach())
+            y_true.extend(target.numpy())
+            logits, _ = moli_model.forward(validate_e, validate_m, validate_c)
+            probabilities = sigmoid(logits)
+            predictions.extend(probabilities.cpu().detach().numpy())
 
-    auc_test = roc_auc_score(y_true, predictions)
-    return auc_test
+    auc_validate = roc_auc_score(y_true, predictions)
+    return auc_validate
 
 
 class BceWithTripletsToss:

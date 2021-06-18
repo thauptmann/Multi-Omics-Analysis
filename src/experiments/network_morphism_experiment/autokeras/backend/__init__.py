@@ -1,4 +1,4 @@
-from experiments.nas_experiments.autokeras.backend import torch
+from experiments.network_morphism_experiment.autokeras.backend import torch
 
 
 class Backend:

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from experiments.nas_experiments.autokeras.backend import Backend
+from experiments.network_morphism_experiment.autokeras.backend import Backend
 from sklearn.metrics import accuracy_score, mean_squared_error
 from torchmetrics import AUROC
 

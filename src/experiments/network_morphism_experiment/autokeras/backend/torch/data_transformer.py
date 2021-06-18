@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from experiments.nas_experiments.autokeras.constant import Constant
+from experiments.network_morphism_experiment.autokeras.constant import Constant
 
 
 class MultiTransformDataset(Dataset):
