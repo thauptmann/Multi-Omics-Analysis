@@ -155,15 +155,20 @@ def load_drug_data(data_path, drug, dataset):
     response_path = data_path / 'response'
     sna_binary_path = data_path / 'SNA_binary'
     expressions_homogenized_path = data_path / 'exprs_homogenized'
-    expression_train = read_and_transpose_csv(expressions_homogenized_path / parameter['expression_train'])
-    response_train = pd.read_csv(response_path / parameter['response_train'], sep="\t", index_col=0, decimal=',')
-    mutation_train = read_and_transpose_csv(sna_binary_path / parameter['mutation_train'])
-    cna_train = read_and_transpose_csv(cna_binary_path / parameter['cna_train'])
+    expression_train = read_and_transpose_csv(expressions_homogenized_path
+                                              / f'GDSC_exprs.{drug}.eb_with.{dataset}_exprs.{drug}.tsv')
+    response_train = pd.read_csv(response_path / f"GDSC_response.{drug}.tsv",
+                                 sep="\t", index_col=0, decimal=',')
+    mutation_train = read_and_transpose_csv(sna_binary_path / f"GDSC_mutations.{drug}.tsv")
+    cna_train = read_and_transpose_csv(cna_binary_path / f"GDSC_CNA.{drug}.tsv")
     cna_train = cna_train.loc[:, ~cna_train.columns.duplicated()]
-    expression_test = read_and_transpose_csv(expressions_homogenized_path / parameter['expression_test'])
-    mutation_test = read_and_transpose_csv(sna_binary_path / parameter['mutation_test'])
-    cna_test = read_and_transpose_csv(cna_binary_path / parameter['cna_test'])
-    response_test = pd.read_csv(response_path / parameter['response_test'], sep="\t", index_col=0, decimal=',')
+    expression_test = read_and_transpose_csv(expressions_homogenized_path /
+                                             f"{dataset}_exprs.{drug}.eb_with.GDSC_exprs.{drug}.tsv")
+    mutation_test = read_and_transpose_csv(sna_binary_path / f"{dataset}_mutations.{drug}.tsv")
+    cna_test = read_and_transpose_csv(cna_binary_path / f"{dataset}_CNA.{drug}.tsv")
+    response_test = pd.read_csv(response_path / f"{dataset}_response.{drug}.tsv",
+                                sep="\t", index_col=0, decimal=',')
+
     response_train.loc[response_train.response == 'R'] = 0
     response_train.loc[response_train.response == 'S'] = 1
     response_test.loc[response_test.response == 'R'] = 0

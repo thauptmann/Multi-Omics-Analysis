@@ -58,11 +58,11 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
     data_path = Path('..', '..', '..', 'data')
     if drug_name == 'egfr':
-        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r = multi_omics_data.load_egfr_data(data_path)
+        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
+            = multi_omics_data.load_egfr_data(data_path)
     else:
-        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r = multi_omics_data.load_drug_data(data_path,
-                                                                                                     drug_name,
-                                                                                                     extern_dataset)
+        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
+            = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset)
     moli_search_space = create_search_space(combination)
 
     random_seed = 42
@@ -250,14 +250,14 @@ if __name__ == '__main__':
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol'])
     args = parser.parse_args()
 
-    drugs = {'gemcitabine_tcga': 'TCGA',
-             'gemcitabine_pdx': 'PDX',
-             'cisplatin': 'TCGA',
-             'docetaxel': 'TCGA',
-             'erlotinib': 'PDX',
-             'cetuximab': 'PDX',
-             'paclitaxel': 'PDX',
-             'egfr': 'PDX'}
+    drugs = {'Gemcitabine_tcga': 'TCGA',
+             'Gemcitabine_pdx': 'PDX',
+             'Cisplatin': 'TCGA',
+             'Docetaxel': 'TCGA',
+             'Erlotinib': 'PDX',
+             'Cetuximab': 'PDX',
+             'Paclitaxel': 'PDX',
+             'EGFR': 'PDX'}
     for drug, extern_dataset in drugs.items():
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                 args.combination, args.sampling_method, drug, extern_dataset)
