@@ -1,20 +1,20 @@
 import numpy as np
+import scipy.signal
 import torch
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
-
+from scipy.stats import sem
 from models.bo_holi_moli_model import AdaptiveMoli
 from siamese_triplet.utils import AllTripletSelector
 from utils import network_training_util
 from utils.network_training_util import BceWithTripletsToss
 
-patience = 10
+random_seed = 42
 
 
-def train_test(parameterization, x_e, x_m, x_c, y,
-               x_test_e, x_test_m, x_test_c, y_test, device):
+def train_and_validate(parameterization, x_e, x_m, x_c, y, device):
     pin_memory = False if 'cpu' == str(device) else True
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
@@ -43,9 +43,9 @@ def train_test(parameterization, x_e, x_m, x_c, y,
     epochs = parameterization['epochs']
     margin = parameterization['margin']
 
-    aucs_test = []
+    aucs_validate = []
     cv_splits = 5
-    skf = StratifiedKFold(n_splits=cv_splits)
+    skf = StratifiedKFold(n_splits=cv_splits, random_state=random_seed)
     for train_index, validate_index in tqdm(skf.split(x_e, y), total=skf.get_n_splits(), desc="k-fold"):
         x_train_e = x_e[train_index]
         x_train_m = x_m[train_index]
@@ -107,33 +107,18 @@ def train_test(parameterization, x_e, x_m, x_c, y,
         trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
 
         bce_with_triplet_loss = BceWithTripletsToss(parameterization['gamma'], all_triplet_selector, trip_criterion)
-        best_model = None
-        best_auc = 0
-        early_stopping_counter = 0
         for _ in trange(epochs, desc='Epoch'):
             network_training_util.train(train_loader, moli_model, moli_optimiser,
                                         bce_with_triplet_loss,
                                         device, gamma)
 
-            # validate
-            auc_validate = network_training_util.validate(validation_loader, moli_model, device)
+        # validate
+        auc_validate = network_training_util.validate(validation_loader, moli_model, device)
+        aucs_validate.append(auc_validate)
 
-            # check for break
-            if auc_validate > best_auc:
-                best_model = moli_model
-                best_auc = auc_validate
-            else:
-                early_stopping_counter += 1
-
-            if early_stopping_counter > patience:
-                print("Network isn't  getting better. Skip next epochs...")
-                break
-
-        auc_test = test(best_model, scaler_gdsc, x_test_e, x_test_m, x_test_c, y_test, device)
-        aucs_test.append(auc_test)
-    mean = np.mean(aucs_test)
-    sem = np.std(aucs_test)
-    return (mean, sem)
+    mean = np.mean(aucs_validate)
+    standard_error_of_mean = scipy.stats.sem(aucs_validate)
+    return (mean, standard_error_of_mean)
 
 
 def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device):

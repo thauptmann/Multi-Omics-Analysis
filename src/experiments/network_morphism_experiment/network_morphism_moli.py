@@ -35,7 +35,7 @@ def bo_network_morphism_moli(search_iterations, run_test, sobol_iterations, load
 
     data_path = Path('..', '..', '..', 'data')
     gdsc_e, gdsc_m, gdsc_c, gdsc_r, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet\
-        = egfr_data.load_data(data_path)
+        = egfr_data.load_egfr_data(data_path)
 
     stratified_shuffle_splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.1)
     train_index, test_index = next(stratified_shuffle_splitter.split(gdsc_e, gdsc_r))

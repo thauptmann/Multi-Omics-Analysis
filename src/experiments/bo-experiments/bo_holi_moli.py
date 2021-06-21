@@ -14,19 +14,20 @@ from ax import (
     load,
     FixedParameter
 )
-from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import StratifiedKFold
 from ax.modelbridge.registry import Models
+from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.choose_gpu import get_free_gpu
 import argparse
 from pathlib import Path
 import numpy as np
-from training_bo_holi_moli import train_test, train_final, test
-from utils import egfr_data
+from training_bo_holi_moli import train_and_validate, train_final, test
+from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots
 
-mini_batch_list = [32, 64, 128]
+mini_batch_list = [32, 64]
 dim_list = [512, 256, 128, 64, 32, 16, 8]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.1, 0.01, 0.001, 0.0001, 0.00001]
@@ -39,7 +40,7 @@ batch_size_list = [32, 64, 128]
 
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
-            sampling_method, variance):
+            sampling_method, drug_name, extern_dataset):
     if sampling_method == 'sobol':
         sobol_iterations = 0
 
@@ -49,32 +50,33 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     else:
         device = torch.device("cpu")
 
-    result_path = Path('..', '..', '..', 'results', 'egfr', 'bayesian_optimisation', experiment_name)
+    result_path = Path('..', '..', '..', 'results', drug_name, 'bayesian_optimisation', experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
     file_mode = 'a' if load_checkpoint else 'w'
     result_file = open(result_path / 'logs.txt', file_mode)
     checkpoint_path = result_path / 'checkpoint.json'
 
     data_path = Path('..', '..', '..', 'data')
-    gdsc_e, gdsc_m, gdsc_c, gdsc_r, PDX_E_erlo, PDX_M_erlo, PDX_C_erlo, PDX_R_erlo, PDX_E_cet, PDX_M_cet, PDX_C_cet, \
-    PDX_R_cet = egfr_data.load_data(data_path)
-    stratified_shuffle_splitter = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
+    if drug_name == 'egfr':
+        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r = multi_omics_data.load_egfr_data(data_path)
+    else:
+        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r = multi_omics_data.load_drug_data(data_path,
+                                                                                                     drug_name,
+                                                                                                     extern_dataset)
     moli_search_space = create_search_space(combination)
 
-    if not variance:
-        random_seeds = [42]
-    else:
-        random_seeds = [42, 72, 69, 46, 34]
+    random_seed = 42
 
     max_objective_list = []
-    auc_test_list = []
-    auc_test_cet_list = []
-    auc_test_erlo_list = []
-    auc_test_both_list = []
+    test_auc_list = []
+    extern_auc_list = []
     now = datetime.now()
     result_file.write(f'Start experiment at {now}\n')
-    for iteration_number, random_seed in enumerate(random_seeds):
-        train_index, test_index = next(stratified_shuffle_splitter.split(gdsc_e, gdsc_r))
+    cv_splits = 5
+    skf = StratifiedKFold(n_splits=cv_splits, random_seed=random_seed)
+    iteration = 0
+    for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc="k-fold"):
+
         x_train_e = gdsc_e[train_index]
         x_train_m = gdsc_m[train_index]
         x_train_c = gdsc_c[train_index]
@@ -83,7 +85,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         x_test_m = gdsc_m[test_index]
         x_test_c = gdsc_c[test_index]
         y_test = gdsc_r[test_index]
-        result_file.write(f'\tIteration {iteration_number} with seed {random_seed}: \n')
+        result_file.write(f'\tIteration {iteration} with seed {random_seed}: \n')
         torch.manual_seed(random_seed)
         np.random.seed(random_seed)
         sobol = Models.SOBOL(moli_search_space, seed=random_seed)
@@ -93,13 +95,11 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             print("Load checkpoint")
             experiment = load(str(checkpoint_path))
             max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
-            experiment.evaluation_function = lambda parameterization: train_test(parameterization,
-                                                                                 x_train_e, x_train_m,
-                                                                                 x_train_c,
-                                                                                 y_train, x_test_e, x_test_m,
-                                                                                 x_test_c,
-                                                                                 y_test,
-                                                                                 device)
+            experiment.evaluation_function = lambda parameterization: train_and_validate(parameterization,
+                                                                                         x_train_e, x_train_m,
+                                                                                         x_train_c,
+                                                                                         y_train,
+                                                                                         device)
             print(f"Resuming after iteration {len(experiment.trials.values())}")
             if (result_path / 'best_parameters').exists():
                 best_parameters = pickle.load(open(result_path / 'best_parameters', 'rb'))
@@ -110,11 +110,10 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             experiment = SimpleExperiment(
                 name="BO-MOLI",
                 search_space=moli_search_space,
-                evaluation_function=lambda parameterization: train_test(parameterization,
-                                                                        x_train_e, x_train_m,
-                                                                        x_train_c,
-                                                                        y_train, x_test_e,
-                                                                        x_test_m, x_test_c, y_test, device),
+                evaluation_function=lambda parameterization: train_and_validate(parameterization,
+                                                                                x_train_e, x_train_m,
+                                                                                x_train_c,
+                                                                                y_train, device),
                 objective_name="auroc",
                 minimize=False,
             )
@@ -138,12 +137,11 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             experiment.new_trial(generator_run=generator_run)
             experiment.eval()
             max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
-            experiment.evaluation_function = lambda parameterization: train_test(parameterization,
-                                                                                 x_train_e, x_train_m,
-                                                                                 x_train_c,
-                                                                                 y_train, x_test_e,
-                                                                                 x_test_m, x_test_c, y_test,
-                                                                                 device)
+            experiment.evaluation_function = lambda parameterization: train_and_validate(parameterization,
+                                                                                         x_train_e, x_train_m,
+                                                                                         x_train_c,
+                                                                                         y_train,
+                                                                                         device)
             save(experiment, str(checkpoint_path))
 
             if i % 10 == 0:
@@ -160,36 +158,27 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         pickle.dump(best_parameters, open(result_path / 'best_parameters', "wb"))
         save_auroc_plots(objectives, result_path, sobol_iterations)
 
+        iteration += 1
+
         result_file.write(f'\t\t{str(best_parameters)}\n')
-        print("Done!")
 
-        # model, scaler = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device)
-        # auc_test = test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device)
-        # auc_test_cet = test(model, scaler, PDX_E_cet, PDX_M_cet, PDX_C_cet, PDX_R_cet, device)
-        # auc_test_erlo = test(model, scaler, PDX_E_erlo, PDX_M_erlo, PDX_C_erlo, PDX_R_erlo, device)
-        #pdx_e_both = pd.concat(PDX_E_erlo + PDX_E_cet)
-        #pdx_m_both = pd.concat(PDX_M_erlo, PDX_M_cet)
-        #pdx_c_both = pd.concat(PDX_C_erlo, PDX_C_cet)
-        # pdx_r_both = pd.concat(PDX_R_erlo, PDX_R_cet)
-        # auc_test_both = test(model, scaler, pdx_e_both, pdx_m_both, pdx_c_both, pdx_r_both, device)
+        model, scaler = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device)
+        auc_test = test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device)
+        aux_extern = test(model, scaler, x_extern_e, x_extern_m, x_extern_c, y_extern, device)
 
-        result_file.write(f'\t\tBest EGFR Test Auroc in iteration {iteration_number} = {max_objective}\n')
-        # result_file.write(f'\t\tEGFR Test Auroc = {auc_test}\n')
-        # result_file.write(f'\t\tEGFR Cetuximab: AUROC = {auc_test_cet}\n')
-        # result_file.write(f'\t\tEGFR Erlotinib: AUROC = {auc_test_erlo}\n')
-        # result_file.write(f'\t\tEGFR Erlotinib and Cetuximab: AUROC = {auc_test_both}\n')
+        result_file.write(f'\t\tBest EGFR Test Auroc in iteration {iteration} = {max_objective}\n')
+        result_file.write(f'\t\tEGFR Test Auroc = {auc_test}\n')
+        result_file.write(f'\t\tEGFR Extern: AUROC = {aux_extern}\n')
         max_objective_list.append(max_objective)
-        # auc_test_list.append(auc_test)
-        # auc_test_cet_list.append(auc_test_cet)
-        # auc_test_erlo_list.append(auc_test_erlo)
-        # auc_test_both_list.append(auc_test_both)
+        test_auc_list.append(auc_test)
+        extern_auc_list.append(aux_extern)
+
+    print("Done!")
 
     result_dict = {
-        'test': max_objective_list,
-        #'test': auc_test_list,
-        #'cetuximab': auc_test_cet_list,
-        #'erlotinib': auc_test_erlo_list,
-        #'both': auc_test_both_list
+        'validation': max_objective_list,
+        'test': auc_test_list,
+        'extern': auc_test_extern_list
     }
     calculate_mean_and_std_auc(result_dict, result_file)
     result_file.close()
@@ -259,7 +248,16 @@ if __name__ == '__main__':
     parser.add_argument('--load_checkpoint', default=False, action='store_true')
     parser.add_argument('--combination', default=None, type=int)
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol'])
-    parser.add_argument('--variance', action='store_true', default=False)
     args = parser.parse_args()
-    bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-            args.combination, args.sampling_method, args.variance)
+
+    drugs = {'gemcitabine_tcga': 'TCGA',
+             'gemcitabine_pdx': 'PDX',
+             'cisplatin': 'TCGA',
+             'docetaxel': 'TCGA',
+             'erlotinib': 'PDX',
+             'cetuximab': 'PDX',
+             'paclitaxel': 'PDX',
+             'egfr': 'PDX'}
+    for drug, extern_dataset in drugs.items():
+        bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
+                args.combination, args.sampling_method, drug, extern_dataset)

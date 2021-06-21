@@ -45,7 +45,7 @@ def cv_and_train(run_test, random_search_iterations, load_checkpoint, experiment
 
     data_path = Path('..', '..', '..', 'data')
     GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet = \
-        egfr_data.load_data(data_path)
+        egfr_data.load_egfr_data(data_path)
 
     skf = StratifiedKFold(n_splits=cv_splits)
 

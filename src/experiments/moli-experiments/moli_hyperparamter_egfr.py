@@ -26,7 +26,7 @@ def main():
 
     data_path = Path('..', '..', '..', 'data')
     GDSCE, GDSCM, GDSCC, GDSCR, PDXEerlo, PDXMerlo, PDXCerlo, PDXRerlo, PDXEcet, PDXMcet, PDXCcet, PDXRcet = \
-        egfr_data.load_data(data_path)
+        egfr_data.load_egfr_data(data_path)
 
     mini_batch = 16
     h_dim1 = 32
