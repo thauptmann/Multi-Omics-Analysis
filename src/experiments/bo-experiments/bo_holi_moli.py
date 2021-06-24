@@ -2,7 +2,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 import torch
-import pandas as pd
 import pickle
 from ax import (
     ParameterType,
@@ -27,8 +26,7 @@ from training_bo_holi_moli import train_and_validate, train_final, test
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots
 
-
-dim_list = [128, 64, 32, 16, 8]
+dim_list = [8, 4]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.01, 0.001, 0.0001, 0.00001]
 drop_rate_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
@@ -38,13 +36,13 @@ combination_list = [0, 1, 2, 3, 4]
 batch_size_list = [32, 64]
 
 drugs = {'Gemcitabine_tcga': 'TCGA',
-             'Gemcitabine_pdx': 'PDX',
-             'Cisplatin': 'TCGA',
-             'Docetaxel': 'TCGA',
-             'Erlotinib': 'PDX',
-             'Cetuximab': 'PDX',
-             'Paclitaxel': 'PDX',
-             'EGFR': 'PDX'}
+         'Gemcitabine_pdx': 'PDX',
+         'Cisplatin': 'TCGA',
+         'Docetaxel': 'TCGA',
+         'Erlotinib': 'PDX',
+         'Cetuximab': 'PDX',
+         'Paclitaxel': 'PDX',
+         'EGFR': 'PDX'}
 
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
@@ -88,7 +86,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     now = datetime.now()
     result_file.write(f'Start experiment at {now}\n')
     cv_splits = 5
-    skf = StratifiedKFold(n_splits=cv_splits, random_seed=random_seed)
+    skf = StratifiedKFold(n_splits=cv_splits, random_state=random_seed, shuffle=True)
     iteration = 0
     result_file.write(f"Start for {drug_name}")
     for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc="k-fold"):
@@ -140,6 +138,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         for i in range(len(experiment.trials.values()), search_iterations):
             print(f"Running GP+EI optimization trial {i + 1} ...")
+
             # Reinitialize GP+EI model at each step with updated data.
             if sampling_method == 'gp':
                 gp_ei = Models.BOTORCH(experiment=experiment, data=experiment.fetch_data())
@@ -247,7 +246,7 @@ def create_search_space(combination):
             ChoiceParameter(name="dropout_rate_middle", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='weight_decay', values=weight_decay_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='gamma', values=gamma_list, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name='epochs', lower=10, upper=50, parameter_type=ParameterType.INT),
+            RangeParameter(name='epochs', lower=1, upper=2, parameter_type=ParameterType.INT),
             combination_parameter,
             ChoiceParameter(name='margin', values=margin_list, parameter_type=ParameterType.FLOAT),
         ]
