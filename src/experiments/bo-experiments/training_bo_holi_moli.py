@@ -27,8 +27,16 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory):
     depth_3 = parameterization['depth_3']
     depth_4 = parameterization['depth_4']
     depth_5 = parameterization['depth_5']
-    lr = parameterization['lr']
-    dropout_rate = parameterization['dropout_rate']
+    lr_e = parameterization['lr_e']
+    lr_m = parameterization['lr_m']
+    lr_c = parameterization['lr_c']
+    lr_middle = parameterization['lr_middle']
+    lr_cl = parameterization['lr_cl']
+    dropout_rate_e = parameterization['dropout_rate_e']
+    dropout_rate_m = parameterization['dropout_rate_m']
+    dropout_rate_c = parameterization['dropout_rate_c']
+    dropout_rate_clf = parameterization['dropout_rate_clf']
+    dropout_rate_middle = parameterization['dropout_rate_middle']
     weight_decay = parameterization['weight_decay']
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
@@ -83,10 +91,17 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory):
 
         depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
         input_sizes = [ie_dim, im_dim, ic_dim]
+        dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_middle, dropout_rate_clf]
         output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
-        moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rate, combination, depths).to(device)
+        moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
-        moli_optimiser = torch.optim.Adagrad(moli_model.parameters(), lr=lr, weight_decay=weight_decay)
+        moli_optimiser = torch.optim.Adagrad([
+            {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle},
+            {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
+            {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
+            {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c},
+            {'params': moli_model.classifier.parameters(), 'lr': lr_cl, 'weight_decay': weight_decay},
+        ])
 
         trip_criterion = torch.nn.TripletMarginLoss( margin=margin, p=2)
 
@@ -118,8 +133,16 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     depth_3 = parameterization['depth_3']
     depth_4 = parameterization['depth_4']
     depth_5 = parameterization['depth_5']
-    lr = parameterization['lr']
-    dropout_rate = parameterization['dropout_rate']
+    lr_e = parameterization['lr_e']
+    lr_m = parameterization['lr_m']
+    lr_c = parameterization['lr_c']
+    lr_cl = parameterization['lr_cl']
+    lr_middle = parameterization['lr_middle']
+    dropout_rate_e = parameterization['dropout_rate_e']
+    dropout_rate_m = parameterization['dropout_rate_m']
+    dropout_rate_c = parameterization['dropout_rate_c']
+    dropout_rate_clf = parameterization['dropout_rate_clf']
+    dropout_rate_middle = parameterization['dropout_rate_middle']
     weight_decay = parameterization['weight_decay']
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
@@ -136,10 +159,17 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
 
     depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
     input_sizes = [ie_dim, im_dim, ic_dim]
+    dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_clf, dropout_rate_middle]
     output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
-    moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rate, combination, depths).to(device)
+    moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
-    moli_optimiser = torch.optim.Adagrad(moli_model.parameters(), lr, weight_decay=weight_decay)
+    moli_optimiser = torch.optim.Adagrad([
+        {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle},
+        {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
+        {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
+        {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c},
+        {'params': moli_model.classifier.parameters(), 'lr': lr_cl, 'weight_decay': weight_decay},
+    ])
 
     trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
     class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
