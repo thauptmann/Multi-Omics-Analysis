@@ -27,7 +27,8 @@ from training_bo_holi_moli import train_and_validate, train_final, test
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots
 
-dim_list = [512, 256, 128, 64, 32, 16, 8]
+
+dim_list = [128, 64, 32, 16, 8]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.01, 0.001, 0.0001, 0.00001]
 drop_rate_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
@@ -47,12 +48,15 @@ drugs = {'Gemcitabine_tcga': 'TCGA',
 
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
-            sampling_method, drug_name, extern_dataset_name):
+            sampling_method, drug_name, extern_dataset_name, gpu_number):
     if sampling_method == 'sobol':
         sobol_iterations = 0
 
     if torch.cuda.is_available():
-        free_gpu_id = get_free_gpu()
+        if gpu_number is None:
+            free_gpu_id = get_free_gpu()
+        else:
+            free_gpu_id = gpu_number
         device = torch.device(f"cuda:{free_gpu_id}")
         pin_memory = True
     else:
@@ -221,16 +225,16 @@ def create_search_space(combination):
     return SearchSpace(
         parameters=[
             ChoiceParameter(name='mini_batch', values=batch_size_list, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim1", lower=8, upper=256, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim2", lower=8, upper=256, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim3", lower=8, upper=256, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim4", lower=8, upper=256, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim5", lower=8, upper=256, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_1", lower=1, upper=5, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_2", lower=1, upper=5, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_3", lower=1, upper=5, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_4", lower=1, upper=5, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_5", lower=1, upper=5, parameter_type=ParameterType.INT),
+            ChoiceParameter(name="h_dim1", values=dim_list, parameter_type=ParameterType.INT),
+            ChoiceParameter(name="h_dim2", values=dim_list, parameter_type=ParameterType.INT),
+            ChoiceParameter(name="h_dim3", values=dim_list, parameter_type=ParameterType.INT),
+            ChoiceParameter(name="h_dim4", values=dim_list, parameter_type=ParameterType.INT),
+            ChoiceParameter(name="h_dim5", values=dim_list, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_1", lower=1, upper=6, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_2", lower=1, upper=6, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_3", lower=1, upper=6, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_4", lower=1, upper=6, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_5", lower=1, upper=6, parameter_type=ParameterType.INT),
             ChoiceParameter(name="lr_e", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name="lr_m", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name="lr_c", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
@@ -258,8 +262,9 @@ if __name__ == '__main__':
     parser.add_argument('--load_checkpoint', default=False, action='store_true')
     parser.add_argument('--combination', default=None, type=int)
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol'])
+    parser.add_argument('--gpu_number', type=int)
     args = parser.parse_args()
 
     for drug, extern_dataset in drugs.items():
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-                args.combination, args.sampling_method, drug, extern_dataset)
+                args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number)
