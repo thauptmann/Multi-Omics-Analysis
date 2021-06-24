@@ -27,7 +27,6 @@ from training_bo_holi_moli import train_and_validate, train_final, test
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots
 
-mini_batch_list = [32, 64]
 dim_list = [512, 256, 128, 64, 32, 16, 8]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.1, 0.01, 0.001, 0.0001, 0.00001]
@@ -40,7 +39,7 @@ batch_size_list = [32, 64, 128]
 
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
-            sampling_method, drug_name, extern_dataset):
+            sampling_method, drug_name, extern_dataset_name):
     if sampling_method == 'sobol':
         sobol_iterations = 0
 
@@ -62,10 +61,12 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             = multi_omics_data.load_egfr_data(data_path)
     else:
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
-            = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset)
+            = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name)
     moli_search_space = create_search_space(combination)
 
     random_seed = 42
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)
 
     max_objective_list = []
     test_auc_list = []
@@ -75,6 +76,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     cv_splits = 5
     skf = StratifiedKFold(n_splits=cv_splits, random_seed=random_seed)
     iteration = 0
+    result_file.write(f"Start for {drug_name}")
     for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc="k-fold"):
 
         x_train_e = gdsc_e[train_index]
@@ -164,7 +166,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         model, scaler = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device)
         auc_test = test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device)
-        aux_extern = test(model, scaler, x_extern_e, x_extern_m, x_extern_c, y_extern, device)
+        aux_extern = test(model, scaler, extern_e, extern_m, extern_c, extern_r, device)
 
         result_file.write(f'\t\tBest EGFR Test Auroc in iteration {iteration} = {max_objective}\n')
         result_file.write(f'\t\tEGFR Test Auroc = {auc_test}\n')
@@ -177,8 +179,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
     result_dict = {
         'validation': max_objective_list,
-        'test': auc_test_list,
-        'extern': auc_test_extern_list
+        'test': test_auc_list,
+        'extern': extern_auc_list
     }
     calculate_mean_and_std_auc(result_dict, result_file)
     result_file.close()
@@ -210,17 +212,17 @@ def create_search_space(combination):
                                                parameter_type=ParameterType.INT)
     return SearchSpace(
         parameters=[
-            ChoiceParameter(name='mini_batch', values=batch_size_list, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim1", lower=8, upper=256, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim2", lower=8, upper=256, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim3", lower=8, upper=256, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim4", lower=8, upper=256, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim5", lower=8, upper=256, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_1", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_2", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_3", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_4", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_5", lower=1, upper=3, parameter_type=ParameterType.INT),
+            FixedParameter(name='mini_batch', value=32, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim1", lower=8, upper=128, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim2", lower=8, upper=128, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim3", lower=8, upper=128, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim4", lower=8, upper=128, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim5", lower=8, upper=128, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_1", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_2", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_3", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_4", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_5", lower=1, upper=5, parameter_type=ParameterType.INT),
             ChoiceParameter(name="lr_e", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name="lr_m", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name="lr_c", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
@@ -233,7 +235,7 @@ def create_search_space(combination):
             ChoiceParameter(name="dropout_rate_middle", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='weight_decay', values=weight_decay_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='gamma', values=gamma_list, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name='epochs', lower=10, upper=100, parameter_type=ParameterType.INT),
+            RangeParameter(name='epochs', lower=10, upper=50, parameter_type=ParameterType.INT),
             combination_parameter,
             ChoiceParameter(name='margin', values=margin_list, parameter_type=ParameterType.FLOAT),
         ]
