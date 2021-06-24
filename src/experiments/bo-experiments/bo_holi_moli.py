@@ -36,6 +36,14 @@ gamma_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 combination_list = [0, 1, 2, 3, 4]
 depth_list = [1, 2, 3, 4]
 batch_size_list = [32, 64, 128]
+drugs = {'Gemcitabine_tcga': 'TCGA',
+             'Gemcitabine_pdx': 'PDX',
+             'Cisplatin': 'TCGA',
+             'Docetaxel': 'TCGA',
+             'Erlotinib': 'PDX',
+             'Cetuximab': 'PDX',
+             'Paclitaxel': 'PDX',
+             'EGFR': 'PDX'}
 
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
@@ -212,27 +220,19 @@ def create_search_space(combination):
                                                parameter_type=ParameterType.INT)
     return SearchSpace(
         parameters=[
-            FixedParameter(name='mini_batch', value=32, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim1", lower=8, upper=128, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim2", lower=8, upper=128, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim3", lower=8, upper=128, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim4", lower=8, upper=128, parameter_type=ParameterType.INT),
-            RangeParameter(name="h_dim5", lower=8, upper=128, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_1", lower=1, upper=5, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_2", lower=1, upper=5, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_3", lower=1, upper=5, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_4", lower=1, upper=5, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_5", lower=1, upper=5, parameter_type=ParameterType.INT),
-            ChoiceParameter(name="lr_e", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="lr_m", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="lr_c", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="lr_cl", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="lr_middle", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="dropout_rate_e", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="dropout_rate_m", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="dropout_rate_c", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="dropout_rate_clf", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="dropout_rate_middle", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name='mini_batch', values=batch_size_list, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim1", lower=8, upper=256, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim2", lower=8, upper=256, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim3", lower=8, upper=256, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim4", lower=8, upper=256, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim5", lower=8, upper=256, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_1", lower=1, upper=3, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_2", lower=1, upper=3, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_3", lower=1, upper=3, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_4", lower=1, upper=3, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_5", lower=1, upper=3, parameter_type=ParameterType.INT),
+            ChoiceParameter(name="lr", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
+            ChoiceParameter(name="dropout_rate", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='weight_decay', values=weight_decay_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='gamma', values=gamma_list, parameter_type=ParameterType.FLOAT),
             RangeParameter(name='epochs', lower=10, upper=50, parameter_type=ParameterType.INT),
@@ -252,14 +252,7 @@ if __name__ == '__main__':
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol'])
     args = parser.parse_args()
 
-    drugs = {'Gemcitabine_tcga': 'TCGA',
-             'Gemcitabine_pdx': 'PDX',
-             'Cisplatin': 'TCGA',
-             'Docetaxel': 'TCGA',
-             'Erlotinib': 'PDX',
-             'Cetuximab': 'PDX',
-             'Paclitaxel': 'PDX',
-             'EGFR': 'PDX'}
+
     for drug, extern_dataset in drugs.items():
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                 args.combination, args.sampling_method, drug, extern_dataset)
