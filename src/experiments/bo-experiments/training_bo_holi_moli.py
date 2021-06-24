@@ -14,8 +14,7 @@ from utils.network_training_util import BceWithTripletsToss
 random_seed = 42
 
 
-def train_and_validate(parameterization, x_e, x_m, x_c, y, device):
-    pin_memory = False if 'cpu' == str(device) else True
+def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -106,7 +105,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device):
     return (mean, standard_error_of_mean)
 
 
-def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device):
+def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -119,16 +118,8 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     depth_3 = parameterization['depth_3']
     depth_4 = parameterization['depth_4']
     depth_5 = parameterization['depth_5']
-    lr_e = parameterization['lr_e']
-    lr_m = parameterization['lr_m']
-    lr_c = parameterization['lr_c']
-    lr_cl = parameterization['lr_cl']
-    lr_middle = parameterization['lr_middle']
-    dropout_rate_e = parameterization['dropout_rate_e']
-    dropout_rate_m = parameterization['dropout_rate_m']
-    dropout_rate_c = parameterization['dropout_rate_c']
-    dropout_rate_clf = parameterization['dropout_rate_clf']
-    dropout_rate_middle = parameterization['dropout_rate_middle']
+    lr = parameterization['lr']
+    dropout_rate = parameterization['dropout_rate']
     weight_decay = parameterization['weight_decay']
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
@@ -145,17 +136,10 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
 
     depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
     input_sizes = [ie_dim, im_dim, ic_dim]
-    dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_clf, dropout_rate_middle]
     output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
-    moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
+    moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rate, combination, depths).to(device)
 
-    moli_optimiser = torch.optim.Adagrad([
-        {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle},
-        {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
-        {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
-        {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c},
-        {'params': moli_model.classifier.parameters(), 'lr': lr_cl, 'weight_decay': weight_decay},
-    ])
+    moli_optimiser = torch.optim.Adagrad(moli_model.parameters(), lr, weight_decay=weight_decay)
 
     trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
     class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
@@ -170,7 +154,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
                                                    torch.FloatTensor(y_train))
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=mini_batch,
                                                shuffle=False,
-                                               num_workers=8, sampler=sampler, pin_memory=True, drop_last=True)
+                                               num_workers=8, sampler=sampler, pin_memory=pin_memory, drop_last=True)
     bce_with_triplet_loss = BceWithTripletsToss(parameterization['gamma'], all_triplet_selector, trip_criterion)
     for _ in range(epochs):
         network_training_util.train(train_loader, moli_model, moli_optimiser,
@@ -178,7 +162,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     return moli_model, train_scaler_gdsc
 
 
-def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device):
+def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
     train_batch_size = 256
     x_test_e = torch.FloatTensor(scaler.transform(x_test_e))
     x_test_m = torch.FloatTensor(x_test_m)
@@ -189,7 +173,7 @@ def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device):
                                                   torch.FloatTensor(x_test_m),
                                                   torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
-                                              num_workers=8, pin_memory=True)
+                                              num_workers=8, pin_memory=pin_memory)
     auc_test = network_training_util.validate(test_loader, moli_model, device)
 
     return auc_test

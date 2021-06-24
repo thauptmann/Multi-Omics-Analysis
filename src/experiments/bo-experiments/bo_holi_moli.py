@@ -29,13 +29,13 @@ from utils.visualisation import save_auroc_plots
 
 dim_list = [512, 256, 128, 64, 32, 16, 8]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
-learning_rate_list = [0.1, 0.01, 0.001, 0.0001, 0.00001]
-drop_rate_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+learning_rate_list = [0.01, 0.001, 0.0001, 0.00001]
+drop_rate_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 weight_decay_list = [0.1, 0.01, 0.001, 0.0001]
 gamma_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 combination_list = [0, 1, 2, 3, 4]
-depth_list = [1, 2, 3, 4]
-batch_size_list = [32, 64, 128]
+batch_size_list = [32, 64]
+
 drugs = {'Gemcitabine_tcga': 'TCGA',
              'Gemcitabine_pdx': 'PDX',
              'Cisplatin': 'TCGA',
@@ -54,8 +54,10 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     if torch.cuda.is_available():
         free_gpu_id = get_free_gpu()
         device = torch.device(f"cuda:{free_gpu_id}")
+        pin_memory = True
     else:
         device = torch.device("cpu")
+        pin_memory = False
 
     result_path = Path('..', '..', '..', 'results', drug_name, 'bayesian_optimisation', experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
@@ -86,7 +88,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     iteration = 0
     result_file.write(f"Start for {drug_name}")
     for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc="k-fold"):
-
+        result_file.write(f'\tIteration {iteration}. \n')
         x_train_e = gdsc_e[train_index]
         x_train_m = gdsc_m[train_index]
         x_train_c = gdsc_c[train_index]
@@ -95,10 +97,11 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         x_test_m = gdsc_m[test_index]
         x_test_c = gdsc_c[test_index]
         y_test = gdsc_r[test_index]
-        result_file.write(f'\tIteration {iteration} with seed {random_seed}: \n')
+
         torch.manual_seed(random_seed)
         np.random.seed(random_seed)
         sobol = Models.SOBOL(moli_search_space, seed=random_seed)
+        max_objective = 0
 
         # load or set up experiment with initial sobel runs
         if load_checkpoint & checkpoint_path.exists():
@@ -109,21 +112,17 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                                                                                          x_train_e, x_train_m,
                                                                                          x_train_c,
                                                                                          y_train,
-                                                                                         device)
+                                                                                         device, pin_memory)
             print(f"Resuming after iteration {len(experiment.trials.values())}")
-            if (result_path / 'best_parameters').exists():
-                best_parameters = pickle.load(open(result_path / 'best_parameters', 'rb'))
-            else:
-                best_parameters = None
+
         else:
-            best_parameters = None
             experiment = SimpleExperiment(
                 name="BO-MOLI",
                 search_space=moli_search_space,
                 evaluation_function=lambda parameterization: train_and_validate(parameterization,
                                                                                 x_train_e, x_train_m,
                                                                                 x_train_c,
-                                                                                y_train, device),
+                                                                                y_train, device, pin_memory),
                 objective_name="auroc",
                 minimize=False,
             )
@@ -151,7 +150,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                                                                                          x_train_e, x_train_m,
                                                                                          x_train_c,
                                                                                          y_train,
-                                                                                         device)
+                                                                                         device, pin_memory)
             save(experiment, str(checkpoint_path))
 
             if i % 10 == 0:
@@ -172,11 +171,11 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         result_file.write(f'\t\t{str(best_parameters)}\n')
 
-        model, scaler = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device)
-        auc_test = test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device)
-        aux_extern = test(model, scaler, extern_e, extern_m, extern_c, extern_r, device)
+        model, scaler = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory)
+        auc_test = test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
+        aux_extern = test(model, scaler, extern_e, extern_m, extern_c, extern_r, device, pin_memory)
 
-        result_file.write(f'\t\tBest EGFR Test Auroc in iteration {iteration} = {max_objective}\n')
+        result_file.write(f'\t\tBest EGFR Test Auroc = {max_objective}\n')
         result_file.write(f'\t\tEGFR Test Auroc = {auc_test}\n')
         result_file.write(f'\t\tEGFR Extern: AUROC = {aux_extern}\n')
         max_objective_list.append(max_objective)
@@ -190,7 +189,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         'test': test_auc_list,
         'extern': extern_auc_list
     }
-    calculate_mean_and_std_auc(result_dict, result_file)
+    calculate_mean_and_std_auc(result_dict, result_file, drug_name)
     result_file.close()
 
 
@@ -203,7 +202,8 @@ def extract_best_parameter(experiment):
     return best_parameters
 
 
-def calculate_mean_and_std_auc(result_dict, result_file):
+def calculate_mean_and_std_auc(result_dict, result_file, drug_name):
+    result_file.write(f'\tMean Result for {drug_name}:\n')
     for result_name, result_value in result_dict.items():
         mean = np.mean(result_value)
         std = np.std(result_value)
@@ -226,11 +226,11 @@ def create_search_space(combination):
             RangeParameter(name="h_dim3", lower=8, upper=256, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim4", lower=8, upper=256, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim5", lower=8, upper=256, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_1", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_2", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_3", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_4", lower=1, upper=3, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_5", lower=1, upper=3, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_1", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_2", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_3", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_4", lower=1, upper=5, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_5", lower=1, upper=5, parameter_type=ParameterType.INT),
             ChoiceParameter(name="lr", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name="dropout_rate", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='weight_decay', values=weight_decay_list, parameter_type=ParameterType.FLOAT),
@@ -251,7 +251,6 @@ if __name__ == '__main__':
     parser.add_argument('--combination', default=None, type=int)
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol'])
     args = parser.parse_args()
-
 
     for drug, extern_dataset in drugs.items():
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
