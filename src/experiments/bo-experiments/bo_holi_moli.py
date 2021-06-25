@@ -26,6 +26,8 @@ from training_bo_holi_moli import train_and_validate, train_final, test
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots
 
+depth_lower = 1
+depth_upper = 2
 dim_list = [8, 4]
 margin_list = [0.5, 1, 1.5, 2, 2.5]
 learning_rate_list = [0.01, 0.001, 0.0001, 0.00001]
@@ -33,7 +35,7 @@ drop_rate_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 weight_decay_list = [0.1, 0.01, 0.001, 0.0001]
 gamma_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 combination_list = [0, 1, 2, 3, 4]
-batch_size_list = [32, 64]
+batch_size_list = [16, 32]
 
 drugs = {'Gemcitabine_tcga': 'TCGA',
          'Gemcitabine_pdx': 'PDX',
@@ -61,7 +63,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         device = torch.device("cpu")
         pin_memory = False
 
-    result_path = Path('..', '..', '..', 'results', drug_name, 'bayesian_optimisation', experiment_name)
+    result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
     file_mode = 'a' if load_checkpoint else 'w'
     result_file = open(result_path / 'logs.txt', file_mode)
@@ -229,11 +231,11 @@ def create_search_space(combination):
             ChoiceParameter(name="h_dim3", values=dim_list, parameter_type=ParameterType.INT),
             ChoiceParameter(name="h_dim4", values=dim_list, parameter_type=ParameterType.INT),
             ChoiceParameter(name="h_dim5", values=dim_list, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_1", lower=1, upper=6, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_2", lower=1, upper=6, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_3", lower=1, upper=6, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_4", lower=1, upper=6, parameter_type=ParameterType.INT),
-            RangeParameter(name="depth_5", lower=1, upper=6, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_1", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_2", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_3", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_4", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
+            RangeParameter(name="depth_5", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
             ChoiceParameter(name="lr_e", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name="lr_m", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name="lr_c", values=learning_rate_list, parameter_type=ParameterType.FLOAT),

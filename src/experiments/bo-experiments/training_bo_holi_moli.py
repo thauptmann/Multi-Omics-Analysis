@@ -11,8 +11,6 @@ from siamese_triplet.utils import AllTripletSelector
 from utils import network_training_util
 from utils.network_training_util import BceWithTripletsToss
 
-random_seed = 42
-
 
 def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory):
     combination = parameterization['combination']
@@ -44,7 +42,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory):
 
     aucs_validate = []
     cv_splits = 5
-    skf = StratifiedKFold(n_splits=cv_splits, random_state=random_seed)
+    skf = StratifiedKFold(n_splits=cv_splits)
     for train_index, validate_index in tqdm(skf.split(x_e, y), total=skf.get_n_splits(), desc="k-fold"):
         x_train_e = x_e[train_index]
         x_train_m = x_m[train_index]

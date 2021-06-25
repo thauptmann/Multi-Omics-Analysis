@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.feature_selection import VarianceThreshold
+
 from utils.network_training_util import read_and_transpose_csv
 
 
@@ -41,9 +42,8 @@ def load_egfr_data(data_path):
     PDXCcet = pd.DataFrame.transpose(PDXCcet)
     PDXCcet = PDXCcet.loc[:, ~PDXCcet.columns.duplicated()]
 
-    selector = VarianceThreshold(0.05)
-    selector.fit(GDSCE)
-    GDSCE = GDSCE[GDSCE.columns[selector.get_support(indices=True)]]
+    high_variance_indices = get_high_variance_gen_indices(GDSCE, GDSCM, GDSCC)
+    GDSCE = GDSCE[GDSCE.columns[high_variance_indices]]
 
     GDSCM = GDSCM.fillna(0)
     GDSCM[GDSCM != 0.0] = 1
@@ -133,16 +133,18 @@ def load_egfr_data(data_path):
     GDSCRv2 = GDSCRv2['response'].values
     PDXRerlo = PDXRerlo['response'].values
     PDXRcet = PDXRcet['response'].values
-    GDSCEv2 = GDSCEv2.to_numpy()
-    PDXEcet = PDXEcet.to_numpy()
-
-    PDXEerlo = PDXEerlo.to_numpy()
 
     pdx_e_both = pd.concat([PDXEcet, PDXEerlo])
     pdx_m_both = pd.concat([PDXMcet, PDXMerlo])
     pdx_c_both = pd.concat([PDXCcet, PDXCerlo])
     pdx_r_both = pd.concat([PDXRcet, PDXRerlo])
-    return GDSCEv2, GDSCMv2, GDSCCv2, GDSCRv2, pdx_e_both, pdx_m_both, pdx_c_both, pdx_r_both
+    return GDSCEv2.to_numpy(), GDSCMv2.to_numpy(), GDSCCv2.to_numpy(), GDSCRv2.to_numpy(),\
+           pdx_e_both.to_numpy(), pdx_m_both.to_numpy(), pdx_c_both.to_numpy(), pdx_r_both.to_numpy()
+
+
+def get_high_variance_gen_indices(data):
+    selector = VarianceThreshold(0.05)
+    return selector.fit(data).get_support(indices=True)
 
 
 def load_drug_data(data_path, drug, dataset):
@@ -162,18 +164,17 @@ def load_drug_data(data_path, drug, dataset):
                                                f"{dataset}_exprs.{drug}.eb_with.GDSC_exprs.{drug}.tsv")
     mutation_extern = read_and_transpose_csv(sna_binary_path / f"{dataset}_mutations.{drug}.tsv")
     cna_extern = read_and_transpose_csv(cna_binary_path / f"{dataset}_CNA.{drug}.tsv")
+    cna_extern = cna_extern.loc[:, ~cna_extern.columns.duplicated()]
     response_extern = pd.read_csv(response_path / f"{dataset}_response.{drug}.tsv",
                                   sep="\t", index_col=0, decimal=',')
 
     response_train.loc[response_train.response == 'R'] = 0
     response_train.loc[response_train.response == 'S'] = 1
+    response_train.rename(mapper=str, axis='index', inplace=True)
     response_extern.loc[response_extern.response == 'R'] = 0
     response_extern.loc[response_extern.response == 'S'] = 1
     response_extern.rename(mapper=str, axis='index', inplace=True)
-    response_train.rename(mapper=str, axis='index', inplace=True)
-    selector = VarianceThreshold(0.05)
-    selector.fit(expression_train)
-    expression_train = expression_train[expression_train.columns[selector.get_support(indices=True)]]
+
     cna_extern = cna_extern.fillna(0)
     cna_extern[cna_extern != 0.0] = 1
     cna_train = cna_train.fillna(0)
@@ -182,25 +183,29 @@ def load_drug_data(data_path, drug, dataset):
     mutation_extern[mutation_extern != 0.0] = 1
     mutation_train = mutation_train.fillna(0)
     mutation_train[mutation_train != 0.0] = 1
-    ls = expression_train.columns.intersection(mutation_train.columns)
-    ls = ls.intersection(cna_train.columns)
-    ls = ls.intersection(expression_extern.columns)
-    ls = ls.intersection(mutation_extern.columns)
-    ls = ls.intersection(cna_extern.columns)
-    ls = pd.unique(ls)
-    ls2 = expression_train.index.intersection(mutation_train.index)
-    ls2 = ls2.intersection(cna_train.index)
-    ls3 = expression_extern.index.intersection(mutation_extern.index)
-    ls3 = ls3.intersection(cna_extern.index)
-    expression_extern = expression_extern.loc[ls3, ls]
-    mutation_extern = mutation_extern.loc[ls3, ls]
-    cna_extern = cna_extern.loc[ls3, ls]
-    response_extern = response_extern.loc[ls3, :]
-    expression_train = expression_train.loc[ls2, ls]
-    mutation_train = mutation_train.loc[ls2, ls]
-    cna_train = cna_train.loc[ls2, ls]
-    response_train = response_train.loc[ls2, :]
+
+    expression_train = expression_train[expression_train.columns[get_high_variance_gen_indices(expression_train)]]
+    mutation_train = mutation_train[mutation_train.columns[get_high_variance_gen_indices(mutation_train)]]
+    cna_train = cna_train[cna_train.columns[get_high_variance_gen_indices(cna_train)]]
+
+    expression_intersection_genes_index = expression_train.columns.intersection(expression_extern.columns)
+    mutation_intersection_genes_index = mutation_train.columns.intersection(mutation_extern.columns)
+    cna_intersection_genes_index = cna_train.columns.intersection(cna_extern.columns)
+
+    extern_sample_intersection = expression_extern.index.intersection(mutation_extern.index)
+    extern_sample_intersection = extern_sample_intersection.intersection(cna_extern.index)
+    train_samples_intersection = expression_train.index.intersection(mutation_train.index)
+    train_samples_intersection = train_samples_intersection.intersection(cna_train.index)
+
+    expression_extern = expression_extern.loc[extern_sample_intersection, expression_intersection_genes_index]
+    mutation_extern = mutation_extern.loc[extern_sample_intersection, mutation_intersection_genes_index]
+    cna_extern = cna_extern.loc[extern_sample_intersection, cna_intersection_genes_index]
+    response_extern = response_extern.loc[extern_sample_intersection, :]
+    expression_train = expression_train.loc[train_samples_intersection, expression_intersection_genes_index]
+    mutation_train = mutation_train.loc[train_samples_intersection, mutation_intersection_genes_index]
+    cna_train = cna_train.loc[train_samples_intersection, cna_intersection_genes_index]
+    response_train = response_train.loc[train_samples_intersection, :]
     y_train = response_train.response.to_numpy(dtype=int)
     y_extern = response_extern.response.to_numpy(dtype=int)
-    return expression_train, mutation_train, cna_train, y_train, expression_extern, mutation_extern, \
-           cna_extern, y_extern
+    return expression_train.to_numpy(), mutation_train.to_numpy(), cna_train.to_numpy(), y_train, \
+           expression_extern.to_numpy(), mutation_extern.to_numpy(), cna_extern.to_numpy(), y_extern
