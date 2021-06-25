@@ -151,7 +151,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
 
     _, ie_dim = x_train_e.shape
     _, im_dim = x_train_m.shape
-    _, ic_dim = x_train_m.shape
+    _, ic_dim = x_train_c.shape
 
     all_triplet_selector = AllTripletSelector()
 

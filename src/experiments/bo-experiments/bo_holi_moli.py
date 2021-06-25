@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 from training_bo_holi_moli import train_and_validate, train_final, test
 from utils import multi_omics_data
-from utils.visualisation import save_auroc_plots
+from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 
 depth_lower = 1
 depth_upper = 2
@@ -44,7 +44,8 @@ drugs = {'Gemcitabine_tcga': 'TCGA',
          'Erlotinib': 'PDX',
          'Cetuximab': 'PDX',
          'Paclitaxel': 'PDX',
-         'EGFR': 'PDX'}
+         'EGFR': 'PDX'
+         }
 
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
@@ -70,7 +71,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     checkpoint_path = result_path / 'checkpoint.json'
 
     data_path = Path('..', '..', '..', 'data')
-    if drug_name == 'egfr':
+    if drug_name == 'EGFR':
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_egfr_data(data_path)
     else:
@@ -85,6 +86,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     max_objective_list = []
     test_auc_list = []
     extern_auc_list = []
+    objectives_list = []
     now = datetime.now()
     result_file.write(f'Start experiment at {now}\n')
     cv_splits = 5
@@ -161,7 +163,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             if i % 10 == 0:
                 best_parameters = extract_best_parameter(experiment)
                 objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
-                save_auroc_plots(objectives, result_path, sobol_iterations)
+                save_auroc_plots(objectives, result_path, iteration, sobol_iterations)
                 print(best_parameters)
 
         # save results
@@ -170,7 +172,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         save(experiment, str(checkpoint_path))
         pickle.dump(objectives, open(result_path / 'objectives', "wb"))
         pickle.dump(best_parameters, open(result_path / 'best_parameters', "wb"))
-        save_auroc_plots(objectives, result_path, sobol_iterations)
+        save_auroc_plots(objectives, result_path, iteration, sobol_iterations)
 
         iteration += 1
 
@@ -183,6 +185,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         result_file.write(f'\t\tBest EGFR Test Auroc = {max_objective}\n')
         result_file.write(f'\t\tEGFR Test Auroc = {auc_test}\n')
         result_file.write(f'\t\tEGFR Extern: AUROC = {aux_extern}\n')
+        objectives_list.append(objectives)
         max_objective_list.append(max_objective)
         test_auc_list.append(auc_test)
         extern_auc_list.append(aux_extern)
@@ -195,6 +198,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         'extern': extern_auc_list
     }
     calculate_mean_and_std_auc(result_dict, result_file, drug_name)
+    save_auroc_with_variance_plots(objectives_list, result_path, 'final', sobol_iterations)
+
     result_file.close()
 
 

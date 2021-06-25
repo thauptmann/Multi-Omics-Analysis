@@ -42,9 +42,6 @@ def load_egfr_data(data_path):
     PDXCcet = pd.DataFrame.transpose(PDXCcet)
     PDXCcet = PDXCcet.loc[:, ~PDXCcet.columns.duplicated()]
 
-    high_variance_indices = get_high_variance_gen_indices(GDSCE, GDSCM, GDSCC)
-    GDSCE = GDSCE[GDSCE.columns[high_variance_indices]]
-
     GDSCM = GDSCM.fillna(0)
     GDSCM[GDSCM != 0.0] = 1
     GDSCC = GDSCC.fillna(0)
@@ -60,29 +57,39 @@ def load_egfr_data(data_path):
     PDXCerlo = PDXCerlo.fillna(0)
     PDXCerlo[PDXCerlo != 0.0] = 1
 
-    ls = GDSCE.columns.intersection(GDSCM.columns)
-    ls = ls.intersection(GDSCC.columns)
-    ls = ls.intersection(PDXEerlo.columns)
-    ls = ls.intersection(PDXMerlo.columns)
-    ls = ls.intersection(PDXCerlo.columns)
-    ls = ls.intersection(PDXEcet.columns)
-    ls = ls.intersection(PDXMcet.columns)
-    ls = ls.intersection(PDXCcet.columns)
-    ls3 = PDXEerlo.index.intersection(PDXMerlo.index)
-    ls3 = ls3.intersection(PDXCerlo.index)
-    ls4 = PDXEcet.index.intersection(PDXMcet.index)
-    ls4 = ls4.intersection(PDXCcet.index)
-    ls = pd.unique(ls)
+    GDSCE = GDSCE[GDSCE.columns[get_high_variance_gen_indices(GDSCE)]]
+    GDSCM = GDSCM[GDSCM.columns[get_high_variance_gen_indices(GDSCM)]]
+    GDSCC = GDSCC[GDSCC.columns[get_high_variance_gen_indices(GDSCC)]]
 
-    PDXEerlo = PDXEerlo.loc[ls3, ls]
-    PDXMerlo = PDXMerlo.loc[ls3, ls]
-    PDXCerlo = PDXCerlo.loc[ls3, ls]
-    PDXEcet = PDXEcet.loc[ls4, ls]
-    PDXMcet = PDXMcet.loc[ls4, ls]
-    PDXCcet = PDXCcet.loc[ls4, ls]
-    GDSCE = GDSCE.loc[:, ls]
-    GDSCM = GDSCM.loc[:, ls]
-    GDSCC = GDSCC.loc[:, ls]
+    expression_intersection_genes_index = GDSCE.columns.intersection(PDXEcet.columns)
+    expression_intersection_genes_index = expression_intersection_genes_index.intersection(PDXEerlo.columns)
+
+    mutation_intersection_genes_index = GDSCM.columns.intersection(PDXMcet.columns)
+    mutation_intersection_genes_index = mutation_intersection_genes_index.intersection(PDXMerlo.columns)
+
+    cna_intersection_genes_index = GDSCC.columns.intersection(PDXCcet.columns)
+    cna_intersection_genes_index = cna_intersection_genes_index.intersection(PDXCerlo.columns)
+
+    extern_erlo_sample_intersection = PDXEerlo.index.intersection(PDXMerlo.index)
+    extern_erlo_sample_intersection = extern_erlo_sample_intersection.intersection(PDXCerlo.index)
+
+    extern_cet_sample_intersection = PDXEcet.index.intersection(PDXMcet.index)
+    extern_cet_sample_intersection = extern_cet_sample_intersection.intersection(PDXCcet.index)
+
+    train_samples_intersection = GDSCE.index.intersection(GDSCM.index)
+    train_samples_intersection = train_samples_intersection.intersection(GDSCC.index)
+
+    PDXEerlo = PDXEerlo.loc[extern_erlo_sample_intersection, expression_intersection_genes_index]
+    PDXMerlo = PDXMerlo.loc[extern_erlo_sample_intersection, mutation_intersection_genes_index]
+    PDXCerlo = PDXCerlo.loc[extern_erlo_sample_intersection, cna_intersection_genes_index]
+
+    PDXEcet = PDXEcet.loc[extern_cet_sample_intersection, expression_intersection_genes_index]
+    PDXMcet = PDXMcet.loc[extern_cet_sample_intersection, mutation_intersection_genes_index]
+    PDXCcet = PDXCcet.loc[extern_cet_sample_intersection, cna_intersection_genes_index]
+
+    GDSCE = GDSCE.loc[train_samples_intersection, expression_intersection_genes_index]
+    GDSCM = GDSCM.loc[train_samples_intersection, mutation_intersection_genes_index]
+    GDSCC = GDSCC.loc[train_samples_intersection, cna_intersection_genes_index]
 
     GDSCR = pd.read_csv(response_path / "GDSC_response.EGFRi.tsv",
                         sep="\t", index_col=0, decimal=",")
@@ -137,9 +144,9 @@ def load_egfr_data(data_path):
     pdx_e_both = pd.concat([PDXEcet, PDXEerlo])
     pdx_m_both = pd.concat([PDXMcet, PDXMerlo])
     pdx_c_both = pd.concat([PDXCcet, PDXCerlo])
-    pdx_r_both = pd.concat([PDXRcet, PDXRerlo])
-    return GDSCEv2.to_numpy(), GDSCMv2.to_numpy(), GDSCCv2.to_numpy(), GDSCRv2.to_numpy(),\
-           pdx_e_both.to_numpy(), pdx_m_both.to_numpy(), pdx_c_both.to_numpy(), pdx_r_both.to_numpy()
+    pdx_r_both = np.concatenate([PDXRcet, PDXRerlo])
+    return GDSCEv2.to_numpy(), GDSCMv2.to_numpy(), GDSCCv2.to_numpy(), GDSCRv2,\
+           pdx_e_both.to_numpy(), pdx_m_both.to_numpy(), pdx_c_both.to_numpy(), pdx_r_both
 
 
 def get_high_variance_gen_indices(data):
@@ -205,6 +212,7 @@ def load_drug_data(data_path, drug, dataset):
     mutation_train = mutation_train.loc[train_samples_intersection, mutation_intersection_genes_index]
     cna_train = cna_train.loc[train_samples_intersection, cna_intersection_genes_index]
     response_train = response_train.loc[train_samples_intersection, :]
+
     y_train = response_train.response.to_numpy(dtype=int)
     y_extern = response_extern.response.to_numpy(dtype=int)
     return expression_train.to_numpy(), mutation_train.to_numpy(), cna_train.to_numpy(), y_train, \
