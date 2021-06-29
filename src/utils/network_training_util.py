@@ -16,7 +16,10 @@ def create_dataloader(x_expression, x_mutation, x_cna, y_response, mini_batch, p
 
 def train(train_loader, moli_model, moli_optimiser, bce_with_triplets_loss, device, gamma):
     y_true = []
+    use_amp = False if device == torch.device('cpu') else True
+
     predictions = []
+    scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
     moli_model.train()
     for (data_e, data_m, data_c, target) in train_loader:
         moli_optimiser.zero_grad()
@@ -27,18 +30,19 @@ def train(train_loader, moli_model, moli_optimiser, bce_with_triplets_loss, devi
             data_c = data_c.to(device)
             target = target.to(device)
 
-            prediction, zt = moli_model.forward(data_e, data_m, data_c)
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                prediction, zt = moli_model.forward(data_e, data_m, data_c)
             if gamma > 0:
                 loss = bce_with_triplets_loss((prediction, zt), target)
             else:
                 bce_with_logits_loss = torch.nn.BCEWithLogitsLoss()
                 target = target.view(-1, 1)
                 loss = bce_with_logits_loss(prediction, target)
-            sigmoid = torch.nn.Sigmoid()
             prediction = sigmoid(prediction)
             predictions.extend(prediction.cpu().detach())
-            loss.backward()
-            moli_optimiser.step()
+            scaler.scale(loss).backward()
+            scaler.step(moli_optimiser)
+            scaler.update()
     y_true = torch.FloatTensor(y_true)
     predictions = torch.FloatTensor(predictions)
     auc = roc_auc_score(y_true, predictions)
@@ -49,13 +53,15 @@ def validate(data_loader, moli_model, device):
     y_true = []
     predictions = []
     moli_model.eval()
+    use_amp = False if device == torch.device('cpu') else True
     with torch.no_grad():
         for (data_e, data_m, data_c, target) in data_loader:
             validate_e = data_e.to(device)
             validate_m = data_m.to(device)
             validate_c = data_c.to(device)
             y_true.extend(target.numpy())
-            logits, _ = moli_model.forward(validate_e, validate_m, validate_c)
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                logits, _ = moli_model.forward(validate_e, validate_m, validate_c)
             probabilities = sigmoid(logits)
             predictions.extend(probabilities.cpu().detach().numpy())
 
