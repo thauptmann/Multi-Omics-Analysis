@@ -145,12 +145,12 @@ def load_egfr_data(data_path):
     pdx_m_both = pd.concat([PDXMcet, PDXMerlo])
     pdx_c_both = pd.concat([PDXCcet, PDXCerlo])
     pdx_r_both = np.concatenate([PDXRcet, PDXRerlo])
-    return GDSCEv2.to_numpy(), GDSCMv2.to_numpy(), GDSCCv2.to_numpy(), GDSCRv2,\
+    return GDSCEv2.to_numpy(), GDSCMv2.to_numpy(), GDSCCv2.to_numpy(), GDSCRv2, \
            pdx_e_both.to_numpy(), pdx_m_both.to_numpy(), pdx_c_both.to_numpy(), pdx_r_both
 
 
 def get_high_variance_gen_indices(data):
-    selector = VarianceThreshold(0.05)
+    selector = VarianceThreshold(0.01)
     return selector.fit(data).get_support(indices=True)
 
 
