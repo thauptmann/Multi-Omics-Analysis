@@ -36,7 +36,8 @@ weight_decay_lower = 0.0001
 weight_decay_upper = 0.1
 gamma_lower = 0.0
 gamma_upper = 0.6
-dim_list = [8, 16, 32, 64, 128, 256]
+dim_lower = 8
+dim_upper = 256
 margin_lower = 0.5
 margin_upper = 3.5
 learning_rate_lower = 0.00001
@@ -250,11 +251,11 @@ def create_search_space(combination):
     return SearchSpace(
         parameters=[
             ChoiceParameter(name='mini_batch', values=batch_size_list, parameter_type=ParameterType.INT),
-            ChoiceParameter(name="h_dim1", values=dim_list, parameter_type=ParameterType.INT),
-            ChoiceParameter(name="h_dim2", values=dim_list, parameter_type=ParameterType.INT),
-            ChoiceParameter(name="h_dim3", values=dim_list, parameter_type=ParameterType.INT),
-            ChoiceParameter(name="h_dim4", values=dim_list, parameter_type=ParameterType.INT),
-            ChoiceParameter(name="h_dim5", values=dim_list, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim1", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim2", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim3", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim4", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
+            RangeParameter(name="h_dim5", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
             RangeParameter(name="depth_1", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
             RangeParameter(name="depth_2", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
             RangeParameter(name="depth_3", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
