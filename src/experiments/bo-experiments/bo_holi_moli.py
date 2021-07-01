@@ -31,7 +31,7 @@ from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 depth_lower = 1
 depth_upper = 5
 drop_rate_lower = 0.0
-drope_rate_upper = 0.9
+drop_rate_upper = 0.9
 weight_decay_lower = 0.0001
 weight_decay_upper = 0.1
 gamma_lower = 0.0
@@ -271,15 +271,15 @@ def create_search_space(combination):
                            parameter_type=ParameterType.FLOAT, log_scale=True),
             RangeParameter(name="lr_middle", lower=learning_rate_lower, upper=learning_rate_upper,
                            parameter_type=ParameterType.FLOAT, log_scale=True),
-            RangeParameter(name="dropout_rate_e", lower=drop_rate_lower, upper=drope_rate_upper,
+            RangeParameter(name="dropout_rate_e", lower=drop_rate_lower, upper=drop_rate_upper,
                            parameter_type=ParameterType.FLOAT, log_scale=True),
-            RangeParameter(name="dropout_rate_m", lower=drop_rate_lower, upper=drope_rate_upper,
+            RangeParameter(name="dropout_rate_m", lower=drop_rate_lower, upper=drop_rate_upper,
                            parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="dropout_rate_c", lower=drop_rate_lower, upper=drope_rate_upper,
+            RangeParameter(name="dropout_rate_c", lower=drop_rate_lower, upper=drop_rate_upper,
                            parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="dropout_rate_clf", lower=drop_rate_lower, upper=drope_rate_upper,
+            RangeParameter(name="dropout_rate_clf", lower=drop_rate_lower, upper=drop_rate_upper,
                            parameter_type=ParameterType.FLOAT),
-            RangeParameter(name="dropout_rate_middle", lower=drop_rate_lower, upper=drope_rate_upper,
+            RangeParameter(name="dropout_rate_middle", lower=drop_rate_lower, upper=drop_rate_upper,
                            parameter_type=ParameterType.FLOAT),
             RangeParameter(name='weight_decay', lower=weight_decay_lower, upper=weight_decay_upper, log_scale=True,
                            parameter_type=ParameterType.FLOAT),
