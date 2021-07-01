@@ -10,9 +10,9 @@ from ax import (
     ChoiceParameter,
     SearchSpace,
     SimpleExperiment,
-    save,
-    load,
-    FixedParameter
+    FixedParameter,
+    json_save,
+    json_load,
 )
 from sklearn.model_selection import StratifiedKFold
 from ax.modelbridge.registry import Models
@@ -113,7 +113,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         # load or set up experiment with initial sobel runs
         if load_checkpoint & checkpoint_path.exists():
             print("Load checkpoint")
-            experiment = load(str(checkpoint_path))
+            experiment = json_load(str(checkpoint_path))
             experiment.evaluation_function = lambda parameterization: train_and_validate(parameterization,
                                                                                          x_train_e, x_train_m,
                                                                                          x_train_c,
@@ -138,7 +138,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                 print(f"Running Sobol initialisation {i + 1}/{sobol_iterations}")
                 experiment.new_trial(generator_run=sobol.gen(1))
                 experiment.eval()
-            save(experiment, str(checkpoint_path))
+            json_save(experiment, str(checkpoint_path))
 
         for i in range(len(experiment.trials.values()), search_iterations):
             print(f"Running GP+EI optimization trial {i + 1} ...")
@@ -157,7 +157,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                                                                                          x_train_c,
                                                                                          y_train,
                                                                                          device, pin_memory)
-            save(experiment, str(checkpoint_path))
+            json_save(experiment, str(checkpoint_path))
 
             if i % 10 == 0:
                 best_parameters = extract_best_parameter(experiment)
@@ -169,7 +169,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         best_parameters = extract_best_parameter(experiment)
         max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
         objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
-        save(experiment, str(checkpoint_path))
+        json_save(experiment, str(checkpoint_path))
         pickle.dump(objectives, open(result_path / 'objectives', "wb"))
         pickle.dump(best_parameters, open(result_path / 'best_parameters', "wb"))
         save_auroc_plots(objectives, result_path, iteration, sobol_iterations)
