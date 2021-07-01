@@ -30,14 +30,23 @@ from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 
 depth_lower = 1
 depth_upper = 5
+drop_rate_lower = 0.0
+drope_rate_upper = 0.9
+weight_decay_lower = 0.0001
+weight_decay_upper = 0.1
+gamma_lower = 0.0
+gamma_upper = 0.6
 dim_list = [8, 16, 32, 64, 128, 256]
-margin_list = [0.5, 1, 1.5, 2, 2.5]
-learning_rate_list = [0.01, 0.001, 0.0001, 0.00001]
-drop_rate_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
-weight_decay_list = [0.1, 0.01, 0.001, 0.0001]
-gamma_list = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+margin_lower = 0.5
+margin_upper = 3.5
+learning_rate_lower = 0.00001
+learning_rate_upper = 0.01
+combination_lower = 0
+combination_upper = 4
 combination_list = [0, 1, 2, 3, 4]
 batch_size_list = [32, 64]
+epoch_lower = 10
+epoch_upper = 50
 
 drugs = {'Gemcitabine_tcga': 'TCGA',
          'Gemcitabine_pdx': 'PDX',
@@ -233,8 +242,8 @@ def calculate_mean_and_std_auc(result_dict, result_file, drug_name):
 
 def create_search_space(combination):
     if combination is None:
-        combination_parameter = ChoiceParameter(name='combination', values=combination_list,
-                                                parameter_type=ParameterType.INT)
+        combination_parameter = RangeParameter(name='combination', lower=combination_lower, upper=combination_upper,
+                                               parameter_type=ParameterType.INT)
     else:
         combination_parameter = FixedParameter(name='combination', value=combination,
                                                parameter_type=ParameterType.INT)
@@ -251,21 +260,32 @@ def create_search_space(combination):
             RangeParameter(name="depth_3", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
             RangeParameter(name="depth_4", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
             RangeParameter(name="depth_5", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
-            ChoiceParameter(name="lr_e", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="lr_m", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="lr_c", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="lr_cl", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="lr_middle", values=learning_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="dropout_rate_e", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="dropout_rate_m", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="dropout_rate_c", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="dropout_rate_clf", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name="dropout_rate_middle", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name='weight_decay', values=weight_decay_list, parameter_type=ParameterType.FLOAT),
-            ChoiceParameter(name='gamma', values=gamma_list, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name='epochs', lower=5, upper=50, parameter_type=ParameterType.INT),
+            RangeParameter(name="lr_e", lower=learning_rate_lower, upper=learning_rate_upper,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="lr_m", lower=learning_rate_lower, upper=learning_rate_upper,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="lr_c", lower=learning_rate_lower, upper=learning_rate_upper,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="lr_cl", lower=learning_rate_lower, upper=learning_rate_upper,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="lr_middle", lower=learning_rate_lower, upper=learning_rate_upper,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="dropout_rate_e", lower=drop_rate_lower, upper=drope_rate_upper,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="dropout_rate_m", lower=drop_rate_lower, upper=drope_rate_upper,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="dropout_rate_c", lower=drop_rate_lower, upper=drope_rate_upper,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="dropout_rate_clf", lower=drop_rate_lower, upper=drope_rate_upper,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name="dropout_rate_middle", lower=drop_rate_lower, upper=drope_rate_upper,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name='weight_decay', lower=weight_decay_lower, upper=weight_decay_upper, log_scale=True,
+                           parameter_type=ParameterType.FLOAT),
+            RangeParameter(name='gamma', lower=gamma_lower, upper=gamma_upper, parameter_type=ParameterType.FLOAT),
+            RangeParameter(name='epochs', lower=epoch_lower, upper=epoch_upper, parameter_type=ParameterType.INT),
             combination_parameter,
-            ChoiceParameter(name='margin', values=margin_list, parameter_type=ParameterType.FLOAT),
+            RangeParameter(name='margin', lower=margin_lower, upper=margin_upper, parameter_type=ParameterType.FLOAT),
         ]
     )
 
