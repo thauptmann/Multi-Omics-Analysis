@@ -262,7 +262,7 @@ def create_search_space(combination):
             ChoiceParameter(name="dropout_rate_middle", values=drop_rate_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='weight_decay', values=weight_decay_list, parameter_type=ParameterType.FLOAT),
             ChoiceParameter(name='gamma', values=gamma_list, parameter_type=ParameterType.FLOAT),
-            RangeParameter(name='epochs', lower=0, upper=50, parameter_type=ParameterType.INT),
+            RangeParameter(name='epochs', lower=5, upper=50, parameter_type=ParameterType.INT),
             combination_parameter,
             ChoiceParameter(name='margin', values=margin_list, parameter_type=ParameterType.FLOAT),
         ]
