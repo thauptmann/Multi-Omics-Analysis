@@ -272,7 +272,7 @@ def create_search_space(combination):
             RangeParameter(name="lr_middle", lower=learning_rate_lower, upper=learning_rate_upper,
                            parameter_type=ParameterType.FLOAT, log_scale=True),
             RangeParameter(name="dropout_rate_e", lower=drop_rate_lower, upper=drop_rate_upper,
-                           parameter_type=ParameterType.FLOAT, log_scale=True),
+                           parameter_type=ParameterType.FLOAT),
             RangeParameter(name="dropout_rate_m", lower=drop_rate_lower, upper=drop_rate_upper,
                            parameter_type=ParameterType.FLOAT),
             RangeParameter(name="dropout_rate_c", lower=drop_rate_lower, upper=drop_rate_upper,
