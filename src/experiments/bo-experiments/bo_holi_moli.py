@@ -238,7 +238,7 @@ def calculate_mean_and_std_auc(result_dict, result_file, drug_name):
         result_file.write(f'\t\t{result_name} mean: {mean}\n')
         result_file.write(f'\t\t{result_name} std: {std}\n')
         result_file.write(f'\t\t{result_name} max: {max_value}\n')
-        result_file.write(f'\t\t{result_name}min: {min_value}\n')
+        result_file.write(f'\t\t{result_name} min: {min_value}\n')
 
 
 def create_search_space(combination):
