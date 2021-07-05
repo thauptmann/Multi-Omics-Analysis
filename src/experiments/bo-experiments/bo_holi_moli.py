@@ -71,7 +71,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         else:
             free_gpu_id = gpu_number
         device = torch.device(f"cuda:{free_gpu_id}")
-        pin_memory = True
+        pin_memory = False
     else:
         device = torch.device("cpu")
         pin_memory = False
