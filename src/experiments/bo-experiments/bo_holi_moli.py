@@ -37,7 +37,7 @@ weight_decay_upper = 0.1
 gamma_lower = 0.0
 gamma_upper = 0.6
 dim_lower = 8
-dim_upper = 256
+dim_upper = 512
 margin_lower = 0.5
 margin_upper = 3.5
 learning_rate_lower = 0.00001
@@ -45,7 +45,8 @@ learning_rate_upper = 0.01
 combination_lower = 0
 combination_upper = 4
 combination_list = [0, 1, 2, 3, 4]
-batch_size_list = [32, 64]
+batch_size_lower = 16
+batch_size_upper = 32
 epoch_lower = 10
 epoch_upper = 50
 
@@ -250,7 +251,8 @@ def create_search_space(combination):
                                                parameter_type=ParameterType.INT)
     return SearchSpace(
         parameters=[
-            ChoiceParameter(name='mini_batch', values=batch_size_list, parameter_type=ParameterType.INT),
+            RangeParameter(name='mini_batch', lower=batch_size_lower, upper=batch_size_upper,
+                           parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim1", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim2", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
             RangeParameter(name="h_dim3", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
