@@ -11,13 +11,23 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from siamese_triplet.utils import AllTripletSelector
 
 from utils.choose_gpu import get_free_gpu
-from utils import egfr_data
 from utils.network_training_util import BceWithTripletsToss
 from autokeras.search import BayesianSearcher
 from autokeras.nn.generator import DenseNetGenerator
 
 
-def bo_network_morphism_moli(search_iterations, run_test, sobol_iterations, load_checkpoint, experiment_name):
+drugs = {'Gemcitabine_tcga': 'TCGA',
+         'Gemcitabine_pdx': 'PDX',
+         'Cisplatin': 'TCGA',
+         'Docetaxel': 'TCGA',
+         'Erlotinib': 'PDX',
+         'Cetuximab': 'PDX',
+         'Paclitaxel': 'PDX',
+         'EGFR': 'PDX'
+         }
+
+
+def bo_network_morphism_moli(search_iterations,  load_checkpoint, experiment_name):
     random_seed = 42
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
@@ -101,5 +111,4 @@ if __name__ == '__main__':
     parser.add_argument('--experiment_name', required=True)
     parser.add_argument('--load_checkpoint', default=False, action='store_true')
     args = parser.parse_args()
-    bo_network_morphism_moli(args.search_iterations, args.run_test, args.sobol_iterations, args.load_checkpoint,
-                             args.experiment_name)
+    bo_network_morphism_moli(args.search_iterations, args.load_checkpoint, args.experiment_name)

@@ -51,36 +51,3 @@ class Constant:
     MAX_BATCH_SIZE = 128
     LIMIT_MEMORY = False
     SEARCH_MAX_ITER = 200
-
-    # Text Classifier
-    BERT_TRAINER_EPOCHS = 4
-    BERT_TRAINER_BATCH_SIZE = 32
-
-    # text preprocessor
-    EMBEDDING_DIM = 100
-    MAX_SEQUENCE_LENGTH = 400
-    MAX_NB_WORDS = 5000
-    EXTRACT_PATH = "glove/"
-    STORE_PATH = ''
-
-    # Download file name
-    PRETRAINED_VOCAB_BERT_BASE_UNCASED = \
-        GoogleDriveFile(google_drive_id='1hlPkUSPeT5ZQBYZ1Z734BbnHIvpx2ZLj', local_name='vbbu.txt')
-    PRETRAINED_VOCAB_BERT_BASE_CASED = \
-        GoogleDriveFile(google_drive_id='1FLytUhOIF0mTfA4A9MtE3aQ1kJr96oTR', local_name='vbbc.txt')
-    PRETRAINED_MODEL_BERT_BASE_UNCASED = \
-        GoogleDriveFile(google_drive_id='1rp1rVBoQwqgvg-JE8JwLL-adgLE07oTG', local_name='mbbu.pth')
-    PRETRAINED_MODEL_BERT_BASE_CASED = \
-        GoogleDriveFile(google_drive_id='1YKoGj-e4zoyTabt5dYpgEPe-PAmjOTDV', local_name='mbbc.pth')
-
-    # Image Resize
-    MAX_IMAGE_SIZE = 128 * 128
-
-    # SYS Constant
-    SYS_LINUX = 'linux'
-    SYS_WINDOWS = 'windows'
-    SYS_GOOGLE_COLAB = 'goog_colab'
-
-    # Google drive downloader
-    CHUNK_SIZE = 32768
-    DOWNLOAD_URL = "https://docs.google.com/uc?export=download"

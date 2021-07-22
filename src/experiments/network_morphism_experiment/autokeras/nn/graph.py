@@ -94,7 +94,7 @@ class Graph:
             during the network morphism.
     """
 
-    def __init__(self, input_shape, weighted=True):
+    def __init__(self, input_shape_list, weighted=True):
         """Initializer for Graph.
 
         Args:
@@ -103,7 +103,7 @@ class Graph:
                 Sometime we only need the neural architecture information with a graph. In that case,
                 we do not save the weights to save memory and time.
         """
-        self.input_shape = input_shape
+        self.input_shape = input_shape_list
         self.weighted = weighted
         self.node_list = []
         self.layer_list = []
@@ -115,10 +115,11 @@ class Graph:
         self.adj_list = {}
         self.reverse_adj_list = {}
         self.operation_history = []
-        self.n_dim = len(input_shape) - 1
+        self.n_dim = len(input_shape_list[0]) - 1
 
         self.vis = None
-        self._add_node(Node(input_shape))
+        for input_shape in input_shape_list:
+            self._add_node(Node(input_shape))
 
     def add_layer(self, layer, input_node_id):
         """Add a layer to the Graph.

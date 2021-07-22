@@ -8,10 +8,6 @@ class Backend:
         pass
 
     @classmethod
-    def get_image_transformer(cls, x_train, augment=None):
-        return cls.backend.ImageDataTransformer(x_train, augment=augment)
-
-    @classmethod
     def produce_model(cls, graph):
         return cls.backend.produce_model(graph)
 

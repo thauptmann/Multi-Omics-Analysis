@@ -7,7 +7,6 @@ import time
 from ax import (
     ParameterType,
     RangeParameter,
-    ChoiceParameter,
     SearchSpace,
     SimpleExperiment,
     FixedParameter
@@ -29,7 +28,7 @@ from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 
 depth_lower = 1
-depth_upper = 5
+depth_upper = 4
 drop_rate_lower = 0.0
 drop_rate_upper = 0.9
 weight_decay_lower = 0.0001
@@ -37,7 +36,7 @@ weight_decay_upper = 0.1
 gamma_lower = 0.0
 gamma_upper = 0.6
 dim_lower = 8
-dim_upper = 512
+dim_upper = 256
 margin_lower = 0.5
 margin_upper = 3.5
 learning_rate_lower = 0.00001
@@ -50,15 +49,16 @@ batch_size_upper = 32
 epoch_lower = 10
 epoch_upper = 50
 
-drugs = {'Gemcitabine_tcga': 'TCGA',
-         'Gemcitabine_pdx': 'PDX',
-         'Cisplatin': 'TCGA',
-         'Docetaxel': 'TCGA',
-         'Erlotinib': 'PDX',
-         'Cetuximab': 'PDX',
-         'Paclitaxel': 'PDX',
-         'EGFR': 'PDX'
-         }
+drugs = {
+    'Gemcitabine_tcga': 'TCGA',
+    'Gemcitabine_pdx': 'PDX',
+    'Cisplatin': 'TCGA',
+    'Docetaxel': 'TCGA',
+    'Erlotinib': 'PDX',
+    'Cetuximab': 'PDX',
+    'Paclitaxel': 'PDX',
+    'EGFR': 'PDX'
+}
 
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
@@ -83,7 +83,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     file_mode = 'a' if load_checkpoint else 'w'
     result_file = open(result_path / 'logs.txt', file_mode)
     checkpoint_path = result_path / 'checkpoint.json'
-    result_file.write(f"Start for {drug_name}")
+    result_file.write(f"Start for {drug_name}\n")
     print(f"Start for {drug_name}")
 
     data_path = Path('..', '..', '..', 'data')
