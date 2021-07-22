@@ -138,3 +138,4 @@ results_*/*
 data/
 data
 results
+nohup.out
