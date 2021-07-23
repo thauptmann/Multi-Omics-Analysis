@@ -57,7 +57,7 @@ drugs = {
     'Erlotinib': 'PDX',
     'Cetuximab': 'PDX',
     'Paclitaxel': 'PDX',
-    'EGFR': 'PDX'
+   # 'EGFR': 'PDX'
 }
 
 
