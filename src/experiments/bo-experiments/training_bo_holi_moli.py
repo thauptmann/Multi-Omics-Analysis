@@ -157,7 +157,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
 
     depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
     input_sizes = [ie_dim, im_dim, ic_dim]
-    dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_clf, dropout_rate_middle]
+    dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_middle, dropout_rate_clf]
     output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
     moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
