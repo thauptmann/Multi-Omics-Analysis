@@ -140,7 +140,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     dropout_rate_m = parameterization['dropout_rate_m']
     dropout_rate_c = parameterization['dropout_rate_c']
     dropout_rate_clf = parameterization['dropout_rate_clf']
-    dropout_rate_middle = parameterization['dropout_rate_middle']
+    dropout_rate_middle = parameterization['dropout_rate_middle'] if 'dropout_rate_middle' in parameterization else None
     weight_decay = parameterization['weight_decay']
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
