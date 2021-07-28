@@ -18,12 +18,14 @@ from sklearn.model_selection import StratifiedKFold
 from ax.modelbridge.registry import Models
 from tqdm import tqdm
 
+from utils.network_training_util import calculate_mean_and_std_auc, test
+
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.choose_gpu import get_free_gpu
 import argparse
 from pathlib import Path
 import numpy as np
-from training_bo_holi_moli import train_and_validate, train_final, test
+from training_bo_holi_moli import train_and_validate, train_final
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 
@@ -195,15 +197,15 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         auc_test = test(model_test, scaler_test, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
 
         model_extern, scaler_extern = train_final(best_parameters, gdsc_e, gdsc_m, gdsc_c, gdsc_r, device, pin_memory)
-        aux_extern = test(model_extern, scaler_extern, extern_e, extern_m, extern_c, extern_r, device, pin_memory)
+        auc_extern = test(model_extern, scaler_extern, extern_e, extern_m, extern_c, extern_r, device, pin_memory)
 
         result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
         result_file.write(f'\t\t{drug} test Auroc = {auc_test}\n')
-        result_file.write(f'\t\t{drug} extern AUROC = {aux_extern}\n')
+        result_file.write(f'\t\t{drug} extern AUROC = {auc_extern}\n')
         objectives_list.append(objectives)
         max_objective_list.append(max_objective)
         test_auc_list.append(auc_test)
-        extern_auc_list.append(aux_extern)
+        extern_auc_list.append(auc_extern)
 
     print("Done!")
 
@@ -227,19 +229,6 @@ def extract_best_parameter(experiment):
     best_arm = experiment.arms_by_name[best_arm_name]
     best_parameters = best_arm.parameters
     return best_parameters
-
-
-def calculate_mean_and_std_auc(result_dict, result_file, drug_name):
-    result_file.write(f'\tMean Result for {drug_name}:\n')
-    for result_name, result_value in result_dict.items():
-        mean = np.mean(result_value)
-        std = np.std(result_value)
-        max_value = np.max(result_value)
-        min_value = np.min(result_value)
-        result_file.write(f'\t\t{result_name} mean: {mean}\n')
-        result_file.write(f'\t\t{result_name} std: {std}\n')
-        result_file.write(f'\t\t{result_name} max: {max_value}\n')
-        result_file.write(f'\t\t{result_name} min: {min_value}\n')
 
 
 def create_search_space(combination):
