@@ -45,7 +45,6 @@ learning_rate_lower = 0.00001
 learning_rate_upper = 0.01
 combination_lower = 0
 combination_upper = 4
-combination_list = [0, 1, 2, 3, 4]
 batch_size_lower = 16
 batch_size_upper = 32
 epoch_lower = 10
@@ -59,7 +58,7 @@ drugs = {
     'Erlotinib': 'PDX',
     'Cetuximab': 'PDX',
     'Paclitaxel': 'PDX',
-    'EGFR': 'PDX'
+   # 'EGFR': 'PDX'
 }
 
 
