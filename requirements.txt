@@ -1,12 +1,12 @@
 scikit-learn~=0.24.1
-numpy==1.21.1
-pandas==1.3.1
+numpy==1.21.2
+pandas==1.3.2
 torch==1.9.0
-tqdm==4.61.2
+tqdm==4.62.1
 ax-platform==0.2.0
 psutil
 seaborn
 ax~=0.52.0
-scipy==1.7.0
-torchmetrics==0.4.1
+scipy==1.7.1
+torchmetrics==0.5.0
 jupyter

@@ -124,6 +124,7 @@ def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device, pin_m
 
 def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
     train_batch_size = 512
+    auc_test = 0.5
     x_test_m = torch.FloatTensor(x_test_m)
     x_test_c = torch.FloatTensor(x_test_c)
     test_y = torch.FloatTensor(test_y.astype(int))
