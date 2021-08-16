@@ -19,7 +19,6 @@ from ax.modelbridge.registry import Models
 from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-from utils.network_training_util import calculate_mean_and_std_auc, test
 from utils.choose_gpu import get_free_gpu
 import argparse
 from pathlib import Path
@@ -27,6 +26,7 @@ import numpy as np
 from training_bo_holi_moli import train_and_validate, train_final
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
+from utils.network_training_util import calculate_mean_and_std_auc, test
 
 depth_lower = 1
 depth_upper = 4
