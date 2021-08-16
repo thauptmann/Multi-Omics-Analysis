@@ -164,11 +164,6 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
             experiment.new_trial(generator_run=generator_run)
             experiment.eval()
-            experiment.evaluation_function = lambda parameterization: train_and_validate(parameterization,
-                                                                                         x_train_e, x_train_m,
-                                                                                         x_train_c,
-                                                                                         y_train,
-                                                                                         device, pin_memory)
             save_experiment(experiment, str(checkpoint_path))
 
             if i % 10 == 0:
