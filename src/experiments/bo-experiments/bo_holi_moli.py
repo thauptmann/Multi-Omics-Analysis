@@ -18,9 +18,8 @@ from sklearn.model_selection import StratifiedKFold
 from ax.modelbridge.registry import Models
 from tqdm import tqdm
 
-from utils.network_training_util import calculate_mean_and_std_auc, test
-
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+from utils.network_training_util import calculate_mean_and_std_auc, test
 from utils.choose_gpu import get_free_gpu
 import argparse
 from pathlib import Path
