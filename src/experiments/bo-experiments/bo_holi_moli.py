@@ -11,6 +11,8 @@ from ax import (
     SimpleExperiment,
     FixedParameter
 )
+from ax.modelbridge.generation_strategy import GenerationStrategy, GenerationStep
+from ax.modelbridge.modelbridge_utils import get_pending_observation_features
 from ax.storage.json_store.load import load_experiment
 from ax.storage.json_store.save import save_experiment
 
@@ -64,7 +66,7 @@ drugs = {
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
             sampling_method, drug_name, extern_dataset_name, gpu_number):
     if sampling_method == 'sobol':
-        sobol_iterations = 0
+        sobol_iterations = search_iterations
 
     if torch.cuda.is_available():
         if gpu_number is None:
@@ -98,7 +100,6 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     random_seed = 42
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
-    sobol = Models.SOBOL(moli_search_space, seed=random_seed)
 
     max_objective_list = []
     test_auc_list = []
@@ -123,50 +124,79 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         y_test = gdsc_r[test_index]
 
         # load or set up experiment with initial sobel runs
+        evaluation_function = lambda parameterization: train_and_validate(parameterization,
+                                                                                x_train_e, x_train_m,
+                                                                                x_train_c,
+                                                                                y_train, device, pin_memory)
         if load_checkpoint & checkpoint_path.exists():
             print("Load checkpoint")
             experiment = load_experiment(str(checkpoint_path))
-            experiment.evaluation_function = lambda parameterization: train_and_validate(parameterization,
-                                                                                         x_train_e, x_train_m,
-                                                                                         x_train_c,
-                                                                                         y_train,
-                                                                                         device, pin_memory)
+            experiment.evaluation_function = evaluation_function
             print(f"Resuming after iteration {len(experiment.trials.values())}")
 
         else:
             experiment = SimpleExperiment(
                 name="BO-MOLI",
                 search_space=moli_search_space,
-                evaluation_function=lambda parameterization: train_and_validate(parameterization,
-                                                                                x_train_e, x_train_m,
-                                                                                x_train_c,
-                                                                                y_train, device, pin_memory),
+                evaluation_function= evaluation_function,
                 objective_name="auroc",
                 minimize=False,
             )
 
-            print(f"Running Sobol initialization trials...")
-            for i in range(sobol_iterations):
-                print(f"Running Sobol initialisation {i + 1}/{sobol_iterations}")
-                experiment.new_trial(generator_run=sobol.gen(1))
-                experiment.eval()
-            save_experiment(experiment, str(checkpoint_path))
+        if sampling_method == 'gp':
+            generation_strategy = GenerationStrategy(
+                steps=[
+                    GenerationStep(model=Models.SOBOL,
+                                   num_trials=sobol_iterations,
+                                   model_kwargs={"seed": random_seed}),
+                    GenerationStep(
+                        model=Models.BOTORCH,
+                        num_trials=-1,
+                    ),
+                ],
+                name="Sobol+GPEI"
+            )
+        elif sampling_method == 'SAASBO':
+            generation_strategy = GenerationStrategy(
+                steps=[
+                    GenerationStep(model=Models.SOBOL, num_trials=sobol_iterations),
+                    GenerationStep(
+                        model=Models.FULLYBAYESIAN,
+                        num_trials=-1,
+                        model_kwargs={
+                            "num_samples": 256,
+                            "warmup_steps": 512,
+                            "disable_progbar": True,
+                            "torch_device": device,
+                            "torch_dtype": torch.double,
+                        },
+                    ),
+                ],
+                name="SAASBO"
+            )
+        else:
+            generation_strategy = GenerationStrategy(
+                steps=[
+                    GenerationStep(model=Models.SOBOL, num_trials=search_iterations),
+                ],
+                name="Sobol"
+            )
 
-        for i in range(len(experiment.trials.values()), search_iterations):
-            print(f"Running GP+EI optimization trial {i + 1} ...")
+        for i in range(0, search_iterations):
+            if i < sobol_iterations:
+                print(f"Running sobol optimization trial {i + 1} ...")
+            else:
+                print(f"Running GPEI optimization trial {i - sobol_iterations + 1} ...")
 
             # Reinitialize GP+EI model at each step with updated data.
-            if sampling_method == 'gp':
-                gp_ei = Models.BOTORCH(experiment=experiment, data=experiment.fetch_data())
-                generator_run = gp_ei.gen(1)
-            else:
-                generator_run = sobol.gen(1)
-
-            experiment.new_trial(generator_run=generator_run)
+            generator_run = generation_strategy.gen(
+                experiment=experiment, n=1, pending_observations=get_pending_observation_features(experiment)
+            )
+            experiment.new_trial(generator_run)
             experiment.eval()
             save_experiment(experiment, str(checkpoint_path))
 
-            if i % 10 == 0:
+            if i % 10 == 0 and i !=0:
                 best_parameters = extract_best_parameter(experiment)
                 objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
                 save_auroc_plots(objectives, result_path, iteration, sobol_iterations)
@@ -319,7 +349,7 @@ if __name__ == '__main__':
     parser.add_argument('--experiment_name', required=True)
     parser.add_argument('--load_checkpoint', default=False, action='store_true')
     parser.add_argument('--combination', default=None, type=int)
-    parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol'])
+    parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     parser.add_argument('--gpu_number', type=int)
     args = parser.parse_args()
 
