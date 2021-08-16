@@ -1,6 +1,6 @@
 import numpy as np
 
-from .layers import StubDense, get_n_dim, get_conv_class, get_batch_norm_class
+from .layers import StubDense, get_n_dim, get_batch_norm_class
 
 from experiments.network_morphism_experiment.autokeras.constant import Constant
 
@@ -28,60 +28,6 @@ def wider_pre_dense(layer, n_add, weighted=True):
     new_pre_layer.set_weights((student_w, student_b))
 
     return new_pre_layer
-
-
-def wider_pre_conv(layer, n_add_filters, weighted=True):
-    n_dim = get_n_dim(layer)
-    if not weighted:
-        return get_conv_class(n_dim)(layer.input_channel,
-                                     layer.filters + n_add_filters,
-                                     kernel_size=layer.kernel_size,
-                                     stride=layer.stride)
-
-    n_pre_filters = layer.filters
-    rand = np.random.randint(n_pre_filters, size=n_add_filters)
-    teacher_w, teacher_b = layer.get_weights()
-
-    student_w = teacher_w.copy()
-    student_b = teacher_b.copy()
-    # target layer update (i)
-    for i in range(len(rand)):
-        teacher_index = rand[i]
-        new_weight = teacher_w[teacher_index, ...]
-        new_weight = new_weight[np.newaxis, ...]
-        student_w = np.concatenate((student_w, new_weight), axis=0)
-        student_b = np.append(student_b, teacher_b[teacher_index])
-    new_pre_layer = get_conv_class(n_dim)(layer.input_channel,
-                                          n_pre_filters + n_add_filters,
-                                          kernel_size=layer.kernel_size,
-                                          stride=layer.stride)
-    new_pre_layer.set_weights((add_noise(student_w, teacher_w), add_noise(student_b, teacher_b)))
-    return new_pre_layer
-
-
-def wider_next_conv(layer, start_dim, total_dim, n_add, weighted=True):
-    n_dim = get_n_dim(layer)
-    if not weighted:
-        return get_conv_class(n_dim)(layer.input_channel + n_add,
-                                     layer.filters,
-                                     kernel_size=layer.kernel_size,
-                                     stride=layer.stride)
-    n_filters = layer.filters
-    teacher_w, teacher_b = layer.get_weights()
-
-    new_weight_shape = list(teacher_w.shape)
-    new_weight_shape[1] = n_add
-    new_weight = np.zeros(tuple(new_weight_shape))
-
-    student_w = np.concatenate((teacher_w[:, :start_dim, ...].copy(),
-                                add_noise(new_weight, teacher_w),
-                                teacher_w[:, start_dim:total_dim, ...].copy()), axis=1)
-    new_layer = get_conv_class(n_dim)(layer.input_channel + n_add,
-                                      n_filters,
-                                      kernel_size=layer.kernel_size,
-                                      stride=layer.stride)
-    new_layer.set_weights((student_w, teacher_b))
-    return new_layer
 
 
 def wider_bn(layer, start_dim, total_dim, n_add, weighted=True):

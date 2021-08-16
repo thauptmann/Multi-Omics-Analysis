@@ -37,10 +37,8 @@ class Constant:
     MLP_DROPOUT_RATE = 0.25
     CONV_BLOCK_DISTANCE = 2
     DENSE_BLOCK_DISTANCE = 1
-    MODEL_LEN = 3
-    MLP_MODEL_LEN = 3
-    MLP_MODEL_WIDTH = 5
-    MODEL_WIDTH = 64
+    MODEL_LEN = 1
+    MODEL_WIDTH = 32
     POOLING_KERNEL_SIZE = 2
 
     # ModelTrainer

@@ -188,20 +188,3 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
         network_training_util.train(train_loader, moli_model, moli_optimiser,
                                     bce_with_triplet_loss, device, gamma)
     return moli_model, train_scaler_gdsc
-
-
-def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
-    train_batch_size = 512
-    x_test_e = torch.FloatTensor(scaler.transform(x_test_e))
-    x_test_m = torch.FloatTensor(x_test_m)
-    x_test_c = torch.FloatTensor(x_test_c)
-    test_y = torch.FloatTensor(test_y.astype(int))
-
-    test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e),
-                                                  torch.FloatTensor(x_test_m),
-                                                  torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
-    test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
-                                              num_workers=8, pin_memory=pin_memory)
-    auc_test = network_training_util.validate(test_loader, moli_model, device)
-
-    return auc_test

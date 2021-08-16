@@ -1,3 +1,5 @@
+import numpy as np
+import torch
 import torch.utils.data
 import torch.nn
 from sklearn.metrics import roc_auc_score
@@ -77,7 +79,7 @@ class BceWithTripletsToss:
         self.bce_with_logits = torch.nn.BCEWithLogitsLoss()
         super(BceWithTripletsToss, self).__init__()
 
-    def __call__(self, predictions, target, ):
+    def __call__(self, predictions, target):
         prediction, zt = predictions
         triplets = self.triplet_selector.get_triplets(zt, target)
         target = target.view(-1, 1)
@@ -89,3 +91,69 @@ class BceWithTripletsToss:
 def read_and_transpose_csv(path):
     csv_data = pd.read_csv(path, sep="\t", index_col=0, decimal=',')
     return pd.DataFrame.transpose(csv_data)
+
+
+def calculate_mean_and_std_auc(result_dict, result_file, drug_name):
+    result_file.write(f'\tMean Result for {drug_name}:\n')
+    for result_name, result_value in result_dict.items():
+        mean = np.mean(result_value)
+        std = np.std(result_value)
+        max_value = np.max(result_value)
+        min_value = np.min(result_value)
+        result_file.write(f'\t\t{result_name} mean: {mean}\n')
+        result_file.write(f'\t\t{result_name} std: {std}\n')
+        result_file.write(f'\t\t{result_name} max: {max_value}\n')
+        result_file.write(f'\t\t{result_name} min: {min_value}\n')
+
+
+def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
+    train_batch_size = 512
+    x_test_e = torch.FloatTensor(scaler.transform(x_test_e))
+    x_test_m = torch.FloatTensor(x_test_m)
+    x_test_c = torch.FloatTensor(x_test_c)
+    test_y = torch.FloatTensor(test_y.astype(int))
+
+    test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e),
+                                                  torch.FloatTensor(x_test_m),
+                                                  torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
+    test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
+                                              num_workers=8, pin_memory=pin_memory)
+    auc_test = validate(test_loader, moli_model, device)
+    return auc_test
+
+
+def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
+    train_batch_size = 512
+    x_test_m = torch.FloatTensor(x_test_m)
+    x_test_c = torch.FloatTensor(x_test_c)
+    test_y = torch.FloatTensor(test_y.astype(int))
+
+    for model, scaler in zip(moli_model_list, scaler_list):
+        x_test_e = torch.FloatTensor(scaler.transform(x_test_e))
+        test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e),
+                                                      torch.FloatTensor(x_test_m),
+                                                      torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
+        test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
+                                                  num_workers=8, pin_memory=pin_memory)
+        auc_test = validate(test_loader, model, device)
+    return auc_test
+
+
+def validate_ensemble(data_loader, moli_model, device):
+    y_true = []
+    predictions = []
+    moli_model.eval()
+    use_amp = False if device == torch.device('cpu') else True
+    with torch.no_grad():
+        for (data_e, data_m, data_c, target) in data_loader:
+            validate_e = data_e.to(device)
+            validate_m = data_m.to(device)
+            validate_c = data_c.to(device)
+            y_true.extend(target.numpy())
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                logits, _ = moli_model.forward(validate_e, validate_m, validate_c)
+            probabilities = sigmoid(logits)
+            predictions.extend(probabilities.cpu().detach().numpy())
+
+    auc_validate = roc_auc_score(y_true, predictions)
+    return auc_validate

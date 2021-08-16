@@ -4,7 +4,7 @@ from copy import deepcopy
 from torch import nn
 from torch.nn import functional
 
-from experiments.network_morphism_experiment.autokeras.nn.layers import StubAdd, StubConcatenate, StubConv1d, StubConv2d, StubConv3d, \
+from experiments.network_morphism_experiment.autokeras.nn.layers import StubAdd, StubConcatenate, \
     StubDropout1d, StubDropout2d, StubDropout3d, StubGlobalPooling1d, StubGlobalPooling2d, StubGlobalPooling3d, \
     StubPooling1d, StubPooling2d, StubPooling3d, StubBatchNormalization1d, StubBatchNormalization2d, \
     StubBatchNormalization3d, StubSoftmax, StubReLU, StubFlatten, StubDense, StubAvgPooling1d, StubAvgPooling2d, \
@@ -30,15 +30,14 @@ class TorchModel(torch.nn.Module):
         for index, layer in enumerate(self.layers):
             self.add_module(str(index), layer)
 
-    def forward(self, input_tensor):
-        topo_node_list = self.graph.topological_order
-        output_id = topo_node_list[-1]
-        input_id = topo_node_list[0]
-
+    def forward(self, input_tensor_list):
+        topological_node_list = self.graph.topological_order
+        output_id = topological_node_list[-1]
         node_list = deepcopy(self.graph.node_list)
-        node_list[input_id] = input_tensor
+        for i, input_tensor in enumerate(input_tensor_list):
+            node_list[i] = input_tensor
 
-        for v in topo_node_list:
+        for v in topological_node_list[len(input_tensor_list):]:
             for u, layer_id in self.graph.reverse_adj_list[v]:
                 layer = self.graph.layer_list[layer_id]
                 torch_layer = list(self.modules())[layer_id + 1]
@@ -101,19 +100,19 @@ class GlobalAvgPool3d(AvgPool):
 
 def set_torch_weight_to_stub(torch_layer, stub_layer):
     # stub_layer.import_weights(torch_layer)
-    if isinstance(stub_layer, (StubConv1d, StubConv2d, StubConv3d, StubDense)):
+    if isinstance(stub_layer, StubDense):
         stub_layer.set_weights((torch_layer.weight.data.cpu().numpy(), torch_layer.bias.data.cpu().numpy()))
     elif isinstance(stub_layer, (StubBatchNormalization1d, StubBatchNormalization2d, StubBatchNormalization3d)):
         stub_layer.set_weights((torch_layer.weight.data.cpu().numpy(),
-                          torch_layer.bias.data.cpu().numpy(),
-                          torch_layer.running_mean.cpu().numpy(),
-                          torch_layer.running_var.cpu().numpy(),
-                          ))
+                                torch_layer.bias.data.cpu().numpy(),
+                                torch_layer.running_mean.cpu().numpy(),
+                                torch_layer.running_var.cpu().numpy(),
+                                ))
 
 
 def set_stub_weight_to_torch(stub_layer, torch_layer):
     # stub_layer.export_weights(torch_layer)
-    if isinstance(stub_layer, (StubConv1d, StubConv2d, StubConv3d, StubDense)):
+    if isinstance(stub_layer, StubDense):
         torch_layer.weight.data = torch.Tensor(stub_layer.weights[0])
         torch_layer.bias.data = torch.Tensor(stub_layer.weights[1])
     elif isinstance(stub_layer, (StubBatchNormalization1d, StubBatchNormalization2d, StubBatchNormalization3d)):
@@ -124,28 +123,7 @@ def set_stub_weight_to_torch(stub_layer, torch_layer):
 
 
 def to_real_layer(stub_layer):
-    if isinstance(stub_layer, StubConv1d):
-        return torch.nn.Conv1d(stub_layer.input_channel,
-                               stub_layer.filters,
-                               stub_layer.kernel_size,
-                               stride=stub_layer.stride,
-                               padding=stub_layer.padding)
-
-    elif isinstance(stub_layer, StubConv2d):
-        return torch.nn.Conv2d(stub_layer.input_channel,
-                               stub_layer.filters,
-                               stub_layer.kernel_size,
-                               stride=stub_layer.stride,
-                               padding=stub_layer.padding)
-
-    elif isinstance(stub_layer, StubConv3d):
-        return torch.nn.Conv3d(stub_layer.input_channel,
-                               stub_layer.filters,
-                               stub_layer.kernel_size,
-                               stride=stub_layer.stride,
-                               padding=stub_layer.padding)
-
-    elif isinstance(stub_layer, StubDropout1d):
+    if isinstance(stub_layer, StubDropout1d):
         return torch.nn.Dropout(stub_layer.rate)
     elif isinstance(stub_layer, StubDropout2d):
         return torch.nn.Dropout2d(stub_layer.rate)

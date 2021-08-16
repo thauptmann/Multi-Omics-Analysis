@@ -3,8 +3,8 @@ from random import randrange, sample
 
 from experiments.network_morphism_experiment.autokeras.nn.graph import NetworkDescriptor
 
-from experiments.network_morphism_experiment.autokeras.nn.layers import is_layer, StubDense, get_dropout_class, StubReLU, get_conv_class, \
-    get_batch_norm_class, get_pooling_class, LayerType
+from experiments.network_morphism_experiment.autokeras.nn.layers import is_layer, StubDense, get_dropout_class, \
+    StubReLU, get_batch_norm_class, get_pooling_class, LayerType
 from experiments.network_morphism_experiment.autokeras.constant import Constant
 
 
@@ -15,11 +15,7 @@ def to_wider_graph(graph):
 
     for layer_id in wider_layers:
         layer = graph.layer_list[layer_id]
-        if is_layer(layer, LayerType.CONV):
-            n_add = layer.filters
-        else:
-            n_add = layer.units
-
+        n_add = layer.units
         graph.to_wider_model(layer_id, n_add)
     return graph
 
@@ -48,30 +44,18 @@ def to_skip_connection_graph(graph):
 def create_new_layer(layer, n_dim):
     input_shape = layer.output.shape
     dense_deeper_classes = [StubDense, get_dropout_class(n_dim), StubReLU]
-    conv_deeper_classes = [get_conv_class(n_dim), get_batch_norm_class(n_dim), StubReLU]
     if is_layer(layer, LayerType.RELU):
-        conv_deeper_classes = [get_conv_class(n_dim), get_batch_norm_class(n_dim)]
         dense_deeper_classes = [StubDense, get_dropout_class(n_dim)]
     elif is_layer(layer, LayerType.DROPOUT):
         dense_deeper_classes = [StubDense, StubReLU]
-    elif is_layer(layer, LayerType.BATCH_NORM):
-        conv_deeper_classes = [get_conv_class(n_dim), StubReLU]
 
-    if len(input_shape) == 1:
-        # It is in the dense layer part.
-        layer_class = sample(dense_deeper_classes, 1)[0]
-    else:
-        # It is in the conv layer part.
-        layer_class = sample(conv_deeper_classes, 1)[0]
+    layer_class = sample(dense_deeper_classes, 1)[0]
 
     if layer_class == StubDense:
         new_layer = StubDense(input_shape[0], input_shape[0])
 
     elif layer_class == get_dropout_class(n_dim):
         new_layer = layer_class(Constant.DENSE_DROPOUT_RATE)
-
-    elif layer_class == get_conv_class(n_dim):
-        new_layer = layer_class(input_shape[-1], input_shape[-1], sample((1, 3, 5), 1)[0], stride=1)
 
     elif layer_class == get_batch_norm_class(n_dim):
         new_layer = layer_class(input_shape[-1])

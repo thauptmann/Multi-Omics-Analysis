@@ -45,7 +45,7 @@ class Searcher(ABC):
         y_queue: A list of trained architecture performances not updated to the gpr.
     """
 
-    def __init__(self, n_output_node, input_shapes, path, metric, loss, generators, verbose,
+    def __init__(self, n_output_node, input_shape_list, path, metric, loss, generators, verbose,
                  trainer_args=None,
                  default_model_len=None,
                  default_model_width=None,
@@ -67,7 +67,7 @@ class Searcher(ABC):
         if trainer_args is None:
             trainer_args = {}
         self.n_classes = n_output_node
-        self.input_shapes = input_shapes
+        self.input_shape_list = input_shape_list
         self.verbose = verbose
         self.history = []
         self.neighbour_history = []
@@ -119,8 +119,7 @@ class Searcher(ABC):
         if self.verbose:
             print('\nInitializing search.')
         for generator in self.generators:
-            graph = generator(self.n_classes, self.input_shapes). \
-                generate(self.default_model_len, self.default_model_width)
+            graph = generator(self.n_classes, self.input_shape_list).generate(self.default_model_width)
             model_id = self.model_count
             self.model_count += 1
             self.training_queue.append((graph, -1, model_id))
@@ -273,11 +272,11 @@ class BayesianSearcher(Searcher):
         t_min: A float. The minimum temperature during simulated annealing.
     """
 
-    def __init__(self, n_output_node, input_shape, path, metric, loss,
+    def __init__(self, n_output_node, input_shape_list, path, metric, loss,
                  generators, verbose, trainer_args=None,
                  default_model_len=None, default_model_width=None,
                  t_min=None, skip_conn=True):
-        super(BayesianSearcher, self).__init__(n_output_node, input_shape,
+        super(BayesianSearcher, self).__init__(n_output_node, input_shape_list,
                                                path, metric, loss,
                                                generators, verbose,
                                                trainer_args,
@@ -306,8 +305,8 @@ class BayesianSearcher(Searcher):
                                                                  remaining_time, multiprocessing_queue)
         if new_parent_id is None:
             new_parent_id = 0
-            generated_graph = self.generators[0](self.n_classes, self.input_shapes). \
-                generate(self.default_model_len, self.default_model_width)
+            generated_graph = self.generators[0](self.n_classes, self.input_shape_list). \
+                generate(self.default_model_width)
 
         return [(generated_graph, new_parent_id)]
 
@@ -323,8 +322,6 @@ class BayesianSearcher(Searcher):
         parent_id = other_info
         self.optimizer.fit([graph.extract_descriptor()], [metric_value])
         self.optimizer.add_child(parent_id, model_id)
-
-
 
 
 def train(q, graph, train_data, test_data, trainer_args, metric, loss, verbose, path):

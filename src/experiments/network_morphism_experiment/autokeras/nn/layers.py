@@ -65,50 +65,11 @@ class StubDense(StubLayer):
         return self.input_units * self.units + self.units
 
 
-class StubConv(StubLayer):
-
-    def __init__(self, input_channel, filters, kernel_size, stride=1, padding=None, output_node=None, input_node=None):
-        super().__init__(input_node, output_node)
-        self.input_channel = input_channel
-        self.filters = filters
-        self.kernel_size = kernel_size
-        self.stride = stride
-        self.padding = padding if padding is not None else int(self.kernel_size / 2)
-
-    @property
-    def output_shape(self):
-        ret = list(self.input.shape[:-1])
-        for index, dim in enumerate(ret):
-            ret[index] = int((dim + 2 * self.padding - self.kernel_size) / self.stride) + 1
-        ret = ret + [self.filters]
-        return tuple(ret)
-
-    def size(self):
-        return (self.input_channel * self.kernel_size * self.kernel_size + 1) * self.filters
-
-    def __str__(self):
-        return super().__str__() + '(' + ', '.join(str(item) for item in [self.input_channel,
-                                                                          self.filters,
-                                                                          self.kernel_size,
-                                                                          self.stride]) + ')'
-
-
-class StubConv1d(StubConv):
-    pass
-
-
-class StubConv2d(StubConv):
-    pass
-
-
-class StubConv3d(StubConv):
-    pass
-
-
 class StubAggregateLayer(StubLayer):
     def __init__(self, input_nodes=None, output_node=None):
         if input_nodes is None:
             input_nodes = []
+        self.input_nodes = input_nodes
         super().__init__(input_nodes, output_node)
 
 
@@ -117,9 +78,8 @@ class StubConcatenate(StubAggregateLayer):
     @property
     def output_shape(self):
         ret = 0
-        for current_input in self.input:
-            ret += current_input.shape[-1]
-        ret = self.input[0].shape[:-1] + (ret,)
+        for current_input in self.input_nodes:
+            ret += current_input
         return ret
 
 
@@ -243,15 +203,8 @@ class StubInput(StubLayer):
 def layer_width(layer):
     if is_layer(layer, LayerType.DENSE):
         return layer.units
-    if is_layer(layer, LayerType.CONV):
-        return layer.filters
     print(layer)
     raise TypeError('The layer should be either Dense or Conv layer.')
-
-
-def get_conv_class(n_dim):
-    conv_class_list = [StubConv1d, StubConv2d, StubConv3d]
-    return conv_class_list[n_dim - 1]
 
 
 def get_dropout_class(n_dim):
@@ -280,18 +233,17 @@ def get_batch_norm_class(n_dim):
 
 
 def get_n_dim(layer):
-    if isinstance(layer, (StubConv1d, StubDropout1d, StubGlobalPooling1d, StubPooling1d, StubBatchNormalization1d)):
+    if isinstance(layer, (StubDropout1d, StubGlobalPooling1d, StubPooling1d, StubBatchNormalization1d)):
         return 1
-    if isinstance(layer, (StubConv2d, StubDropout2d, StubGlobalPooling2d, StubPooling2d, StubBatchNormalization2d)):
+    if isinstance(layer, (StubDropout2d, StubGlobalPooling2d, StubPooling2d, StubBatchNormalization2d)):
         return 2
-    if isinstance(layer, (StubConv3d, StubDropout3d, StubGlobalPooling3d, StubPooling3d, StubBatchNormalization3d)):
+    if isinstance(layer, (StubDropout3d, StubGlobalPooling3d, StubPooling3d, StubBatchNormalization3d)):
         return 3
     return -1
 
 
 class LayerType:
     INPUT = (StubInput,)
-    CONV = (StubConv,)
     DENSE = (StubDense,)
     BATCH_NORM = (StubBatchNormalization,)
     CONCAT = (StubConcatenate,)

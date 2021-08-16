@@ -53,8 +53,6 @@ class ModelTrainer(ModelTrainerBase):
         if self.device is None:
             self.device = get_device()
         self.model = model
-        if torch.cuda.device_count() > 1:
-            self.model = torch.nn.DataParallel(self.model)
         self.model.to(self.device)
         self.optimizer = None
         self.early_stop = None
@@ -92,11 +90,7 @@ class ModelTrainer(ModelTrainerBase):
 
         test_metric_value_list = []
         test_loss_list = []
-        self.optimizer = torch.optim.SGD(
-            self.model.parameters(),
-            lr=lr,
-            momentum=0.9,
-            weight_decay=3e-4)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, max_iter_num)
 
         for epoch in range(max_iter_num):
@@ -130,14 +124,18 @@ class ModelTrainer(ModelTrainerBase):
             progress_bar = self.init_progress_bar(len(loader))
         else:
             progress_bar = None
-        for (inputs, targets) in loader:
+        for (data_e, data_m, data_c,  targets) in loader:
             if time.time() >= self._timeout:
                 raise TimeoutError
-            inputs = inputs.to(self.device)
-            targets = targets.to(self.device)
+
+            if torch.mean(targets) != 0. and torch.mean(targets) != 1.:
+                data_e = data_e.to(self.device)
+                data_m = data_m.to(self.device)
+                data_c = data_c.to(self.device)
+                targets = targets.to(self.device)
             targets = targets.unsqueeze(1)
             self.optimizer.zero_grad()
-            outputs = self.model(inputs)
+            outputs = self.model([data_e, data_m, data_c])
             loss = self.loss_function(outputs, targets)
             loss.backward()
             self.optimizer.step()
