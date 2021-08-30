@@ -59,14 +59,12 @@ drugs = {
     'Erlotinib': 'PDX',
     'Cetuximab': 'PDX',
     'Paclitaxel': 'PDX',
-   # 'EGFR': 'PDX'
+    # 'EGFR': 'PDX'
 }
 
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
-            sampling_method, drug_name, extern_dataset_name, gpu_number):
-
-
+            sampling_method, drug_name, extern_dataset_name, gpu_number, small_search_space):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -94,7 +92,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     else:
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name)
-    moli_search_space = create_search_space(combination)
+    moli_search_space = create_search_space(combination, small_search_space)
 
     random_seed = 42
     torch.manual_seed(random_seed)
@@ -124,9 +122,9 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         # load or set up experiment with initial sobel runs
         evaluation_function = lambda parameterization: train_and_validate(parameterization,
-                                                                                x_train_e, x_train_m,
-                                                                                x_train_c,
-                                                                                y_train, device, pin_memory)
+                                                                          x_train_e, x_train_m,
+                                                                          x_train_c,
+                                                                          y_train, device, pin_memory)
         if load_checkpoint & checkpoint_path.exists():
             print("Load checkpoint")
             experiment = load_experiment(str(checkpoint_path))
@@ -137,7 +135,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             experiment = SimpleExperiment(
                 name="BO-MOLI",
                 search_space=moli_search_space,
-                evaluation_function= evaluation_function,
+                evaluation_function=evaluation_function,
                 objective_name="auroc",
                 minimize=False,
             )
@@ -190,7 +188,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             if i < sobol_iterations:
                 print(f"Running sobol optimization trial {i + 1} ...")
             else:
-                print(f"Running GPEI optimization trial {i - sobol_iterations + 1} ...")
+                print(f"Running {sampling_method} optimization trial {i - sobol_iterations + 1} ...")
 
             # Reinitialize GP+EI model at each step with updated data.
             generator_run = generation_strategy.gen(
@@ -200,7 +198,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             experiment.eval()
             save_experiment(experiment, str(checkpoint_path))
 
-            if i % 10 == 0 and i !=0:
+            if i % 10 == 0 and i != 0:
                 best_parameters = extract_best_parameter(experiment)
                 objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
                 save_auroc_plots(objectives, result_path, iteration, sobol_iterations)
@@ -258,11 +256,16 @@ def extract_best_parameter(experiment):
     return best_parameters
 
 
-def create_search_space(combination):
+def create_search_space(combination, small_search_space):
     if combination is None:
         combination_parameter = RangeParameter(name='combination', lower=combination_lower, upper=combination_upper,
                                                parameter_type=ParameterType.INT)
-        return SearchSpace(
+    else:
+        combination_parameter = FixedParameter(name='combination', value=combination,
+                                               parameter_type=ParameterType.INT)
+
+    if combination is not None and not small_search_space:
+        search_space = SearchSpace(
             parameters=[
                 RangeParameter(name='mini_batch', lower=batch_size_lower, upper=batch_size_upper,
                                parameter_type=ParameterType.INT),
@@ -301,13 +304,12 @@ def create_search_space(combination):
                 RangeParameter(name='gamma', lower=gamma_lower, upper=gamma_upper, parameter_type=ParameterType.FLOAT),
                 RangeParameter(name='epochs', lower=epoch_lower, upper=epoch_upper, parameter_type=ParameterType.INT),
                 combination_parameter,
-                RangeParameter(name='margin', lower=margin_lower, upper=margin_upper, parameter_type=ParameterType.FLOAT),
+                RangeParameter(name='margin', lower=margin_lower, upper=margin_upper,
+                               parameter_type=ParameterType.FLOAT),
             ]
         )
-    else:
-        combination_parameter = FixedParameter(name='combination', value=combination,
-                                               parameter_type=ParameterType.INT)
-        return SearchSpace(
+    elif combination is None and not small_search_space:
+        search_space = SearchSpace(
             parameters=[
                 RangeParameter(name='mini_batch', lower=batch_size_lower, upper=batch_size_upper,
                                parameter_type=ParameterType.INT),
@@ -344,6 +346,27 @@ def create_search_space(combination):
                                parameter_type=ParameterType.FLOAT),
             ]
         )
+    else:
+        search_space = SearchSpace(
+            parameters=[
+                RangeParameter(name='mini_batch', lower=batch_size_lower, upper=batch_size_upper,
+                               parameter_type=ParameterType.INT),
+                RangeParameter(name="h_dim1", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
+                RangeParameter(name="depth_1", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
+                RangeParameter(name="lr_e", lower=learning_rate_lower, upper=learning_rate_upper,
+                               parameter_type=ParameterType.FLOAT, log_scale=True),
+                RangeParameter(name="dropout_rate_e", lower=drop_rate_lower, upper=drop_rate_upper,
+                               parameter_type=ParameterType.FLOAT),
+                RangeParameter(name='weight_decay', lower=weight_decay_lower, upper=weight_decay_upper, log_scale=True,
+                               parameter_type=ParameterType.FLOAT),
+                RangeParameter(name='gamma', lower=gamma_lower, upper=gamma_upper, parameter_type=ParameterType.FLOAT),
+                RangeParameter(name='epochs', lower=epoch_lower, upper=epoch_upper, parameter_type=ParameterType.INT),
+                combination_parameter,
+                RangeParameter(name='margin', lower=margin_lower, upper=margin_upper,
+                               parameter_type=ParameterType.FLOAT),
+            ]
+        )
+    return search_space
 
 
 if __name__ == '__main__':
@@ -355,8 +378,9 @@ if __name__ == '__main__':
     parser.add_argument('--combination', default=None, type=int)
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     parser.add_argument('--gpu_number', type=int)
+    parser.add_argument('--small_search_space', default=False, action='store_true')
     args = parser.parse_args()
 
     for drug, extern_dataset in drugs.items():
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-                args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number)
+                args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number, args.small_search_space)
