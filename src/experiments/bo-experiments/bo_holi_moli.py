@@ -160,7 +160,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             print('Using sobol+SAASBO')
             generation_strategy = GenerationStrategy(
                 steps=[
-                    GenerationStep(model=Models.SOBOL, num_trials=sobol_iterations),
+                    GenerationStep(model=Models.SOBOL,
+                                   num_trials=sobol_iterations),
                     GenerationStep(
                         model=Models.FULLYBAYESIAN,
                         num_trials=-1,
