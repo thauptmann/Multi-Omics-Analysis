@@ -65,8 +65,7 @@ drugs = {
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
             sampling_method, drug_name, extern_dataset_name, gpu_number):
-    if sampling_method == 'sobol':
-        sobol_iterations = search_iterations
+
 
     if torch.cuda.is_available():
         if gpu_number is None:
@@ -144,6 +143,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             )
 
         if sampling_method == 'gp':
+            print('Using sobol+GPEI')
             generation_strategy = GenerationStrategy(
                 steps=[
                     GenerationStep(model=Models.SOBOL,
@@ -156,7 +156,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                 ],
                 name="Sobol+GPEI"
             )
-        elif sampling_method == 'SAASBO':
+        elif sampling_method == 'saasbo':
+            print('Using sobol+SAASBO')
             generation_strategy = GenerationStrategy(
                 steps=[
                     GenerationStep(model=Models.SOBOL, num_trials=sobol_iterations),
@@ -175,6 +176,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                 name="SAASBO"
             )
         else:
+            print('Using only soobl')
+            sobol_iterations = search_iterations
             generation_strategy = GenerationStrategy(
                 steps=[
                     GenerationStep(model=Models.SOBOL, num_trials=search_iterations),
