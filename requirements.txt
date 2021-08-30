@@ -10,3 +10,4 @@ ax~=0.52.0
 scipy==1.7.1
 torchmetrics==0.5.0
 jupyter
+pyro-ppl
