@@ -1,0 +1,41 @@
+Start for Cisplatin
+Start experiment at 2021-07-30 19:05:44.580824
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 26, 'h_dim1': 123, 'h_dim2': 146, 'h_dim3': 8, 'h_dim5': 164, 'depth_1': 1, 'depth_2': 4, 'depth_3': 4, 'depth_5': 1, 'lr_e': 7.585050911511802e-05, 'lr_m': 0.00016771427546098322, 'lr_c': 0.0006560785644156451, 'lr_cl': 4.2657215296113784e-05, 'dropout_rate_e': 0.316643089056015, 'dropout_rate_m': 0.4172233069315553, 'dropout_rate_c': 0.18594156838953496, 'dropout_rate_clf': 0.2893421810120344, 'weight_decay': 0.0006836031734965094, 'gamma': 0.5802866471931338, 'epochs': 41, 'margin': 1.8045811131596565, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.7113574998234089
+		Cisplatin test Auroc = 0.7039735099337748
+		Cisplatin extern AUROC = 0.6333333333333333
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 20, 'h_dim1': 80, 'h_dim2': 165, 'h_dim3': 72, 'h_dim5': 161, 'depth_1': 1, 'depth_2': 2, 'depth_3': 2, 'depth_5': 1, 'lr_e': 0.00029362750981573837, 'lr_m': 3.571697680793655e-05, 'lr_c': 0.0008309476353544576, 'lr_cl': 0.00125329389330547, 'dropout_rate_e': 0.2650761882774532, 'dropout_rate_m': 0.09555592657998205, 'dropout_rate_c': 0.570451051555574, 'dropout_rate_clf': 0.8420456833206117, 'weight_decay': 0.0012027118581524295, 'gamma': 0.22696253601461647, 'epochs': 42, 'margin': 1.4112144578248262, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.7131978438228439
+		Cisplatin test Auroc = 0.758719646799117
+		Cisplatin extern AUROC = 0.6055555555555555
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 18, 'h_dim1': 166, 'h_dim2': 139, 'h_dim3': 65, 'h_dim5': 24, 'depth_1': 1, 'depth_2': 4, 'depth_3': 3, 'depth_5': 3, 'lr_e': 0.0036307232084365425, 'lr_m': 0.0021756277408181155, 'lr_c': 0.0009741428844652522, 'lr_cl': 0.006579393793085716, 'dropout_rate_e': 0.5272480026818812, 'dropout_rate_m': 0.6572098229080439, 'dropout_rate_c': 0.6228960438631476, 'dropout_rate_clf': 0.2239230277016759, 'weight_decay': 0.06022587462533402, 'gamma': 0.2064690487459302, 'epochs': 14, 'margin': 0.6672412781044841, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.7653907077770714
+		Cisplatin test Auroc = 0.6470833333333332
+		Cisplatin extern AUROC = 0.6402777777777777
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 19, 'h_dim1': 116, 'h_dim2': 117, 'h_dim3': 239, 'h_dim5': 163, 'depth_1': 1, 'depth_2': 3, 'depth_3': 4, 'depth_5': 3, 'lr_e': 0.005894518049993242, 'lr_m': 0.0025075458037459187, 'lr_c': 1.4274784348354313e-05, 'lr_cl': 0.0006876187602889929, 'dropout_rate_e': 0.40231276787817477, 'dropout_rate_m': 0.6532171988859773, 'dropout_rate_c': 0.0694797445088625, 'dropout_rate_clf': 0.18560998030006887, 'weight_decay': 0.03516560365098856, 'gamma': 0.07475238349288701, 'epochs': 45, 'margin': 2.686138807795942, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.7154230239457513
+		Cisplatin test Auroc = 0.7531249999999999
+		Cisplatin extern AUROC = 0.6611111111111111
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 17, 'h_dim1': 192, 'h_dim2': 206, 'h_dim3': 119, 'h_dim5': 247, 'depth_1': 1, 'depth_2': 2, 'depth_3': 4, 'depth_5': 1, 'lr_e': 0.0011417613011934283, 'lr_m': 0.0008177631716074279, 'lr_c': 1.1237665214233841e-05, 'lr_cl': 0.00025909629667123397, 'dropout_rate_e': 0.22279967246577145, 'dropout_rate_m': 0.2328724041581154, 'dropout_rate_c': 0.6979488663375378, 'dropout_rate_clf': 0.5126355542801321, 'weight_decay': 0.0002489484610812033, 'gamma': 0.12072810530662537, 'epochs': 45, 'margin': 2.9083741940557957, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.7026123560782652
+		Cisplatin test Auroc = 0.7953333333333334
+		Cisplatin extern AUROC = 0.7402777777777778
+	Mean Result for Cisplatin:
+		validation mean: 0.7215962862894683
+		validation std: 0.022324053000406435
+		validation max: 0.7653907077770714
+		validation min: 0.7026123560782652
+		test mean: 0.7316469646799117
+		test std: 0.051316698090786296
+		test max: 0.7953333333333334
+		test min: 0.6470833333333332
+		extern mean: 0.6561111111111112
+		extern std: 0.04568241145177633
+		extern max: 0.7402777777777778
+		extern min: 0.6055555555555555
+	Minutes needed: 2021

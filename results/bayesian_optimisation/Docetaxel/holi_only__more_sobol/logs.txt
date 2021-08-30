@@ -1,0 +1,41 @@
+Start for Docetaxel
+Start experiment at 2021-08-21 22:56:18.684977
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 25, 'h_dim1': 154, 'h_dim2': 166, 'h_dim3': 239, 'h_dim4': 47, 'h_dim5': 179, 'depth_1': 1, 'depth_2': 3, 'depth_3': 3, 'depth_4': 1, 'depth_5': 2, 'lr_e': 0.00012890975450128574, 'lr_m': 0.0013430622253212331, 'lr_c': 0.0008464664894845548, 'lr_cl': 0.0001038434342736334, 'lr_middle': 0.0017085123862963718, 'dropout_rate_e': 0.8466703221201897, 'dropout_rate_m': 0.5090692891739309, 'dropout_rate_c': 0.8901308446191252, 'dropout_rate_clf': 0.40018279887735847, 'dropout_rate_middle': 0.5938249239698052, 'weight_decay': 0.037789753800033514, 'gamma': 0.0940223291516304, 'epochs': 39, 'combination': 1, 'margin': 2.9848653469234705}"
+		Best Docetaxel validation Auroc = 0.8220831667333067
+		Docetaxel test Auroc = 0.8034188034188033
+		Docetaxel extern AUROC = 0.546875
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 24, 'h_dim1': 248, 'h_dim2': 236, 'h_dim3': 176, 'h_dim4': 246, 'h_dim5': 194, 'depth_1': 1, 'depth_2': 3, 'depth_3': 1, 'depth_4': 2, 'depth_5': 2, 'lr_e': 4.1822244221358415e-05, 'lr_m': 4.286734061793353e-05, 'lr_c': 0.0007736169968052775, 'lr_cl': 0.00029852624403909326, 'lr_middle': 0.000319900906704089, 'dropout_rate_e': 0.873097223136574, 'dropout_rate_m': 0.1013123863376677, 'dropout_rate_c': 0.18950120927765965, 'dropout_rate_clf': 0.8504085134714842, 'dropout_rate_middle': 0.6446915276348592, 'weight_decay': 0.0022030301746211603, 'gamma': 0.3393958194181323, 'epochs': 20, 'combination': 4, 'margin': 1.3940081568434834}"
+		Best Docetaxel validation Auroc = 0.7874204257690862
+		Docetaxel test Auroc = 0.8192559074912016
+		Docetaxel extern AUROC = 0.421875
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 23, 'h_dim1': 226, 'h_dim2': 135, 'h_dim3': 107, 'h_dim4': 254, 'h_dim5': 131, 'depth_1': 3, 'depth_2': 1, 'depth_3': 3, 'depth_4': 3, 'depth_5': 1, 'lr_e': 0.00011285398886302358, 'lr_m': 0.0008650965474097993, 'lr_c': 1.1248866016533579e-05, 'lr_cl': 0.0025146255269029812, 'lr_middle': 2.1106108713043756e-05, 'dropout_rate_e': 0.21934968866407872, 'dropout_rate_m': 0.5967523707076907, 'dropout_rate_c': 0.03136039366945625, 'dropout_rate_clf': 0.7363307509571314, 'dropout_rate_middle': 0.5687850234098732, 'weight_decay': 0.0003331391551949342, 'gamma': 0.21918563470244407, 'epochs': 17, 'combination': 4, 'margin': 1.2787886187434196}"
+		Best Docetaxel validation Auroc = 0.858534525583706
+		Docetaxel test Auroc = 0.6983408748114631
+		Docetaxel extern AUROC = 0.6875
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 30, 'h_dim1': 217, 'h_dim2': 48, 'h_dim3': 29, 'h_dim4': 36, 'h_dim5': 206, 'depth_1': 1, 'depth_2': 1, 'depth_3': 4, 'depth_4': 2, 'depth_5': 1, 'lr_e': 1.516744007986457e-05, 'lr_m': 0.0006937891823484175, 'lr_c': 0.0007519224957405544, 'lr_cl': 0.0007285623643789728, 'lr_middle': 0.000617384676306584, 'dropout_rate_e': 0.2547433963045478, 'dropout_rate_m': 0.7497397265397012, 'dropout_rate_c': 0.16998224034905435, 'dropout_rate_clf': 0.7567103879526258, 'dropout_rate_middle': 0.5926101590506733, 'weight_decay': 0.009433488169182692, 'gamma': 0.2201057430356741, 'epochs': 13, 'combination': 1, 'margin': 1.0981524894014}"
+		Best Docetaxel validation Auroc = 0.8139061950977184
+		Docetaxel test Auroc = 0.8871292106586225
+		Docetaxel extern AUROC = 0.65625
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 24, 'h_dim1': 105, 'h_dim2': 197, 'h_dim3': 237, 'h_dim4': 129, 'h_dim5': 226, 'depth_1': 2, 'depth_2': 2, 'depth_3': 1, 'depth_4': 4, 'depth_5': 3, 'lr_e': 0.0005739635801350897, 'lr_m': 3.0293258555216587e-05, 'lr_c': 0.00012403515409217043, 'lr_cl': 0.001290993553045072, 'lr_middle': 0.0030982765111324134, 'dropout_rate_e': 0.4347064280882478, 'dropout_rate_m': 0.8201123951934278, 'dropout_rate_c': 0.7193357180804014, 'dropout_rate_clf': 0.7794423557817937, 'dropout_rate_middle': 0.5366732122376562, 'weight_decay': 0.009368644133578826, 'gamma': 0.03426191210746765, 'epochs': 50, 'combination': 4, 'margin': 2.4673472298309207}"
+		Best Docetaxel validation Auroc = 0.8030058279718416
+		Docetaxel test Auroc = 0.7798582995951416
+		Docetaxel extern AUROC = 0.671875
+	Mean Result for Docetaxel:
+		validation mean: 0.816990028231132
+		validation std: 0.023796279513951187
+		validation max: 0.858534525583706
+		validation min: 0.7874204257690862
+		test mean: 0.7976006191950464
+		test std: 0.061131756441611486
+		test max: 0.8871292106586225
+		test min: 0.6983408748114631
+		extern mean: 0.596875
+		extern std: 0.10048709494258454
+		extern max: 0.6875
+		extern min: 0.421875
+	Minutes needed: 2741

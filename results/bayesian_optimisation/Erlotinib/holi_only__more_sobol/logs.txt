@@ -1,0 +1,41 @@
+Start for Erlotinib
+Start experiment at 2021-08-23 20:37:08.919584
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 28, 'h_dim1': 241, 'h_dim2': 68, 'h_dim3': 188, 'h_dim4': 203, 'h_dim5': 194, 'depth_1': 2, 'depth_2': 2, 'depth_3': 1, 'depth_4': 2, 'depth_5': 4, 'lr_e': 8.381493560288188e-05, 'lr_m': 2.828900516124547e-05, 'lr_c': 9.330356799967843e-05, 'lr_cl': 0.0005635213132664578, 'lr_middle': 1.2466443525435407e-05, 'dropout_rate_e': 0.12282600095495581, 'dropout_rate_m': 0.41044701682403684, 'dropout_rate_c': 0.21509997406974435, 'dropout_rate_clf': 0.0015011259354650974, 'dropout_rate_middle': 0.5389871438965201, 'weight_decay': 0.00014147952789070082, 'gamma': 0.011487486027181148, 'epochs': 18, 'combination': 1, 'margin': 2.7549156146124005}"
+		Best Erlotinib validation Auroc = 0.7216187137330754
+		Erlotinib test Auroc = 0.7269230769230769
+		Erlotinib extern AUROC = 0.5370370370370371
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 24, 'h_dim1': 141, 'h_dim2': 149, 'h_dim3': 136, 'h_dim4': 120, 'h_dim5': 124, 'depth_1': 4, 'depth_2': 3, 'depth_3': 1, 'depth_4': 3, 'depth_5': 4, 'lr_e': 0.001982495420518537, 'lr_m': 0.0005550819012595949, 'lr_c': 6.335849378853232e-05, 'lr_cl': 0.0002754488802327518, 'lr_middle': 1.4055260761835339e-05, 'dropout_rate_e': 0.23746213568374516, 'dropout_rate_m': 0.2515845042653382, 'dropout_rate_c': 0.13516997946426274, 'dropout_rate_clf': 0.1662114123813808, 'dropout_rate_middle': 0.07248345818370582, 'weight_decay': 0.0029017821470617862, 'gamma': 0.02198935244232416, 'epochs': 45, 'combination': 1, 'margin': 2.7315397383645177}"
+		Best Erlotinib validation Auroc = 0.7336238716956802
+		Erlotinib test Auroc = 0.5403846153846155
+		Erlotinib extern AUROC = 0.3703703703703703
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 26, 'h_dim1': 172, 'h_dim2': 63, 'h_dim3': 149, 'h_dim4': 232, 'h_dim5': 41, 'depth_1': 1, 'depth_2': 4, 'depth_3': 4, 'depth_4': 1, 'depth_5': 2, 'lr_e': 0.0011316246138049924, 'lr_m': 0.00167845188361892, 'lr_c': 2.1847411968015704e-05, 'lr_cl': 0.0004401167189417799, 'lr_middle': 0.005092200906055415, 'dropout_rate_e': 0.794463476445526, 'dropout_rate_m': 0.5791715936735272, 'dropout_rate_c': 0.677574154548347, 'dropout_rate_clf': 0.689466121327132, 'dropout_rate_middle': 0.09489751970395446, 'weight_decay': 0.019909625591811652, 'gamma': 0.4711930649355054, 'epochs': 10, 'combination': 2, 'margin': 3.347072240896523}"
+		Best Erlotinib validation Auroc = 0.7351120245003223
+		Erlotinib test Auroc = 0.6013888888888889
+		Erlotinib extern AUROC = 0.611111111111111
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 18, 'h_dim1': 248, 'h_dim2': 253, 'h_dim3': 235, 'h_dim4': 111, 'h_dim5': 25, 'depth_1': 4, 'depth_2': 4, 'depth_3': 3, 'depth_4': 3, 'depth_5': 1, 'lr_e': 0.0008033123238406885, 'lr_m': 0.0008228073384818901, 'lr_c': 0.00016761409549799665, 'lr_cl': 0.0005579123286556081, 'lr_middle': 1.797410723994292e-05, 'dropout_rate_e': 0.4469077826477587, 'dropout_rate_m': 0.7219410616904497, 'dropout_rate_c': 0.6115971654653549, 'dropout_rate_clf': 0.15119860991835596, 'dropout_rate_middle': 0.15311319502070547, 'weight_decay': 0.0033739318025269214, 'gamma': 0.04257755409926176, 'epochs': 11, 'combination': 3, 'margin': 1.0307543464004993}"
+		Best Erlotinib validation Auroc = 0.7638048033526758
+		Erlotinib test Auroc = 0.7542372881355932
+		Erlotinib extern AUROC = 0.888888888888889
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 28, 'h_dim1': 149, 'h_dim2': 52, 'h_dim3': 69, 'h_dim4': 57, 'h_dim5': 53, 'depth_1': 2, 'depth_2': 3, 'depth_3': 1, 'depth_4': 1, 'depth_5': 3, 'lr_e': 0.006239856637153512, 'lr_m': 1.1852502964520724e-05, 'lr_c': 0.006181372389633931, 'lr_cl': 0.00039007946977529184, 'lr_middle': 0.00024219510040605352, 'dropout_rate_e': 0.4900058498606086, 'dropout_rate_m': 0.01846102774143219, 'dropout_rate_c': 0.7235295957885682, 'dropout_rate_clf': 0.0678656280040741, 'dropout_rate_middle': 0.15163103733211755, 'weight_decay': 0.001350122489493989, 'gamma': 0.33754630386829376, 'epochs': 15, 'combination': 1, 'margin': 0.5184265607967973}"
+		Best Erlotinib validation Auroc = 0.6747574145712444
+		Erlotinib test Auroc = 0.9041720990873533
+		Erlotinib extern AUROC = 0.5370370370370371
+	Mean Result for Erlotinib:
+		validation mean: 0.7257833655705996
+		validation std: 0.02903487263639089
+		validation max: 0.7638048033526758
+		validation min: 0.6747574145712444
+		test mean: 0.7054211936839054
+		test std: 0.1268125049644066
+		test max: 0.9041720990873533
+		test min: 0.5403846153846155
+		extern mean: 0.5888888888888889
+		extern std: 0.16948238797996373
+		extern max: 0.888888888888889
+		extern min: 0.3703703703703703
+	Minutes needed: 1905
