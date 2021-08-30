@@ -1,0 +1,40 @@
+Start for CetuximabStart experiment at 2021-07-14 22:36:07.658813
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 22, 'h_dim1': 233, 'h_dim2': 110, 'h_dim3': 250, 'h_dim4': 204, 'h_dim5': 110, 'depth_1': 3, 'depth_2': 4, 'depth_3': 2, 'depth_4': 4, 'depth_5': 3, 'lr_e': 0.0003503609835722593, 'lr_m': 0.0013770089892212582, 'lr_c': 5.6363373004852905e-05, 'lr_cl': 0.00752316644642061, 'lr_middle': 3.547416282804155e-05, 'dropout_rate_e': 0.6506070424827246, 'dropout_rate_m': 0.40989985220071845, 'dropout_rate_c': 0.2386037336891304, 'dropout_rate_clf': 0.4156346619158841, 'dropout_rate_middle': 0.6032959635040809, 'weight_decay': 0.010405591945210452, 'gamma': 0.13018177684366622, 'epochs': 21, 'combination': 1, 'margin': 1.3625089497800977}"
+		Best Cetuximab validation Auroc = 0.7679682365409395
+		Cetuximab test Auroc = 0.8642176870748299
+		Cetuximab extern AUROC = 0.26363636363636367
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 23, 'h_dim1': 8, 'h_dim2': 158, 'h_dim3': 48, 'h_dim4': 241, 'h_dim5': 127, 'depth_1': 3, 'depth_2': 3, 'depth_3': 4, 'depth_4': 3, 'depth_5': 2, 'lr_e': 0.000832750935766981, 'lr_m': 0.00016183473538610677, 'lr_c': 0.00017944524265513622, 'lr_cl': 0.0005612419380331059, 'lr_middle': 0.003070101623138567, 'dropout_rate_e': 0.22295751050591298, 'dropout_rate_m': 0.2794340326393025, 'dropout_rate_c': 0.046767348733437894, 'dropout_rate_clf': 0.8834464808214667, 'dropout_rate_middle': 0.7133050389208669, 'weight_decay': 0.00030032581003963665, 'gamma': 0.2697251173998444, 'epochs': 22, 'combination': 4, 'margin': 2.0633841852847894}"
+		Best Cetuximab validation Auroc = 0.7625244173014021
+		Cetuximab test Auroc = 0.7233560090702947
+		Cetuximab extern AUROC = 0.29090909090909095
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 31, 'h_dim1': 133, 'h_dim2': 236, 'h_dim3': 238, 'h_dim4': 92, 'h_dim5': 141, 'depth_1': 2, 'depth_2': 1, 'depth_3': 3, 'depth_4': 2, 'depth_5': 3, 'lr_e': 0.001994208721760174, 'lr_m': 9.06534857250956e-05, 'lr_c': 0.0019662271192180114, 'lr_cl': 0.0009969025529026488, 'lr_middle': 2.577051140592784e-05, 'dropout_rate_e': 0.042950818128711654, 'dropout_rate_m': 0.29048422801035806, 'dropout_rate_c': 0.02120064021236677, 'dropout_rate_clf': 0.8172404183647822, 'dropout_rate_middle': 0.8143323853821677, 'weight_decay': 0.006022767381494234, 'gamma': 0.05642340211226068, 'epochs': 49, 'combination': 4, 'margin': 2.539319991267069}"
+		Best Cetuximab validation Auroc = 0.7711945988395587
+		Cetuximab test Auroc = 0.715561224489796
+		Cetuximab extern AUROC = 0.22
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 16, 'h_dim1': 195, 'h_dim2': 200, 'h_dim3': 74, 'h_dim4': 166, 'h_dim5': 176, 'depth_1': 3, 'depth_2': 2, 'depth_3': 1, 'depth_4': 4, 'depth_5': 2, 'lr_e': 9.199345818310558e-05, 'lr_m': 0.0008100977484766858, 'lr_c': 0.0001100215451475018, 'lr_cl': 4.67466345670924e-05, 'lr_middle': 0.00015634892314007954, 'dropout_rate_e': 0.03726876875151468, 'dropout_rate_m': 0.6621899864896299, 'dropout_rate_c': 0.10232907199685291, 'dropout_rate_clf': 0.4726353003154866, 'dropout_rate_middle': 0.34222558365733025, 'weight_decay': 0.013141444960651623, 'gamma': 0.36979661294332156, 'epochs': 23, 'combination': 1, 'margin': 0.5}"
+		Best Cetuximab validation Auroc = 0.74337797448859
+		Cetuximab test Auroc = 0.7125850340136055
+		Cetuximab extern AUROC = 0.3745454545454546
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 20, 'h_dim1': 215, 'h_dim2': 125, 'h_dim3': 132, 'h_dim4': 26, 'h_dim5': 124, 'depth_1': 3, 'depth_2': 1, 'depth_3': 4, 'depth_4': 2, 'depth_5': 1, 'lr_e': 0.0014450469357906253, 'lr_m': 0.005558313795975447, 'lr_c': 0.0003731967443468256, 'lr_cl': 0.0003353901920539912, 'lr_middle': 1.623410906105853e-05, 'dropout_rate_e': 0.5076212463921377, 'dropout_rate_m': 0.19131255636437502, 'dropout_rate_c': 0.8200393498000367, 'dropout_rate_clf': 0.8417495919604276, 'dropout_rate_middle': 0.7550306985251413, 'weight_decay': 0.0896969794741329, 'gamma': 0.38864777723750515, 'epochs': 12, 'combination': 1, 'margin': 0.5092363234587067}"
+		Best Cetuximab validation Auroc = 0.7684435447593343
+		Cetuximab test Auroc = 0.7645975056689343
+		Cetuximab extern AUROC = 0.3290909090909091
+	Mean Result for Cetuximab:
+		validation mean: 0.7627017543859649
+		validation std: 0.010062527673075717
+		validation max: 0.7711945988395587
+		validation min: 0.74337797448859
+		test mean: 0.756063492063492
+		test std: 0.05722018651407156
+		test max: 0.8642176870748299
+		test min: 0.7125850340136055
+		extern mean: 0.2956363636363637
+		extern std: 0.05312825585550439
+		extern max: 0.3745454545454546
+		extern min: 0.22
+	Minutes needed: 2557

@@ -1,0 +1,41 @@
+Start for Docetaxel
+Start experiment at 2021-08-01 04:46:42.980001
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 30, 'h_dim1': 61, 'h_dim2': 233, 'h_dim3': 173, 'h_dim5': 178, 'depth_1': 1, 'depth_2': 4, 'depth_3': 2, 'depth_5': 2, 'lr_e': 0.007107416693044375, 'lr_m': 0.00038429919150292756, 'lr_c': 2.3338442103972523e-05, 'lr_cl': 0.0016358441967509719, 'dropout_rate_e': 0.5786528016440571, 'dropout_rate_m': 0.6726269365288318, 'dropout_rate_c': 0.7699539835564793, 'dropout_rate_clf': 0.8266474516130984, 'weight_decay': 0.00040487348455498835, 'gamma': 0.4361078588292003, 'epochs': 26, 'margin': 2.442978408187628, 'combination': 3}"
+		Best Docetaxel validation Auroc = 0.8200236874946991
+		Docetaxel test Auroc = 0.840623428858723
+		Docetaxel extern AUROC = 0.578125
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 16, 'h_dim1': 256, 'h_dim2': 141, 'h_dim3': 162, 'h_dim5': 116, 'depth_1': 1, 'depth_2': 3, 'depth_3': 4, 'depth_5': 3, 'lr_e': 0.0001899118883940793, 'lr_m': 0.001449195509412719, 'lr_c': 0.004053305437135354, 'lr_cl': 0.0005890570696177608, 'dropout_rate_e': 0.4262573732994497, 'dropout_rate_m': 0.5550235200673342, 'dropout_rate_c': 0.5115866647101939, 'dropout_rate_clf': 0.2647976174019277, 'weight_decay': 0.0006013958642595293, 'gamma': 0.5654794547706842, 'epochs': 20, 'margin': 2.7023772643879056, 'combination': 3}"
+		Best Docetaxel validation Auroc = 0.7965968764009548
+		Docetaxel test Auroc = 0.8401206636500754
+		Docetaxel extern AUROC = 0.59375
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 25, 'h_dim1': 130, 'h_dim2': 71, 'h_dim3': 47, 'h_dim5': 36, 'depth_1': 1, 'depth_2': 2, 'depth_3': 1, 'depth_5': 1, 'lr_e': 0.002561583514693215, 'lr_m': 4.492094686043502e-05, 'lr_c': 6.015187791276677e-05, 'lr_cl': 0.0022995897810881775, 'dropout_rate_e': 0.5584099455736578, 'dropout_rate_m': 0.7718791868537664, 'dropout_rate_c': 0.267729651555419, 'dropout_rate_clf': 0.7448971465229989, 'weight_decay': 0.003027189918829443, 'gamma': 0.30362419746816155, 'epochs': 20, 'margin': 2.5145660806447268, 'combination': 3}"
+		Best Docetaxel validation Auroc = 0.8661788617886179
+		Docetaxel test Auroc = 0.6711915535444948
+		Docetaxel extern AUROC = 0.734375
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 20, 'h_dim1': 198, 'h_dim2': 76, 'h_dim3': 18, 'h_dim5': 248, 'depth_1': 2, 'depth_2': 3, 'depth_3': 2, 'depth_5': 1, 'lr_e': 0.00013981942661383433, 'lr_m': 0.00295669543166071, 'lr_c': 0.008022617117643223, 'lr_cl': 0.00013204895684724896, 'dropout_rate_e': 0.4237827764824033, 'dropout_rate_m': 0.34681166829541327, 'dropout_rate_c': 0.46554117165505887, 'dropout_rate_clf': 0.7977250317111612, 'weight_decay': 0.007274426395964798, 'gamma': 0.5728692848235368, 'epochs': 26, 'margin': 2.530829573981464, 'combination': 3}"
+		Best Docetaxel validation Auroc = 0.8161694110234693
+		Docetaxel test Auroc = 0.8599798893916542
+		Docetaxel extern AUROC = 0.65625
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 25, 'h_dim1': 53, 'h_dim2': 188, 'h_dim3': 26, 'h_dim5': 111, 'depth_1': 2, 'depth_2': 3, 'depth_3': 3, 'depth_5': 2, 'lr_e': 0.0024771343506129295, 'lr_m': 0.00046996873132852825, 'lr_c': 0.006513195018332878, 'lr_cl': 0.0015535444159643203, 'dropout_rate_e': 0.7251679393462837, 'dropout_rate_m': 0.8784372649155557, 'dropout_rate_c': 0.7390635011717678, 'dropout_rate_clf': 0.4502396662719548, 'weight_decay': 0.001237396083224615, 'gamma': 0.11277918107807636, 'epochs': 43, 'margin': 1.573874500580132, 'combination': 3}"
+		Best Docetaxel validation Auroc = 0.8265856687627979
+		Docetaxel test Auroc = 0.6816801619433198
+		Docetaxel extern AUROC = 0.765625
+	Mean Result for Docetaxel:
+		validation mean: 0.8251109010941079
+		validation std: 0.02283695218882554
+		validation max: 0.8661788617886179
+		validation min: 0.7965968764009548
+		test mean: 0.7787191394776534
+		test std: 0.08388604483295087
+		test max: 0.8599798893916542
+		test min: 0.6711915535444948
+		extern mean: 0.665625
+		extern std: 0.07434610783356449
+		extern max: 0.765625
+		extern min: 0.578125
+	Minutes needed: 2031

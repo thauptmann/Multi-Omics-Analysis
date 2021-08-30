@@ -1,0 +1,41 @@
+Start for Erlotinib
+Start experiment at 2021-08-02 14:37:34.534436
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 17, 'h_dim1': 177, 'h_dim2': 170, 'h_dim3': 89, 'h_dim5': 232, 'depth_1': 3, 'depth_2': 3, 'depth_3': 3, 'depth_5': 2, 'lr_e': 0.00427031061514931, 'lr_m': 0.000556460680584604, 'lr_c': 0.00039354796788632627, 'lr_cl': 3.92330783244828e-05, 'dropout_rate_e': 0.27731560673564676, 'dropout_rate_m': 0.7160359530709685, 'dropout_rate_c': 0.8780785177834333, 'dropout_rate_clf': 0.8089553981088102, 'weight_decay': 0.0021586054748680317, 'gamma': 0.5513550281524658, 'epochs': 23, 'margin': 0.9532037433236837, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.7085239361702127
+		Erlotinib test Auroc = 0.7615384615384616
+		Erlotinib extern AUROC = 0.5
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 31, 'h_dim1': 226, 'h_dim2': 219, 'h_dim3': 179, 'h_dim5': 74, 'depth_1': 3, 'depth_2': 3, 'depth_3': 4, 'depth_5': 4, 'lr_e': 0.0030569565397064744, 'lr_m': 0.0004907464855259513, 'lr_c': 0.0034659224565007653, 'lr_cl': 0.004435845871292373, 'dropout_rate_e': 0.10194178009405733, 'dropout_rate_m': 0.5267516464926303, 'dropout_rate_c': 0.1541769557632506, 'dropout_rate_clf': 0.3799433056265116, 'weight_decay': 0.0008336498794377238, 'gamma': 0.10331473220139742, 'epochs': 14, 'margin': 2.3501901058480144, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.7494515635074145
+		Erlotinib test Auroc = 0.5955128205128205
+		Erlotinib extern AUROC = 0.3888888888888889
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 31, 'h_dim1': 164, 'h_dim2': 82, 'h_dim3': 174, 'h_dim5': 42, 'depth_1': 2, 'depth_2': 3, 'depth_3': 1, 'depth_5': 4, 'lr_e': 0.0006420442402242827, 'lr_m': 2.2809444087383093e-05, 'lr_c': 0.005034843046207484, 'lr_cl': 0.003460426519137332, 'dropout_rate_e': 0.2173420786857605, 'dropout_rate_m': 0.21828247206285598, 'dropout_rate_c': 0.4869408091530204, 'dropout_rate_clf': 0.25368443587794903, 'weight_decay': 0.0005305900413157111, 'gamma': 0.16227759215980767, 'epochs': 10, 'margin': 2.076452584937215, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.7859840425531914
+		Erlotinib test Auroc = 0.7013888888888888
+		Erlotinib extern AUROC = 0.6851851851851852
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 19, 'h_dim1': 173, 'h_dim2': 161, 'h_dim3': 231, 'h_dim5': 88, 'depth_1': 4, 'depth_2': 3, 'depth_3': 3, 'depth_5': 1, 'lr_e': 0.0027571343496606807, 'lr_m': 1.4279154418501779e-05, 'lr_c': 0.000545302372759393, 'lr_cl': 0.003674372076220823, 'dropout_rate_e': 0.19143305523321033, 'dropout_rate_m': 0.3513926373794675, 'dropout_rate_c': 0.22392757991328835, 'dropout_rate_clf': 0.22728038979694248, 'weight_decay': 0.02012868562495586, 'gamma': 0.31381152905523774, 'epochs': 14, 'margin': 2.4683207208290696, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.7525358639587363
+		Erlotinib test Auroc = 0.7014341590612777
+		Erlotinib extern AUROC = 0.6296296296296297
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 31, 'h_dim1': 254, 'h_dim2': 256, 'h_dim3': 66, 'h_dim5': 112, 'depth_1': 3, 'depth_2': 2, 'depth_3': 4, 'depth_5': 3, 'lr_e': 0.00026779487707683766, 'lr_m': 0.00032186177521459385, 'lr_c': 6.12949436388276e-05, 'lr_cl': 0.006280714144668858, 'dropout_rate_e': 0.3263097619637847, 'dropout_rate_m': 0.33773370254784824, 'dropout_rate_c': 0.25936077553778886, 'dropout_rate_clf': 0.6481899445876479, 'weight_decay': 0.00793141409085735, 'gamma': 0.1332080455496907, 'epochs': 25, 'margin': 3.4687955295667052, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.6946075112830432
+		Erlotinib test Auroc = 0.7731421121251629
+		Erlotinib extern AUROC = 0.7407407407407407
+	Mean Result for Erlotinib:
+		validation mean: 0.7382205834945197
+		validation std: 0.03285240057620254
+		validation max: 0.7859840425531914
+		validation min: 0.6946075112830432
+		test mean: 0.7066032884253224
+		test std: 0.06299252372505079
+		test max: 0.7731421121251629
+		test min: 0.5955128205128205
+		extern mean: 0.5888888888888889
+		extern std: 0.12797890772719256
+		extern max: 0.7407407407407407
+		extern min: 0.3888888888888889
+	Minutes needed: 1600

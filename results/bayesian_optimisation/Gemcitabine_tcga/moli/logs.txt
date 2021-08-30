@@ -1,0 +1,41 @@
+Start for Gemcitabine_tcga
+Start experiment at 2021-07-27 23:46:40.742610
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 24, 'h_dim1': 10, 'h_dim2': 148, 'h_dim3': 184, 'h_dim5': 147, 'depth_1': 4, 'depth_2': 3, 'depth_3': 1, 'depth_5': 4, 'lr_e': 0.00019389510588375535, 'lr_m': 0.00042097486708612974, 'lr_c': 0.00022262308024227447, 'lr_cl': 0.006810074689496377, 'dropout_rate_e': 0.23913027942180634, 'dropout_rate_m': 0.05899618640542031, 'dropout_rate_c': 0.3881921318359673, 'dropout_rate_clf': 0.16953884521499277, 'weight_decay': 0.00043235480718371806, 'gamma': 0.0016732016578316687, 'epochs': 48, 'margin': 1.0791932586580515, 'combination': 3}"
+		Best Gemcitabine_tcga validation Auroc = 0.6790816078545737
+		Gemcitabine_tcga test Auroc = 0.478711162255466
+		Gemcitabine_tcga extern AUROC = 0.544973544973545
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 27, 'h_dim1': 174, 'h_dim2': 131, 'h_dim3': 57, 'h_dim5': 248, 'depth_1': 3, 'depth_2': 1, 'depth_3': 3, 'depth_5': 3, 'lr_e': 0.005644272805505992, 'lr_m': 2.427008129534997e-05, 'lr_c': 0.00036857902191136265, 'lr_cl': 0.0005498921246108213, 'dropout_rate_e': 0.13602712126448752, 'dropout_rate_m': 0.8473938580602408, 'dropout_rate_c': 0.6644530294463039, 'dropout_rate_clf': 0.2981930156238377, 'weight_decay': 0.00010886597100825256, 'gamma': 0.05520605519413948, 'epochs': 18, 'margin': 2.231804692186415, 'combination': 3}"
+		Best Gemcitabine_tcga validation Auroc = 0.7555270868919163
+		Gemcitabine_tcga test Auroc = 0.4309551208285386
+		Gemcitabine_tcga extern AUROC = 0.5641534391534392
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 20, 'h_dim1': 178, 'h_dim2': 97, 'h_dim3': 229, 'h_dim5': 148, 'depth_1': 2, 'depth_2': 3, 'depth_3': 4, 'depth_5': 1, 'lr_e': 1.814382186406605e-05, 'lr_m': 0.007521178673980091, 'lr_c': 3.888966549854428e-05, 'lr_cl': 0.0003406291168221021, 'dropout_rate_e': 0.510726610198617, 'dropout_rate_m': 0.5961239039897919, 'dropout_rate_c': 0.6450221945531667, 'dropout_rate_clf': 0.4335158935748041, 'weight_decay': 0.002445497580743659, 'gamma': 0.48650444224476813, 'epochs': 46, 'margin': 3.3984807832166553, 'combination': 3}"
+		Best Gemcitabine_tcga validation Auroc = 0.6995741851712981
+		Gemcitabine_tcga test Auroc = 0.7686996547756042
+		Gemcitabine_tcga extern AUROC = 0.617063492063492
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 22, 'h_dim1': 146, 'h_dim2': 244, 'h_dim3': 125, 'h_dim5': 108, 'depth_1': 1, 'depth_2': 4, 'depth_3': 3, 'depth_5': 4, 'lr_e': 1.8061342201974746e-05, 'lr_m': 1.5233250194504984e-05, 'lr_c': 0.005280864727527229, 'lr_cl': 0.0008405177909803262, 'dropout_rate_e': 0.45965593568980695, 'dropout_rate_m': 0.647652560658753, 'dropout_rate_c': 0.38626309717074037, 'dropout_rate_clf': 0.11065002847462893, 'weight_decay': 0.002137453834287995, 'gamma': 0.10880499389022588, 'epochs': 18, 'margin': 2.360400370322168, 'combination': 3}"
+		Best Gemcitabine_tcga validation Auroc = 0.6332126886916913
+		Gemcitabine_tcga test Auroc = 0.7439585730724971
+		Gemcitabine_tcga extern AUROC = 0.5324074074074074
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 23, 'h_dim1': 231, 'h_dim2': 191, 'h_dim3': 228, 'h_dim5': 104, 'depth_1': 2, 'depth_2': 3, 'depth_3': 2, 'depth_5': 2, 'lr_e': 0.0004159708581449308, 'lr_m': 0.0020557808037063763, 'lr_c': 1.2273116945496946e-05, 'lr_cl': 1.8519887186872978e-05, 'dropout_rate_e': 0.8768599877133966, 'dropout_rate_m': 0.7535706167109311, 'dropout_rate_c': 0.4958135046064854, 'dropout_rate_clf': 0.31747933812439444, 'weight_decay': 0.0001416673202504461, 'gamma': 0.009647167101502417, 'epochs': 20, 'margin': 3.2064402168616652, 'combination': 3}"
+		Best Gemcitabine_tcga validation Auroc = 0.705683143773695
+		Gemcitabine_tcga test Auroc = 0.6158227848101265
+		Gemcitabine_tcga extern AUROC = 0.6256613756613757
+	Mean Result for Gemcitabine_tcga:
+		validation mean: 0.6946157424766348
+		validation std: 0.03967092072658876
+		validation max: 0.7555270868919163
+		validation min: 0.6332126886916913
+		test mean: 0.6076294591484466
+		test std: 0.13596331483356083
+		test max: 0.7686996547756042
+		test min: 0.4309551208285386
+		extern mean: 0.576851851851852
+		extern std: 0.03782097407387834
+		extern max: 0.6256613756613757
+		extern min: 0.5324074074074074
+	Minutes needed: 1993
