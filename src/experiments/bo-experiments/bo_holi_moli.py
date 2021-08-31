@@ -64,6 +64,7 @@ drugs = {
 
 random_seed = 42
 
+
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
             sampling_method, drug_name, extern_dataset_name, gpu_number, small_search_space):
     if torch.cuda.is_available():
@@ -159,7 +160,12 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             generation_strategy = GenerationStrategy(
                 steps=[
                     GenerationStep(model=Models.SOBOL,
-                                   num_trials=sobol_iterations),
+                                   num_trials=sobol_iterations,
+                                   model_kwargs={
+                                       "torch_device": torch.device("cpu"),
+                                       "torch_dtype": torch.double
+                                   }
+                                   ),
                     GenerationStep(
                         model=Models.FULLYBAYESIAN,
                         num_trials=-1,
