@@ -6,11 +6,11 @@ import numpy as np
 import torch
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
-
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils import multi_omics_data
 from utils.network_training_util import test, test_ensemble, calculate_mean_and_std_auc
 
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+
 from utils.choose_gpu import get_free_gpu
 from training_bo_holi_moli import train_final
 
