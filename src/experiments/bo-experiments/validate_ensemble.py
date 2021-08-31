@@ -1,16 +1,16 @@
 import argparse
 import sys
 from pathlib import Path
-
+from sklearn.metrics import roc_auc_score
 import numpy as np
 import torch
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils import multi_omics_data
 from utils.network_training_util import test, test_ensemble
 
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.choose_gpu import get_free_gpu
 from training_bo_holi_moli import train_final
 
@@ -44,7 +44,7 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
         device = torch.device("cpu")
         pin_memory = False
 
-    result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', 'ensemble', experiment_name)
+    result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', 'ensemble', experiment_name, drug_name)
     result_path.mkdir(parents=True, exist_ok=True)
 
     result_file = open(result_path / 'logs.txt', 'w')
@@ -74,21 +74,32 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
         auc_list.append(auc_test)
         iteration += 1
 
-    model_list = []
-    scaler_list = []
-    for best_parameters in best_parameters_list:
-
+    model_extern_list = []
+    scaler_extern_list = []
+    for best_parameters in tqdm(best_parameters_list, desc='External Validation'):
         model_extern, scaler_extern = train_final(best_parameters, gdsc_e, gdsc_m, gdsc_c, gdsc_r, device, pin_memory)
-        y_true_list, prediction_lists = test_ensemble(model_extern, scaler_extern, extern_e, extern_m, extern_c,
-                                                      extern_r, device, pin_memory)
+        model_extern_list.append(model_extern)
+        scaler_extern_list.append(scaler_extern)
+
+    y_true_list, prediction_lists = test_ensemble(model_extern_list, scaler_extern_list, extern_e, extern_m, extern_c,
+                                                  extern_r, device, pin_memory)
     # todo soft vote
-    hard_voting_auroc = 0
+    prediction_sum = np.sum(prediction_lists, axis=0) / 5
+    soft_voting_auroc = roc_auc_score(y_true_list, prediction_sum)
 
     # todo hard vote
-    soft_voting_auroc = 0
+    prediction_round = np.around(prediction_lists)
+    prediction_max = np.sum(prediction_round, axis=0)
+    prediction_max = np.where(prediction_max >= 3, 1, 0)
+    hard_voting_auroc = roc_auc_score(y_true_list, prediction_max)
 
     # todo weighted vote
-    weighted_voting_auroc = 0
+    y = np.exp(auc_list)
+    weights = y / np.sum(y)
+    weighted_predictions = prediction_lists * weights
+    normalised_weighted_predictions = np.sum(weighted_predictions, axis=0) / 5
+
+    weighted_voting_auroc = roc_auc_score(y_true_list, normalised_weighted_predictions)
 
     result_file.write(f'{drug_name} Hard voting = {hard_voting_auroc}\n')
     result_file.write(f'{drug_name} Soft voting = {soft_voting_auroc}\n')
@@ -118,7 +129,6 @@ if __name__ == '__main__':
                 for line in log_file:
                     if 'best_parameters' in line:
                         best_parameter_string = line.split("=")[-1].strip()
-                        # best_parameter_string = best_parameter_string.replace("'", "\"")
                         # strip the string literals
                         best_parameters_list.append(eval(best_parameter_string[1:-1]))
 
