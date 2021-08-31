@@ -8,7 +8,7 @@ from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
 from utils import multi_omics_data
-from utils.network_training_util import test, test_ensemble
+from utils.network_training_util import test, test_ensemble, calculate_mean_and_std_auc
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.choose_gpu import get_free_gpu
@@ -32,7 +32,6 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     cv_splits = 5
-    skf = StratifiedKFold(n_splits=cv_splits, random_state=random_seed, shuffle=True)
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -57,6 +56,8 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
 
     iteration = 0
     auc_list = []
+    auc_extern_list = []
+    skf = StratifiedKFold(n_splits=cv_splits, random_state=random_seed, shuffle=True)
     for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc=" Outer k-fold"):
         x_train_e = gdsc_e[train_index]
         x_train_m = gdsc_m[train_index]
@@ -71,16 +72,21 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
                                               y_train, device,
                                               pin_memory)
         auc_test = test(model_test, scaler_test, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
+        model_extern, scaler_extern = train_final(best_parameters_list[iteration], gdsc_e, gdsc_m, gdsc_c, gdsc_r,
+                                                  device, pin_memory)
+        auc_extern = test(model_extern, scaler_extern, extern_e, extern_m, extern_c, extern_r, device, pin_memory)
         auc_list.append(auc_test)
+        auc_extern_list.append(auc_extern)
+
         iteration += 1
 
     model_list = []
     scaler_list = []
-    for best_parameters in best_parameters_list:
+    #for best_parameters in best_parameters_list:
 
-        model_extern, scaler_extern = train_final(best_parameters, gdsc_e, gdsc_m, gdsc_c, gdsc_r, device, pin_memory)
-        y_true_list, prediction_lists = test_ensemble(model_extern, scaler_extern, extern_e, extern_m, extern_c,
-                                                      extern_r, device, pin_memory)
+       # model_extern, scaler_extern = train_final(best_parameters, gdsc_e, gdsc_m, gdsc_c, gdsc_r, device, pin_memory)
+       # y_true_list, prediction_lists = test_ensemble(model_extern, scaler_extern, extern_e, extern_m, extern_c,
+         #                                             extern_r, device, pin_memory)
     # todo soft vote
     hard_voting_auroc = 0
 
@@ -89,10 +95,29 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
 
     # todo weighted vote
     weighted_voting_auroc = 0
+    print(f'{auc_list =}\n')
+    print(f'{auc_extern_list =}\n')
+    result_dict = {
+        'test': auc_list,
+        'extern': auc_extern_list
+    }
+    calculate_mean_and_std_auctmp(result_dict, result_file, drug_name)
 
-    result_file.write(f'{drug_name} Hard voting = {hard_voting_auroc}\n')
-    result_file.write(f'{drug_name} Soft voting = {soft_voting_auroc}\n')
-    result_file.write(f'{drug_name} Weighted Voting = {weighted_voting_auroc}\n')
+    # print(f'\t\t{drug_name} test Auroc = {auc_test}\n')
+    # print(f'\t\t{drug_name} extern AUROC = {auc_extern}\n')
+
+
+def calculate_mean_and_std_auctmp(result_dict, result_file, drug_name):
+    result_file.write(f'\tMean Result for {drug_name}:\n')
+    for result_name, result_value in result_dict.items():
+        mean = np.mean(result_value)
+        std = np.std(result_value)
+        max_value = np.max(result_value)
+        min_value = np.min(result_value)
+        print(f'\t\t{result_name} mean: {mean}\n')
+        print(f'\t\t{result_name} std: {std}\n')
+        print(f'\t\t{result_name} max: {max_value}\n')
+        print(f'\t\t{result_name} min: {min_value}\n')
 
 
 if __name__ == '__main__':
@@ -118,7 +143,6 @@ if __name__ == '__main__':
                 for line in log_file:
                     if 'best_parameters' in line:
                         best_parameter_string = line.split("=")[-1].strip()
-                        # best_parameter_string = best_parameter_string.replace("'", "\"")
                         # strip the string literals
                         best_parameters_list.append(eval(best_parameter_string[1:-1]))
 
