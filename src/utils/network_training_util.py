@@ -51,7 +51,7 @@ def train(train_loader, moli_model, moli_optimiser, bce_with_triplets_loss, devi
     return auc
 
 
-def validate(data_loader, moli_model, device):
+def validate(data_loader, moli_model, device, return_predictions=False):
     y_true = []
     predictions = []
     moli_model.eval()
@@ -68,7 +68,10 @@ def validate(data_loader, moli_model, device):
             predictions.extend(probabilities.cpu().detach().numpy())
 
     auc_validate = roc_auc_score(y_true, predictions)
-    return auc_validate
+    if return_predictions:
+        return auc_validate, y_true, predictions
+    else:
+        return auc_validate
 
 
 class BceWithTripletsToss:
@@ -124,11 +127,11 @@ def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device, pin_m
 
 def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
     train_batch_size = 512
-    auc_test = 0.5
     x_test_m = torch.FloatTensor(x_test_m)
     x_test_c = torch.FloatTensor(x_test_c)
     test_y = torch.FloatTensor(test_y.astype(int))
-
+    prediction_lists = []
+    y_true_list = None
     for model, scaler in zip(moli_model_list, scaler_list):
         x_test_e = torch.FloatTensor(scaler.transform(x_test_e))
         test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e),
@@ -136,25 +139,6 @@ def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, te
                                                       torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
         test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
                                                   num_workers=8, pin_memory=pin_memory)
-        auc_test = validate(test_loader, model, device)
-    return auc_test
-
-
-def validate_ensemble(data_loader, moli_model, device):
-    y_true = []
-    predictions = []
-    moli_model.eval()
-    use_amp = False if device == torch.device('cpu') else True
-    with torch.no_grad():
-        for (data_e, data_m, data_c, target) in data_loader:
-            validate_e = data_e.to(device)
-            validate_m = data_m.to(device)
-            validate_c = data_c.to(device)
-            y_true.extend(target.numpy())
-            with torch.cuda.amp.autocast(enabled=use_amp):
-                logits, _ = moli_model.forward(validate_e, validate_m, validate_c)
-            probabilities = sigmoid(logits)
-            predictions.extend(probabilities.cpu().detach().numpy())
-
-    auc_validate = roc_auc_score(y_true, predictions)
-    return auc_validate
+        _, y_true_list, prediction_list = validate(test_loader, model, device, True)
+        prediction_lists.append(prediction_list)
+    return y_true_list, prediction_lists

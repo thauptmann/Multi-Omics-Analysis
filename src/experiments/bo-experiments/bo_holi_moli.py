@@ -62,6 +62,7 @@ drugs = {
     # 'EGFR': 'PDX'
 }
 
+random_seed = 42
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
             sampling_method, drug_name, extern_dataset_name, gpu_number, small_search_space):
@@ -94,7 +95,6 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name)
     moli_search_space = create_search_space(combination, small_search_space)
 
-    random_seed = 42
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
 
@@ -167,15 +167,16 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                             "num_samples": 256,
                             "warmup_steps": 512,
                             "disable_progbar": True,
-                            "torch_device": device,
+                            "torch_device": 'cpu',
                             "torch_dtype": torch.double,
+                            "verbose": False,
                         },
                     ),
                 ],
                 name="SAASBO"
             )
         else:
-            print('Using only soobl')
+            print('Using only sobol')
             sobol_iterations = search_iterations
             generation_strategy = GenerationStrategy(
                 steps=[
