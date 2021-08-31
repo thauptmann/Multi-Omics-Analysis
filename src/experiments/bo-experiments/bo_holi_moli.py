@@ -160,11 +160,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             generation_strategy = GenerationStrategy(
                 steps=[
                     GenerationStep(model=Models.SOBOL,
-                                   num_trials=sobol_iterations,
-                                   model_kwargs={
-                                       "torch_device": torch.device("cpu"),
-                                       "torch_dtype": torch.double
-                                   }
+                                   num_trials=sobol_iterations
                                    ),
                     GenerationStep(
                         model=Models.FULLYBAYESIAN,
@@ -173,9 +169,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                             "num_samples": 256,
                             "warmup_steps": 512,
                             "disable_progbar": True,
-                            "torch_device": torch.device("cpu"),
+                            "torch_device": device,
                             "torch_dtype": torch.double,
-                            "verbose": False,
                         },
                     ),
                 ],
