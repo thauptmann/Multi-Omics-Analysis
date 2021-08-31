@@ -4,7 +4,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import json
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
@@ -70,30 +69,30 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
 
         model_test, scaler_test = train_final(best_parameters_list[iteration], x_train_e, x_train_m, x_train_c,
                                               y_train, device,
-                                                  pin_memory)
+                                              pin_memory)
         auc_test = test(model_test, scaler_test, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
         auc_list.append(auc_test)
         iteration += 1
 
-
+    model_list = []
+    scaler_list = []
     for best_parameters in best_parameters_list:
-        mode_list = []
-        scaler_list = []
+
         model_extern, scaler_extern = train_final(best_parameters, gdsc_e, gdsc_m, gdsc_c, gdsc_r, device, pin_memory)
-    y_true_list, prediction_lists = test_ensemble(model_extern, scaler_extern, extern_e, extern_m, extern_c,
-                                                    extern_r, device, pin_memory)
-        # todo soft vote
-        hard_voting_auroc = 0
+        y_true_list, prediction_lists = test_ensemble(model_extern, scaler_extern, extern_e, extern_m, extern_c,
+                                                      extern_r, device, pin_memory)
+    # todo soft vote
+    hard_voting_auroc = 0
 
-        # todo hard vote
-        soft_voting_auroc = 0
+    # todo hard vote
+    soft_voting_auroc = 0
 
-        # todo weighted vote
-        weighted_voting_auroc = 0
+    # todo weighted vote
+    weighted_voting_auroc = 0
 
-        result_file.write(f'{drug} Hard voting = {hard_voting_auroc}\n')
-        result_file.write(f'{drug} Soft voting = {soft_voting_auroc}\n')
-        result_file.write(f'{drug} Weighted Voting = {weighted_voting_auroc}\n')
+    result_file.write(f'{drug_name} Hard voting = {hard_voting_auroc}\n')
+    result_file.write(f'{drug_name} Soft voting = {soft_voting_auroc}\n')
+    result_file.write(f'{drug_name} Weighted Voting = {weighted_voting_auroc}\n')
 
 
 if __name__ == '__main__':
@@ -105,9 +104,9 @@ if __name__ == '__main__':
 
     p = Path('../results')
     logfile_name = 'logs.txt'
-    result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation')
+    cv_result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation')
 
-    drug_paths = [x for x in result_path.iterdir()]
+    drug_paths = [x for x in cv_result_path.iterdir()]
     for drug_path in drug_paths:
         best_parameters_list = []
         drug_name = drug_path.stem
@@ -119,7 +118,9 @@ if __name__ == '__main__':
                 for line in log_file:
                     if 'best_parameters' in line:
                         best_parameter_string = line.split("=")[-1].strip()
-                        best_parameters_list.append(json.loads(best_parameter_string))
+                        # best_parameter_string = best_parameter_string.replace("'", "\"")
+                        # strip the string literals
+                        best_parameters_list.append(eval(best_parameter_string[1:-1]))
 
         train_and_validate_ensemble(args.experiment_name, args.gpu_number, drug_name, drugs[drug_name],
                                     best_parameters_list)
