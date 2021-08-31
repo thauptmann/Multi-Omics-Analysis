@@ -266,7 +266,7 @@ def create_search_space(combination, small_search_space):
         combination_parameter = FixedParameter(name='combination', value=combination,
                                                parameter_type=ParameterType.INT)
 
-    if combination is not None and not small_search_space:
+    if combination is None and not small_search_space:
         search_space = SearchSpace(
             parameters=[
                 RangeParameter(name='mini_batch', lower=batch_size_lower, upper=batch_size_upper,
@@ -310,7 +310,8 @@ def create_search_space(combination, small_search_space):
                                parameter_type=ParameterType.FLOAT),
             ]
         )
-    elif combination is None and not small_search_space:
+    # moli
+    elif combination is not None and not small_search_space:
         search_space = SearchSpace(
             parameters=[
                 RangeParameter(name='mini_batch', lower=batch_size_lower, upper=batch_size_upper,
