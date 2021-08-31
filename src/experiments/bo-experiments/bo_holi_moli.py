@@ -169,7 +169,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                             "num_samples": 256,
                             "warmup_steps": 512,
                             "disable_progbar": True,
-                            "torch_device": device,
+                            "torch_device": torch.device('cpu'),
                             "torch_dtype": torch.double,
                         },
                     ),
