@@ -31,10 +31,14 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory):
     lr_middle = parameterization['lr_middle'] if 'lr_middle' in parameterization else parameterization['lr_e']
     lr_cl = parameterization['lr_cl'] if 'lr_cl' in parameterization else parameterization['lr_e']
     dropout_rate_e = parameterization['dropout_rate_e']
-    dropout_rate_m = parameterization['dropout_rate_m'] if 'dropout_rate_m' in parameterization else None
-    dropout_rate_c = parameterization['dropout_rate_c'] if 'dropout_rate_c' in parameterization else None
-    dropout_rate_clf = parameterization['dropout_rate_clf'] if 'dropout_rate_clf' in parameterization else None
-    dropout_rate_middle = parameterization['dropout_rate_middle'] if 'dropout_rate_middle' in parameterization else None
+    dropout_rate_m = parameterization['dropout_rate_m'] if 'dropout_rate_m' in parameterization \
+        else parameterization['dropout_rate_e']
+    dropout_rate_c = parameterization['dropout_rate_c'] if 'dropout_rate_c' in parameterization \
+        else parameterization['dropout_rate_e']
+    dropout_rate_clf = parameterization['dropout_rate_clf'] if 'dropout_rate_clf' in parameterization \
+        else parameterization['dropout_rate_e']
+    dropout_rate_middle = parameterization['dropout_rate_middle'] if 'dropout_rate_middle' in parameterization \
+        else parameterization['dropout_rate_e']
     weight_decay = parameterization['weight_decay']
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
@@ -137,10 +141,14 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     lr_middle = parameterization['lr_middle'] if 'lr_middle' in parameterization else parameterization['lr_e']
     lr_cl = parameterization['lr_cl'] if 'lr_cl' in parameterization else parameterization['lr_e']
     dropout_rate_e = parameterization['dropout_rate_e']
-    dropout_rate_m = parameterization['dropout_rate_m'] if 'dropout_rate_m' in parameterization else None
-    dropout_rate_c = parameterization['dropout_rate_c'] if 'dropout_rate_c' in parameterization else None
-    dropout_rate_clf = parameterization['dropout_rate_clf'] if 'dropout_rate_clf' in parameterization else None
-    dropout_rate_middle = parameterization['dropout_rate_middle'] if 'dropout_rate_middle' in parameterization else None
+    dropout_rate_m = parameterization['dropout_rate_m'] if 'dropout_rate_m' in parameterization \
+        else parameterization['dropout_rate_e']
+    dropout_rate_c = parameterization['dropout_rate_c'] if 'dropout_rate_c' in parameterization \
+        else parameterization['dropout_rate_e']
+    dropout_rate_clf = parameterization['dropout_rate_clf'] if 'dropout_rate_clf' in parameterization \
+        else parameterization['dropout_rate_e']
+    dropout_rate_middle = parameterization['dropout_rate_middle'] if 'dropout_rate_middle' in parameterization \
+        else parameterization['dropout_rate_e']
     weight_decay = parameterization['weight_decay']
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
