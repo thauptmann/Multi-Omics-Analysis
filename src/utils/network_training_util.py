@@ -62,11 +62,9 @@ def validate(data_loader, moli_model, device, return_predictions=False):
             validate_m = data_m.to(device)
             validate_c = data_c.to(device)
             y_true.extend(target.numpy())
-            with torch.cuda.amp.autocast(enabled=use_amp):
-                logits, _ = moli_model.forward(validate_e, validate_m, validate_c)
+            logits, _ = moli_model.forward(validate_e, validate_m, validate_c)
             probabilities = sigmoid(logits)
             predictions.extend(probabilities.cpu().detach().numpy())
-
     auc_validate = roc_auc_score(y_true, predictions)
     if return_predictions:
         return auc_validate, y_true, predictions
