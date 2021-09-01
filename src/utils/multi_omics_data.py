@@ -150,7 +150,7 @@ def load_egfr_data(data_path):
 
 
 def get_high_variance_gen_indices(data):
-    selector = VarianceThreshold(0.01)
+    selector = VarianceThreshold(0)
     return selector.fit(data).get_support(indices=True)
 
 

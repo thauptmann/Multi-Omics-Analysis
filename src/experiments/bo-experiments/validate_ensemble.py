@@ -94,7 +94,8 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
     hard_voting_auroc = roc_auc_score(y_true_list, prediction_max)
 
     # todo weighted vote
-    y = np.exp(auc_list)
+    temperature = 2
+    y = np.exp(temperature * auc_list)
     weights = y / np.sum(y)
     weighted_predictions = np.squeeze(prediction_lists)*weights[:, np.newaxis]
     normalised_weighted_predictions = np.sum(weighted_predictions, axis=0)
