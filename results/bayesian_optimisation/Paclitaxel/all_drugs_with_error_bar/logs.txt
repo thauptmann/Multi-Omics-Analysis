@@ -2,39 +2,39 @@ Start for PaclitaxelStart experiment at 2021-07-16 17:13:33.873236
 	iteration = 0. 
 		str(best_parameters) = "{'mini_batch': 22, 'h_dim1': 75, 'h_dim2': 189, 'h_dim3': 253, 'h_dim4': 194, 'h_dim5': 212, 'depth_1': 1, 'depth_2': 2, 'depth_3': 3, 'depth_4': 2, 'depth_5': 2, 'lr_e': 0.0012496062667858012, 'lr_m': 0.0012403758820276835, 'lr_c': 0.01, 'lr_cl': 0.0017854957714451213, 'lr_middle': 0.01, 'dropout_rate_e': 0.6305312011428471, 'dropout_rate_m': 0.7798302478720618, 'dropout_rate_c': 0.739474024717623, 'dropout_rate_clf': 0.9, 'dropout_rate_middle': 0.2890269650525437, 'weight_decay': 0.01669277948545197, 'gamma': 0.29037605282681617, 'epochs': 33, 'combination': 0, 'margin': 1.454225707202933}"
 		Best Paclitaxel validation Auroc = 0.7937068965517241
-		Paclitaxel test Auroc = 0.7095890410958904
-		Paclitaxel extern AUROC = 0.5210526315789474
+		Paclitaxel test Auroc = 0.5753424657534247
+		Paclitaxel extern AUROC = 0.7315789473684211
 	iteration = 1. 
 		str(best_parameters) = "{'mini_batch': 21, 'h_dim1': 216, 'h_dim2': 247, 'h_dim3': 100, 'h_dim4': 66, 'h_dim5': 99, 'depth_1': 1, 'depth_2': 3, 'depth_3': 2, 'depth_4': 1, 'depth_5': 1, 'lr_e': 2.067219686649842e-05, 'lr_m': 0.000609197809683859, 'lr_c': 0.0009102065159594293, 'lr_cl': 0.0067383813672552695, 'lr_middle': 0.00029287862973383387, 'dropout_rate_e': 0.20790714021224546, 'dropout_rate_m': 0.14036812067188714, 'dropout_rate_c': 0.8238954530585717, 'dropout_rate_clf': 0.8562548381296721, 'dropout_rate_middle': 0.48207407288161835, 'weight_decay': 0.03177967721683416, 'gamma': 0.049121216268804425, 'epochs': 41, 'combination': 0, 'margin': 1.8492647898520658}"
 		Best Paclitaxel validation Auroc = 0.7465517241379309
-		Paclitaxel test Auroc = 0.7506849315068493
-		Paclitaxel extern AUROC = 0.5210526315789474
+		Paclitaxel test Auroc = 0.5123287671232877
+		Paclitaxel extern AUROC = 0.46842105263157896
 	iteration = 2. 
 		str(best_parameters) = "{'mini_batch': 29, 'h_dim1': 88, 'h_dim2': 252, 'h_dim3': 49, 'h_dim4': 34, 'h_dim5': 85, 'depth_1': 2, 'depth_2': 1, 'depth_3': 2, 'depth_4': 4, 'depth_5': 1, 'lr_e': 0.01, 'lr_m': 3.097626482970773e-05, 'lr_c': 0.000375340199703062, 'lr_cl': 0.002472804311468674, 'lr_middle': 2.3676437941775727e-05, 'dropout_rate_e': 0.9, 'dropout_rate_m': 0.6678152503812969, 'dropout_rate_c': 0.20647382903632439, 'dropout_rate_clf': 0.40572322358748236, 'dropout_rate_middle': 0.4658849954461022, 'weight_decay': 0.0020405292178857777, 'gamma': 0.16135815369734402, 'epochs': 11, 'combination': 1, 'margin': 1.4875542849395327}"
 		Best Paclitaxel validation Auroc = 0.7446551724137931
-		Paclitaxel test Auroc = 0.526027397260274
-		Paclitaxel extern AUROC = 0.2631578947368421
+		Paclitaxel test Auroc = 0.7315068493150686
+		Paclitaxel extern AUROC = 0.5105263157894737
 	iteration = 3. 
 		str(best_parameters) = "{'mini_batch': 26, 'h_dim1': 243, 'h_dim2': 90, 'h_dim3': 97, 'h_dim4': 218, 'h_dim5': 82, 'depth_1': 2, 'depth_2': 2, 'depth_3': 1, 'depth_4': 3, 'depth_5': 4, 'lr_e': 7.092658042366602e-05, 'lr_m': 9.153213378431334e-05, 'lr_c': 5.607238195697433e-05, 'lr_cl': 0.004626649420741842, 'lr_middle': 0.00013758327781817928, 'dropout_rate_e': 0.4840257083174784, 'dropout_rate_m': 0.8743347017028911, 'dropout_rate_c': 0.8350950579823858, 'dropout_rate_clf': 0.48977287365384176, 'dropout_rate_middle': 0.3796483576237477, 'weight_decay': 0.009714001129898366, 'gamma': 0.05425012723724818, 'epochs': 40, 'combination': 3, 'margin': 2.346032591963082}"
 		Best Paclitaxel validation Auroc = 0.7671317942723552
-		Paclitaxel test Auroc = 0.4837962962962963
-		Paclitaxel extern AUROC = 0.5868421052631578
+		Paclitaxel test Auroc = 0.611111111111111
+		Paclitaxel extern AUROC = 0.5263157894736842
 	iteration = 4. 
 		str(best_parameters) = "{'mini_batch': 23, 'h_dim1': 49, 'h_dim2': 71, 'h_dim3': 177, 'h_dim4': 147, 'h_dim5': 193, 'depth_1': 2, 'depth_2': 2, 'depth_3': 3, 'depth_4': 2, 'depth_5': 2, 'lr_e': 1e-05, 'lr_m': 5.6532695721607935e-05, 'lr_c': 0.0016876996158398294, 'lr_cl': 0.0003011421683861934, 'lr_middle': 0.0004161885265818147, 'dropout_rate_e': 0.4222877610160033, 'dropout_rate_m': 0.3323782138589455, 'dropout_rate_c': 0.7622477396572563, 'dropout_rate_clf': 0.07600227128826327, 'dropout_rate_middle': 0.05686362805732603, 'weight_decay': 0.00025370856793349863, 'gamma': 0.09750780855763383, 'epochs': 24, 'combination': 1, 'margin': 1.581543227720272}"
 		Best Paclitaxel validation Auroc = 0.712168322618352
-		Paclitaxel test Auroc = 0.8027777777777778
-		Paclitaxel extern AUROC = 0.5052631578947369
+		Paclitaxel test Auroc = 0.7972222222222222
+		Paclitaxel extern AUROC = 0.6578947368421053
 	Mean Result for Paclitaxel:
 		validation mean: 0.752842781998831
 		validation std: 0.026963225829137485
 		validation max: 0.7937068965517241
 		validation min: 0.712168322618352
-		test mean: 0.6545750887874175
-		test std: 0.1264259299367099
-		test max: 0.8027777777777778
-		test min: 0.4837962962962963
-		extern mean: 0.47947368421052633
-		extern std: 0.11175259576081345
-		extern max: 0.5868421052631578
-		extern min: 0.2631578947368421
+		test mean: 0.6455022831050228
+		test std: 0.10416915414417717
+		test max: 0.7972222222222222
+		test min: 0.5123287671232877
+		extern mean: 0.5789473684210527
+		extern std: 0.09919342306854526
+		extern max: 0.7315789473684211
+		extern min: 0.46842105263157896
 	Minutes needed: 1520
