@@ -121,6 +121,8 @@ if __name__ == '__main__':
     for drug_path in drug_paths:
         best_parameters_list = []
         drug_name = drug_path.stem
+        if drug_name in ('EGFR', 'ensemble'):
+            continue
         log_path = drug_path / args.method_name / logfile_name
         if log_path.is_file():
             with open(log_path, 'r') as log_file:
