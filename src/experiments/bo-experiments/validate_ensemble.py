@@ -94,8 +94,9 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
     hard_voting_auroc = roc_auc_score(y_true_list, prediction_max)
 
     # todo weighted vote
-    weighted_predictions = np.squeeze(prediction_lists)*auc_list[:, np.newaxis]
-    normalised_weighted_predictions = (np.sum(weighted_predictions, axis=0)) / np.sum(auc_list)
+    weights = np.asarray(auc_list)
+    weighted_predictions = np.squeeze(prediction_lists)*weights[:, np.newaxis]
+    normalised_weighted_predictions = (np.sum(weighted_predictions, axis=0)) / np.sum(weights)
 
     weighted_voting_auroc = roc_auc_score(y_true_list, normalised_weighted_predictions)
 
