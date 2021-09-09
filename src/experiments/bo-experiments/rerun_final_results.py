@@ -56,7 +56,6 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
 
     iteration = 0
     auc_list_test = []
-    auprc_list_test = []
     for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc=" Outer k-fold"):
         x_train_e = gdsc_e[train_index]
         x_train_m = gdsc_m[train_index]
@@ -70,28 +69,34 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
         model_test, scaler_test = train_final(best_parameters_list[iteration], x_train_e, x_train_m, x_train_c,
                                               y_train, device,
                                               pin_memory)
-        auc_test, auprc_test = test(model_test, scaler_test, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
+        auc_test, _ = test(model_test, scaler_test, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
         auc_list_test.append(auc_test)
-        auprc_list_test.append(auprc_test)
         iteration += 1
 
     auc_list_extern = []
     auprc_list_extern = []
     for best_parameters in tqdm(best_parameters_list, desc='External Validation'):
         model_extern, scaler_extern = train_final(best_parameters, gdsc_e, gdsc_m, gdsc_c, gdsc_r, device, pin_memory)
-        auc_test, auprc_test = test(model_extern, scaler_extern, extern_e, extern_m, extern_c,
-                                    extern_r, device, pin_memory)
-        auc_list_extern.append(auc_test)
-        auprc_list_extern.append(auprc_test)
+        auc_extern, auprc_extern = test(model_extern, scaler_extern, extern_e, extern_m, extern_c,
+                                        extern_r, device, pin_memory)
+        auc_list_extern.append(auc_extern)
+        auprc_list_extern.append(auprc_extern)
 
     result_dict = {
         'test auroc': auc_list_test,
         'extern auroc': auc_list_extern,
-        'test auprc': auprc_list_test,
-        'extern auprc': auc_list_extern
+        'extern auprc': auprc_list_extern
     }
 
     calculate_mean_and_std_auc(result_dict, result_file, drug_name)
+
+    positive_extern = np.count_nonzero(extern_r == 1)
+    negative_extern = np.count_nonzero(extern_r == 0)
+    no_skill_prediction_auprc = positive_extern / (positive_extern + negative_extern)
+    result_file.write(f'\n No skill predictor extern AUPRC: {no_skill_prediction_auprc} \n')
+    result_file.write(f'\n test auroc list: {auc_list_test} \n')
+    result_file.write(f'\n extern auroc list: {auc_list_extern} \n')
+    result_file.write(f'\n extern auprc list: {auprc_list_extern} \n')
 
 
 if __name__ == '__main__':

@@ -245,8 +245,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     result_dict = {
         'validation auroc': max_objective_list,
         'test auroc': test_auc_list,
-        'extern auroc': extern_auc_list,
         'test auprc': test_auprc_list,
+        'extern auroc': extern_auc_list,
         'extern auprc': extern_auprc_list
     }
     calculate_mean_and_std_auc(result_dict, result_file, drug_name)

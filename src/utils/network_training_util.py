@@ -95,16 +95,17 @@ def read_and_transpose_csv(path):
 
 
 def calculate_mean_and_std_auc(result_dict, result_file, drug_name):
-    result_file.write(f'\tMean Result for {drug_name}:\n')
+    result_file.write(f'\tMean Result for {drug_name}:\n\n')
     for result_name, result_value in result_dict.items():
         mean = np.mean(result_value)
         std = np.std(result_value)
         max_value = np.max(result_value)
         min_value = np.min(result_value)
-        result_file.write(f'\t\t{result_name} mean: {mean}\n')
-        result_file.write(f'\t\t{result_name} std: {std}\n')
         result_file.write(f'\t\t{result_name} max: {max_value}\n')
         result_file.write(f'\t\t{result_name} min: {min_value}\n')
+        result_file.write(f'\t\t{result_name} mean: {mean}\n')
+        result_file.write(f'\t\t{result_name} std: {std}\n')
+        result_file.write('\n')
 
 
 def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
