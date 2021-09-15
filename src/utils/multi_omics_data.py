@@ -57,9 +57,9 @@ def load_egfr_data(data_path):
     PDXCerlo = PDXCerlo.fillna(0)
     PDXCerlo[PDXCerlo != 0.0] = 1
 
-    GDSCE = GDSCE[GDSCE.columns[get_high_variance_gen_indices(GDSCE)]]
-    GDSCM = GDSCM[GDSCM.columns[get_high_variance_gen_indices(GDSCM)]]
-    GDSCC = GDSCC[GDSCC.columns[get_high_variance_gen_indices(GDSCC)]]
+    GDSCE = GDSCE[GDSCE.columns[get_non_zero_variance_gen_indices(GDSCE)]]
+    GDSCM = GDSCM[GDSCM.columns[get_non_zero_variance_gen_indices(GDSCM)]]
+    GDSCC = GDSCC[GDSCC.columns[get_non_zero_variance_gen_indices(GDSCC)]]
 
     expression_intersection_genes_index = GDSCE.columns.intersection(PDXEcet.columns)
     expression_intersection_genes_index = expression_intersection_genes_index.intersection(PDXEerlo.columns)
@@ -149,7 +149,7 @@ def load_egfr_data(data_path):
            pdx_e_both.to_numpy(), pdx_m_both.to_numpy(), pdx_c_both.to_numpy(), pdx_r_both
 
 
-def get_high_variance_gen_indices(data):
+def get_non_zero_variance_gen_indices(data):
     selector = VarianceThreshold(0)
     return selector.fit(data).get_support(indices=True)
 
@@ -191,9 +191,9 @@ def load_drug_data(data_path, drug, dataset):
     mutation_train = mutation_train.fillna(0)
     mutation_train[mutation_train != 0.0] = 1
 
-    expression_train = expression_train[expression_train.columns[get_high_variance_gen_indices(expression_train)]]
-    mutation_train = mutation_train[mutation_train.columns[get_high_variance_gen_indices(mutation_train)]]
-    cna_train = cna_train[cna_train.columns[get_high_variance_gen_indices(cna_train)]]
+    expression_train = expression_train[expression_train.columns[get_non_zero_variance_gen_indices(expression_train)]]
+    mutation_train = mutation_train[mutation_train.columns[get_non_zero_variance_gen_indices(mutation_train)]]
+    cna_train = cna_train[cna_train.columns[get_non_zero_variance_gen_indices(cna_train)]]
 
     expression_intersection_genes_index = expression_train.columns.intersection(expression_extern.columns)
     mutation_intersection_genes_index = mutation_train.columns.intersection(mutation_extern.columns)

@@ -82,10 +82,10 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     result_path.mkdir(parents=True, exist_ok=True)
 
     file_mode = 'a' if load_checkpoint else 'w'
-    result_file = open(result_path / 'logs.txt', file_mode)
+    result_file = open(result_path / 'results.txt', file_mode)
+    log_file = open(result_path / 'logs.txt', file_mode)
     checkpoint_path = result_path / 'checkpoint.json'
-    result_file.write(f"Start for {drug_name}\n")
-    print(f"Start for {drug_name}")
+    log_file.write(f"Start for {drug_name}\n")
 
     data_path = Path('..', '..', '..', 'data')
     if drug_name == 'EGFR':
@@ -102,6 +102,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     max_objective_list = []
     test_auc_list = []
     extern_auc_list = []
+    test_auprc_list = []
+    extern_auprc_list = []
     objectives_list = []
     now = datetime.now()
     result_file.write(f'Start experiment at {now}\n')
@@ -127,10 +129,10 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                                                                           x_train_c,
                                                                           y_train, device, pin_memory)
         if load_checkpoint & checkpoint_path.exists():
-            print("Load checkpoint")
+            log_file.write("Load checkpoint")
             experiment = load_experiment(str(checkpoint_path))
             experiment.evaluation_function = evaluation_function
-            print(f"Resuming after iteration {len(experiment.trials.values())}")
+            log_file.write(f"Resuming after iteration {len(experiment.trials.values())}")
 
         else:
             experiment = SimpleExperiment(
@@ -142,7 +144,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             )
 
         if sampling_method == 'gp':
-            print('Using sobol+GPEI')
+            log_file.write('Using sobol+GPEI')
             generation_strategy = GenerationStrategy(
                 steps=[
                     GenerationStep(model=Models.SOBOL,
@@ -156,7 +158,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                 name="Sobol+GPEI"
             )
         elif sampling_method == 'saasbo':
-            print('Using sobol+SAASBO')
+            log_file.write('Using sobol+SAASBO')
             generation_strategy = GenerationStrategy(
                 steps=[
                     GenerationStep(model=Models.SOBOL,
@@ -177,7 +179,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                 name="SAASBO"
             )
         else:
-            print('Using only sobol')
+            log_file.write('Using only sobol')
             sobol_iterations = search_iterations
             generation_strategy = GenerationStrategy(
                 steps=[
@@ -188,9 +190,9 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         for i in range(0, search_iterations):
             if i < sobol_iterations:
-                print(f"Running sobol optimization trial {i + 1} ...")
+                log_file.write(f"Running sobol optimization trial {i + 1} ...")
             else:
-                print(f"Running {sampling_method} optimization trial {i - sobol_iterations + 1} ...")
+                log_file.write(f"Running {sampling_method} optimization trial {i - sobol_iterations + 1} ...")
 
             # Reinitialize GP+EI model at each step with updated data.
             generator_run = generation_strategy.gen(
@@ -204,7 +206,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                 best_parameters = extract_best_parameter(experiment)
                 objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
                 save_auroc_plots(objectives, result_path, iteration, sobol_iterations)
-                print(best_parameters)
+                log_file.write(best_parameters)
 
         # save results
         best_parameters = extract_best_parameter(experiment)
@@ -221,25 +223,31 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         model_test, scaler_test = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device,
                                               pin_memory)
-        auc_test = test(model_test, scaler_test, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
+        auc_test, auprc_test = test(model_test, scaler_test, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
 
         model_extern, scaler_extern = train_final(best_parameters, gdsc_e, gdsc_m, gdsc_c, gdsc_r, device, pin_memory)
-        auc_extern = test(model_extern, scaler_extern, extern_e, extern_m, extern_c, extern_r, device, pin_memory)
+        auc_extern, auprc_extern = test(model_extern, scaler_extern, extern_e, extern_m, extern_c, extern_r, device, pin_memory)
 
         result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
         result_file.write(f'\t\t{drug} test Auroc = {auc_test}\n')
+        result_file.write(f'\t\t{drug} test AUPRC = {auprc_test}\n')
         result_file.write(f'\t\t{drug} extern AUROC = {auc_extern}\n')
+        result_file.write(f'\t\t{drug} extern AUPRC = {auprc_extern}\n')
         objectives_list.append(objectives)
         max_objective_list.append(max_objective)
         test_auc_list.append(auc_test)
         extern_auc_list.append(auc_extern)
+        test_auprc_list.append(auprc_test)
+        extern_auprc_list.append(auprc_extern)
 
     print("Done!")
 
     result_dict = {
-        'validation': max_objective_list,
-        'test': test_auc_list,
-        'extern': extern_auc_list
+        'validation auroc': max_objective_list,
+        'test auroc': test_auc_list,
+        'test auprc': test_auprc_list,
+        'extern auroc': extern_auc_list,
+        'extern auprc': extern_auprc_list
     }
     calculate_mean_and_std_auc(result_dict, result_file, drug_name)
     save_auroc_with_variance_plots(objectives_list, result_path, 'final', sobol_iterations)
@@ -382,8 +390,12 @@ if __name__ == '__main__':
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     parser.add_argument('--gpu_number', type=int)
     parser.add_argument('--small_search_space', default=False, action='store_true')
+    parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
+                                                          'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     args = parser.parse_args()
 
-    for drug, extern_dataset in drugs.items():
-        bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-                args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number, args.small_search_space)
+    if args.drug == 'all':
+        for drug, extern_dataset in drugs.items():
+            bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
+                    args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
+                    args.small_search_space)

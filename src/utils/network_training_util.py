@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.utils.data
 import torch.nn
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, average_precision_score
 import pandas as pd
 
 sigmoid = torch.nn.Sigmoid()
@@ -55,7 +55,6 @@ def validate(data_loader, moli_model, device, return_predictions=False):
     y_true = []
     predictions = []
     moli_model.eval()
-    use_amp = False if device == torch.device('cpu') else True
     with torch.no_grad():
         for (data_e, data_m, data_c, target) in data_loader:
             validate_e = data_e.to(device)
@@ -66,10 +65,11 @@ def validate(data_loader, moli_model, device, return_predictions=False):
             probabilities = sigmoid(logits)
             predictions.extend(probabilities.cpu().detach().numpy())
     auc_validate = roc_auc_score(y_true, predictions)
+    auprc_validate = average_precision_score(y_true, predictions)
     if return_predictions:
         return auc_validate, y_true, predictions
     else:
-        return auc_validate
+        return auc_validate, auprc_validate
 
 
 class BceWithTripletsToss:
@@ -95,16 +95,17 @@ def read_and_transpose_csv(path):
 
 
 def calculate_mean_and_std_auc(result_dict, result_file, drug_name):
-    result_file.write(f'\tMean Result for {drug_name}:\n')
+    result_file.write(f'\tMean Result for {drug_name}:\n\n')
     for result_name, result_value in result_dict.items():
         mean = np.mean(result_value)
         std = np.std(result_value)
         max_value = np.max(result_value)
         min_value = np.min(result_value)
-        result_file.write(f'\t\t{result_name} mean: {mean}\n')
-        result_file.write(f'\t\t{result_name} std: {std}\n')
         result_file.write(f'\t\t{result_name} max: {max_value}\n')
         result_file.write(f'\t\t{result_name} min: {min_value}\n')
+        result_file.write(f'\t\t{result_name} mean: {mean}\n')
+        result_file.write(f'\t\t{result_name} std: {std}\n')
+        result_file.write('\n')
 
 
 def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
@@ -119,8 +120,8 @@ def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device, pin_m
                                                   torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
                                               num_workers=8, pin_memory=pin_memory)
-    auc_test = validate(test_loader, moli_model, device)
-    return auc_test
+    auc_test, auprc = validate(test_loader, moli_model, device)
+    return auc_test, auprc
 
 
 def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
