@@ -1,0 +1,4 @@
+Start for Erlotinib
+Erlotinib Hard voting = 0.5
+Erlotinib Soft voting = 0.5555555555555556
+Erlotinib Weighted Voting = 0.5555555555555556

@@ -1,0 +1,4 @@
+Start for Gemcitabine_tcga
+Gemcitabine_tcga Hard voting = 0.5277777777777778
+Gemcitabine_tcga Soft voting = 0.6322751322751322
+Gemcitabine_tcga Weighted Voting = 0.6362433862433862

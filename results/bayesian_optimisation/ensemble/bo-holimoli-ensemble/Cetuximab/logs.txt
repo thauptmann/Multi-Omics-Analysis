@@ -1,0 +1,4 @@
+Start for Cetuximab
+Cetuximab Hard voting = 0.5
+Cetuximab Soft voting = 0.4036363636363637
+Cetuximab Weighted Voting = 0.4036363636363637

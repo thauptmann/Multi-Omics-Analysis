@@ -1,0 +1,4 @@
+Start for Paclitaxel
+Paclitaxel Hard voting = 0.5
+Paclitaxel Soft voting = 0.7
+Paclitaxel Weighted Voting = 0.7000000000000001

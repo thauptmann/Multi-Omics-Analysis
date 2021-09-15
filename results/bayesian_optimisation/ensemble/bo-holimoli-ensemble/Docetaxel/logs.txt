@@ -1,0 +1,4 @@
+Start for Docetaxel
+Docetaxel Hard voting = 0.5625
+Docetaxel Soft voting = 0.703125
+Docetaxel Weighted Voting = 0.703125
