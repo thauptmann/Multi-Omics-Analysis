@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils import multi_omics_data
-from utils.network_training_util import test, test_ensemble, calculate_mean_and_std_auc
+from utils.network_training_util import test,  calculate_mean_and_std_auc
 
 from utils.choose_gpu import get_free_gpu
 from training_bo_holi_moli import train_final
@@ -26,8 +26,8 @@ drugs = {
 random_seed = 42
 
 
-def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_dataset_name,
-                                best_parameters_list):
+def rerun_final_architecture(experiment_name, gpu_number, drug_name, extern_dataset_name,
+                             best_parameters_list):
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     cv_splits = 5
@@ -127,5 +127,5 @@ if __name__ == '__main__':
                         # strip the string literals
                         best_parameters_list.append(eval(best_parameter_string[1:-1]))
 
-        train_and_validate_ensemble(args.experiment_name, args.gpu_number, drug_name, drugs[drug_name],
-                                    best_parameters_list)
+        rerun_final_architecture(args.experiment_name, args.gpu_number, drug_name, drugs[drug_name],
+                                 best_parameters_list)
