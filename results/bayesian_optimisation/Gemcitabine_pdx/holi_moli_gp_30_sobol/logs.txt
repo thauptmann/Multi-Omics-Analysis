@@ -1,0 +1,41 @@
+Start for Gemcitabine_pdx
+Start experiment at 2021-09-05 10:55:55.853486
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 28, 'h_dim1': 137, 'h_dim2': 119, 'h_dim3': 114, 'h_dim4': 149, 'h_dim5': 107, 'depth_1': 3, 'depth_2': 1, 'depth_3': 4, 'depth_4': 2, 'depth_5': 2, 'lr_e': 1e-05, 'lr_m': 0.000757103308808685, 'lr_c': 0.0018519817606816767, 'lr_cl': 0.00022350831374795627, 'lr_middle': 0.0004300627922881719, 'dropout_rate_e': 0.7847889520750779, 'dropout_rate_m': 0.7484130525747066, 'dropout_rate_c': 0.43465767360718943, 'dropout_rate_clf': 0.39452071065496286, 'dropout_rate_middle': 0.5574241910310995, 'weight_decay': 0.0021473014456091376, 'gamma': 0.18108428167966292, 'epochs': 46, 'combination': 3, 'margin': 2.67423554180506}"
+		Best Gemcitabine_pdx validation Auroc = 0.7038397978030524
+		Gemcitabine_pdx test Auroc = 0.481012658227848
+		Gemcitabine_pdx extern AUROC = 0.8174603174603176
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 24, 'h_dim1': 56, 'h_dim2': 196, 'h_dim3': 215, 'h_dim4': 170, 'h_dim5': 212, 'depth_1': 1, 'depth_2': 2, 'depth_3': 3, 'depth_4': 3, 'depth_5': 1, 'lr_e': 0.0017497665496593998, 'lr_m': 0.0009161797137991934, 'lr_c': 0.007290529993034062, 'lr_cl': 0.003911685050747971, 'lr_middle': 0.006710745494068645, 'dropout_rate_e': 0.4952083260577497, 'dropout_rate_m': 0.8569455828811755, 'dropout_rate_c': 0.7232356387077841, 'dropout_rate_clf': 0.7680402573645272, 'dropout_rate_middle': 0.2885164263571198, 'weight_decay': 0.015143539548817973, 'gamma': 0.2771652252521519, 'epochs': 31, 'combination': 2, 'margin': 1.5647747057356702}"
+		Best Gemcitabine_pdx validation Auroc = 0.7828379091502451
+		Gemcitabine_pdx test Auroc = 0.4988492520138089
+		Gemcitabine_pdx extern AUROC = 0.6666666666666666
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 25, 'h_dim1': 72, 'h_dim2': 187, 'h_dim3': 220, 'h_dim4': 192, 'h_dim5': 198, 'depth_1': 2, 'depth_2': 2, 'depth_3': 2, 'depth_4': 3, 'depth_5': 1, 'lr_e': 0.0043092490399798495, 'lr_m': 0.00045500436314489025, 'lr_c': 0.01, 'lr_cl': 0.002843009320770915, 'lr_middle': 0.01, 'dropout_rate_e': 0.5394395659624789, 'dropout_rate_m': 0.8786072350613577, 'dropout_rate_c': 0.8014026718897973, 'dropout_rate_clf': 0.9, 'dropout_rate_middle': 0.25739622173214355, 'weight_decay': 0.01845887295521126, 'gamma': 0.31454177392414284, 'epochs': 31, 'combination': 1, 'margin': 1.0674395907392968}"
+		Best Gemcitabine_pdx validation Auroc = 0.7479353275285033
+		Gemcitabine_pdx test Auroc = 0.6173762945914845
+		Gemcitabine_pdx extern AUROC = 0.6746031746031746
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 30, 'h_dim1': 83, 'h_dim2': 149, 'h_dim3': 196, 'h_dim4': 221, 'h_dim5': 178, 'depth_1': 4, 'depth_2': 2, 'depth_3': 2, 'depth_4': 3, 'depth_5': 4, 'lr_e': 0.00027918756845618655, 'lr_m': 0.0015574892054149145, 'lr_c': 0.0007185399318588436, 'lr_cl': 0.007053140541213124, 'lr_middle': 0.0015061756918907522, 'dropout_rate_e': 0.20834889130994075, 'dropout_rate_m': 0.35840222283970036, 'dropout_rate_c': 0.7173337912231412, 'dropout_rate_clf': 0.6943034830852405, 'dropout_rate_middle': 0.7663460693332431, 'weight_decay': 0.003014910812068437, 'gamma': 0.19096960831899581, 'epochs': 18, 'combination': 0, 'margin': 1.7252079884097808}"
+		Best Gemcitabine_pdx validation Auroc = 0.6724027552111541
+		Gemcitabine_pdx test Auroc = 0.6329113924050633
+		Gemcitabine_pdx extern AUROC = 0.6587301587301587
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 19, 'h_dim1': 253, 'h_dim2': 242, 'h_dim3': 57, 'h_dim4': 31, 'h_dim5': 221, 'depth_1': 3, 'depth_2': 4, 'depth_3': 2, 'depth_4': 2, 'depth_5': 2, 'lr_e': 0.00036636357336575513, 'lr_m': 0.0001867520411843967, 'lr_c': 0.003079279736167249, 'lr_cl': 0.0006931112864679475, 'lr_middle': 0.002269194930268961, 'dropout_rate_e': 0.18559126991786978, 'dropout_rate_m': 0.8999999531221635, 'dropout_rate_c': 0.28418748909540814, 'dropout_rate_clf': 0.19346214705163997, 'dropout_rate_middle': 0.5955768814121755, 'weight_decay': 0.00021682807420009002, 'gamma': 0.07684720104865257, 'epochs': 40, 'combination': 4, 'margin': 0.9825840264777588}"
+		Best Gemcitabine_pdx validation Auroc = 0.6938233415267535
+		Gemcitabine_pdx test Auroc = 0.6189873417721519
+		Gemcitabine_pdx extern AUROC = 0.46825396825396826
+	Mean Result for Gemcitabine_pdx:
+		validation mean: 0.7201678262439417
+		validation std: 0.03985150390542111
+		validation max: 0.7828379091502451
+		validation min: 0.6724027552111541
+		test mean: 0.5698273878020712
+		test std: 0.06570105508632032
+		test max: 0.6329113924050633
+		test min: 0.481012658227848
+		extern mean: 0.6571428571428573
+		extern std: 0.11115645333340698
+		extern max: 0.8174603174603176
+		extern min: 0.46825396825396826
+	Minutes needed: 2656
