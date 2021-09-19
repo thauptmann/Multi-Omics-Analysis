@@ -8,13 +8,17 @@ from ax import (
     ParameterType,
     RangeParameter,
     SearchSpace,
-    SimpleExperiment,
-    FixedParameter
+    Experiment,
+    FixedParameter,
+    OptimizationConfig,
+    Objective,
+
 )
 from ax.modelbridge.generation_strategy import GenerationStrategy, GenerationStep
 from ax.modelbridge.modelbridge_utils import get_pending_observation_features
 from ax.storage.json_store.load import load_experiment
 from ax.storage.json_store.save import save_experiment
+from ax.runners.synthetic import SyntheticRunner
 
 from sklearn.model_selection import StratifiedKFold
 from ax.modelbridge.registry import Models
@@ -25,10 +29,12 @@ from utils.choose_gpu import get_free_gpu
 import argparse
 from pathlib import Path
 import numpy as np
-from training_bo_holi_moli import train_and_validate, train_final
+from training_bo_holi_moli import MoliMetric, train_final
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc, test
+from ax.storage.metric_registry import register_metric
+
 
 depth_lower = 1
 depth_upper = 4
@@ -78,6 +84,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         device = torch.device("cpu")
         pin_memory = False
 
+    register_metric(MoliMetric)
     result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
 
@@ -123,25 +130,17 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         x_test_c = gdsc_c[test_index]
         y_test = gdsc_r[test_index]
 
-        # load or set up experiment with initial sobel runs
-        evaluation_function = lambda parameterization: train_and_validate(parameterization,
-                                                                          x_train_e, x_train_m,
-                                                                          x_train_c,
-                                                                          y_train, device, pin_memory)
-        if load_checkpoint & checkpoint_path.exists():
-            log_file.write("Load checkpoint")
-            experiment = load_experiment(str(checkpoint_path))
-            experiment.evaluation_function = evaluation_function
-            log_file.write(f"Resuming after iteration {len(experiment.trials.values())}")
-
-        else:
-            experiment = SimpleExperiment(
-                name="BO-MOLI",
-                search_space=moli_search_space,
-                evaluation_function=evaluation_function,
-                objective_name="auroc",
+        optimization_config = OptimizationConfig(
+            objective=Objective(
+                metric=MoliMetric("auroc", x_train_e, x_train_m, x_train_c, y_train, device, pin_memory),
                 minimize=False,
-            )
+            ))
+        experiment = Experiment(
+            name="BO-MOLI",
+            search_space=moli_search_space,
+            optimization_config=optimization_config,
+            runner=SyntheticRunner()
+        )
 
         if sampling_method == 'gp':
             log_file.write('Using sobol+GPEI')
@@ -198,8 +197,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             generator_run = generation_strategy.gen(
                 experiment=experiment, n=1, pending_observations=get_pending_observation_features(experiment)
             )
-            experiment.new_trial(generator_run)
-            experiment.eval()
+            trial = experiment.new_trial(generator_run)
+            trial.run()
             save_experiment(experiment, str(checkpoint_path))
 
             if i % 10 == 0 and i != 0:
