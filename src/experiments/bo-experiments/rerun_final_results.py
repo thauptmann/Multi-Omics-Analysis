@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils import multi_omics_data
-from utils.network_training_util import test,  calculate_mean_and_std_auc
+from utils.network_training_util import test, calculate_mean_and_std_auc
 
 from utils.choose_gpu import get_free_gpu
 from training_bo_holi_moli import train_final
@@ -56,6 +56,9 @@ def rerun_final_architecture(experiment_name, gpu_number, drug_name, extern_data
 
     iteration = 0
     auc_list_test = []
+    auprc_list_test = []
+    auc_list_extern = []
+    auprc_list_extern = []
     for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc=" Outer k-fold"):
         x_train_e = gdsc_e[train_index]
         x_train_m = gdsc_m[train_index]
@@ -66,24 +69,22 @@ def rerun_final_architecture(experiment_name, gpu_number, drug_name, extern_data
         x_test_c = gdsc_c[test_index]
         y_test = gdsc_r[test_index]
 
-        model_test, scaler_test = train_final(best_parameters_list[iteration], x_train_e, x_train_m, x_train_c,
-                                              y_train, device,
-                                              pin_memory)
-        auc_test, _ = test(model_test, scaler_test, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
+        model_final, scaler_final = train_final(best_parameters_list[iteration], x_train_e, x_train_m, x_train_c,
+                                                y_train, device, pin_memory)
+        auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device,
+                                    pin_memory)
         auc_list_test.append(auc_test)
-        iteration += 1
+        auprc_list_test.append(auprc_test)
 
-    auc_list_extern = []
-    auprc_list_extern = []
-    for best_parameters in tqdm(best_parameters_list, desc='External Validation'):
-        model_extern, scaler_extern = train_final(best_parameters, gdsc_e, gdsc_m, gdsc_c, gdsc_r, device, pin_memory)
-        auc_extern, auprc_extern = test(model_extern, scaler_extern, extern_e, extern_m, extern_c,
+        auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c,
                                         extern_r, device, pin_memory)
         auc_list_extern.append(auc_extern)
         auprc_list_extern.append(auprc_extern)
+        iteration += 1
 
     result_dict = {
         'test auroc': auc_list_test,
+        'test_auprc': auprc_list_test,
         'extern auroc': auc_list_extern,
         'extern auprc': auprc_list_extern
     }

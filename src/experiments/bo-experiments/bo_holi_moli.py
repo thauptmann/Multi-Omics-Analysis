@@ -220,12 +220,11 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         result_file.write(f'\t\t{str(best_parameters) = }\n')
 
-        model_test, scaler_test = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device,
+        model_final, scaler_final = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device,
                                               pin_memory)
-        auc_test, auprc_test = test(model_test, scaler_test, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
-
-        model_extern, scaler_extern = train_final(best_parameters, gdsc_e, gdsc_m, gdsc_c, gdsc_r, device, pin_memory)
-        auc_extern, auprc_extern = test(model_extern, scaler_extern, extern_e, extern_m, extern_c, extern_r, device, pin_memory)
+        auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
+        auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device,
+                                        pin_memory)
 
         result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
         result_file.write(f'\t\t{drug} test Auroc = {auc_test}\n')
