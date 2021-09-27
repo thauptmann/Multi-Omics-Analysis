@@ -96,6 +96,7 @@ def rerun_final_architecture(experiment_name, gpu_number, drug_name, extern_data
     no_skill_prediction_auprc = positive_extern / (positive_extern + negative_extern)
     result_file.write(f'\n No skill predictor extern AUPRC: {no_skill_prediction_auprc} \n')
     result_file.write(f'\n test auroc list: {auc_list_test} \n')
+    result_file.write(f'\n test auprc list: {auprc_list_test} \n')
     result_file.write(f'\n extern auroc list: {auc_list_extern} \n')
     result_file.write(f'\n extern auprc list: {auprc_list_extern} \n')
 
