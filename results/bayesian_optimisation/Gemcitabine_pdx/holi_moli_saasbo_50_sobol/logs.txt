@@ -1,0 +1,41 @@
+Start for Gemcitabine_pdx
+Start experiment at 2021-09-06 10:56:18.673725
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 16, 'h_dim1': 256, 'h_dim2': 256, 'h_dim3': 256, 'h_dim4': 256, 'h_dim5': 8, 'depth_1': 4, 'depth_2': 1, 'depth_3': 1, 'depth_4': 4, 'depth_5': 1, 'lr_e': 1e-05, 'lr_m': 0.00016739203701307805, 'lr_c': 1e-05, 'lr_cl': 0.01, 'lr_middle': 0.01, 'dropout_rate_e': 0.9, 'dropout_rate_m': 0.0, 'dropout_rate_c': 0.9, 'dropout_rate_clf': 0.0, 'dropout_rate_middle': 0.0, 'weight_decay': 0.0001, 'gamma': 0.6, 'epochs': 10, 'combination': 4, 'margin': 0.5}"
+		Best Gemcitabine_pdx validation Auroc = 0.6938622255551389
+		Gemcitabine_pdx test Auroc = 0.7042577675489068
+		Gemcitabine_pdx extern AUROC = 0.5238095238095237
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 26, 'h_dim1': 256, 'h_dim2': 166, 'h_dim3': 256, 'h_dim4': 186, 'h_dim5': 256, 'depth_1': 1, 'depth_2': 4, 'depth_3': 4, 'depth_4': 1, 'depth_5': 1, 'lr_e': 0.01, 'lr_m': 1e-05, 'lr_c': 0.01, 'lr_cl': 0.0013980179749133416, 'lr_middle': 0.0014924729576961861, 'dropout_rate_e': 0.0, 'dropout_rate_m': 0.3385029897908499, 'dropout_rate_c': 0.0, 'dropout_rate_clf': 0.24305865730685525, 'dropout_rate_middle': 0.4717414461941417, 'weight_decay': 0.0001, 'gamma': 0.6, 'epochs': 41, 'combination': 3, 'margin': 3.5}"
+		Best Gemcitabine_pdx validation Auroc = 0.7896207418517129
+		Gemcitabine_pdx test Auroc = 0.5558112773302647
+		Gemcitabine_pdx extern AUROC = 0.6031746031746033
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 32, 'h_dim1': 193, 'h_dim2': 195, 'h_dim3': 8, 'h_dim4': 50, 'h_dim5': 243, 'depth_1': 3, 'depth_2': 4, 'depth_3': 3, 'depth_4': 2, 'depth_5': 1, 'lr_e': 0.01, 'lr_m': 0.0001970249937116073, 'lr_c': 1e-05, 'lr_cl': 0.01, 'lr_middle': 0.0029041480012242456, 'dropout_rate_e': 0.428007564117092, 'dropout_rate_m': 0.9, 'dropout_rate_c': 0.23977385881218324, 'dropout_rate_clf': 0.9, 'dropout_rate_middle': 0.5755920787102451, 'weight_decay': 0.00033110151641786733, 'gamma': 0.1461661015923408, 'epochs': 10, 'combination': 1, 'margin': 0.5}"
+		Best Gemcitabine_pdx validation Auroc = 0.7317675568331736
+		Gemcitabine_pdx test Auroc = 0.6006904487917146
+		Gemcitabine_pdx extern AUROC = 0.6666666666666666
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 16, 'h_dim1': 256, 'h_dim2': 116, 'h_dim3': 8, 'h_dim4': 8, 'h_dim5': 256, 'depth_1': 1, 'depth_2': 4, 'depth_3': 1, 'depth_4': 1, 'depth_5': 1, 'lr_e': 1e-05, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 1e-05, 'lr_middle': 0.01, 'dropout_rate_e': 0.9, 'dropout_rate_m': 0.0, 'dropout_rate_c': 0.9, 'dropout_rate_clf': 0.0, 'dropout_rate_middle': 0.9, 'weight_decay': 0.0001, 'gamma': 0.6, 'epochs': 50, 'combination': 4, 'margin': 0.5}"
+		Best Gemcitabine_pdx validation Auroc = 0.6330312877556972
+		Gemcitabine_pdx test Auroc = 0.8107019562715765
+		Gemcitabine_pdx extern AUROC = 0.626984126984127
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 22, 'h_dim1': 205, 'h_dim2': 234, 'h_dim3': 90, 'h_dim4': 223, 'h_dim5': 234, 'depth_1': 1, 'depth_2': 2, 'depth_3': 1, 'depth_4': 4, 'depth_5': 3, 'lr_e': 0.0027281633355170243, 'lr_m': 6.108853083340684e-05, 'lr_c': 1.603188147976001e-05, 'lr_cl': 2.1947704662644345e-05, 'lr_middle': 0.0010344179621148036, 'dropout_rate_e': 0.2778645216487348, 'dropout_rate_m': 0.09234208362177014, 'dropout_rate_c': 0.6121830252930522, 'dropout_rate_clf': 0.09233624814078212, 'dropout_rate_middle': 0.8311293449252845, 'weight_decay': 0.01325300687693663, 'gamma': 0.13809325397014618, 'epochs': 24, 'combination': 1, 'margin': 0.7387584140524268}"
+		Best Gemcitabine_pdx validation Auroc = 0.7369384382507743
+		Gemcitabine_pdx test Auroc = 0.6563291139240507
+		Gemcitabine_pdx extern AUROC = 0.626984126984127
+	Mean Result for Gemcitabine_pdx:
+		validation mean: 0.7170440500492995
+		validation std: 0.05191432507889835
+		validation max: 0.7896207418517129
+		validation min: 0.6330312877556972
+		test mean: 0.6655581127733027
+		test std: 0.08820629764948906
+		test max: 0.8107019562715765
+		test min: 0.5558112773302647
+		extern mean: 0.6095238095238095
+		extern std: 0.047460052024527175
+		extern max: 0.6666666666666666
+		extern min: 0.5238095238095237
+	Minutes needed: 15750
