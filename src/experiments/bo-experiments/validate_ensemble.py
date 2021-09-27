@@ -57,6 +57,8 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
 
     iteration = 0
     auc_list = []
+    model_list = []
+    scaler_list = []
     for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc=" Outer k-fold"):
         x_train_e = gdsc_e[train_index]
         x_train_m = gdsc_m[train_index]
@@ -67,21 +69,17 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
         x_test_c = gdsc_c[test_index]
         y_test = gdsc_r[test_index]
 
-        model_test, scaler_test = train_final(best_parameters_list[iteration], x_train_e, x_train_m, x_train_c,
+        model, scaler = train_final(best_parameters_list[iteration], x_train_e, x_train_m, x_train_c,
                                               y_train, device,
                                               pin_memory)
-        auc_test = test(model_test, scaler_test, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
+        auc_test = test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
         auc_list.append(auc_test)
+        model_list.append(model)
+        scaler_list.append(scaler)
+
         iteration += 1
 
-    model_extern_list = []
-    scaler_extern_list = []
-    for best_parameters in tqdm(best_parameters_list, desc='External Validation'):
-        model_extern, scaler_extern = train_final(best_parameters, gdsc_e, gdsc_m, gdsc_c, gdsc_r, device, pin_memory)
-        model_extern_list.append(model_extern)
-        scaler_extern_list.append(scaler_extern)
-
-    y_true_list, prediction_lists = test_ensemble(model_extern_list, scaler_extern_list, extern_e, extern_m, extern_c,
+    y_true_list, prediction_lists = test_ensemble(model_list, scaler_list, extern_e, extern_m, extern_c,
                                                   extern_r, device, pin_memory)
     # todo soft vote
     prediction_sum = np.sum(prediction_lists, axis=0) / 5

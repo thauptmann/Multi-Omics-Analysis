@@ -11,12 +11,11 @@ from ax import (
     Experiment,
     FixedParameter,
     OptimizationConfig,
-    Objective,
+    Objective, Data,
 
 )
 from ax.modelbridge.generation_strategy import GenerationStrategy, GenerationStep
 from ax.modelbridge.modelbridge_utils import get_pending_observation_features
-from ax.storage.json_store.load import load_experiment
 from ax.storage.json_store.save import save_experiment
 from ax.runners.synthetic import SyntheticRunner
 
@@ -148,9 +147,11 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                 steps=[
                     GenerationStep(model=Models.SOBOL,
                                    num_trials=sobol_iterations,
+                                   max_parallelism=1,
                                    model_kwargs={"seed": random_seed}),
                     GenerationStep(
                         model=Models.BOTORCH,
+                        max_parallelism=1,
                         num_trials=-1,
                     ),
                 ],
@@ -161,7 +162,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             generation_strategy = GenerationStrategy(
                 steps=[
                     GenerationStep(model=Models.SOBOL,
-                                   num_trials=sobol_iterations
+                                   num_trials=sobol_iterations,
+
                                    ),
                     GenerationStep(
                         model=Models.FULLYBAYESIAN,
@@ -195,20 +197,18 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
             # Reinitialize GP+EI model at each step with updated data.
             generator_run = generation_strategy.gen(
-                experiment=experiment, n=1, pending_observations=get_pending_observation_features(experiment)
-            )
+                experiment=experiment, n=1)
             trial = experiment.new_trial(generator_run)
             trial.run()
-            save_experiment(experiment, str(checkpoint_path))
 
             if i % 10 == 0 and i != 0:
-                best_parameters = extract_best_parameter(experiment)
+                best_parameters = extract_best_parameter(trial)
                 objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
                 save_auroc_plots(objectives, result_path, iteration, sobol_iterations)
                 log_file.write(best_parameters)
 
         # save results
-        best_parameters = extract_best_parameter(experiment)
+        best_parameters = extract_best_parameter(trial)
         max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
         objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
         save_experiment(experiment, str(checkpoint_path))
