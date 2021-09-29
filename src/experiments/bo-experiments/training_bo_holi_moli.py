@@ -1,11 +1,9 @@
 import numpy as np
-import scipy.signal
 import torch
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
-from scipy.stats import sem
 from models.bo_holi_moli_model import AdaptiveMoli
 from siamese_triplet.utils import AllTripletSelector
 from utils import network_training_util
