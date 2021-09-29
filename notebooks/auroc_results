@@ -279,10 +279,3 @@
 0,Gemcitabine with TCGA,Extern,0.5555555555555555,Holi-Moli-more-Sobol
 0,Gemcitabine with TCGA,Extern,0.593915343915344,Holi-Moli-more-Sobol
 0,Gemcitabine with TCGA,Extern,0.5396825396825397,Holi-Moli-more-Sobol
-0,Cisplatin,Extern,0.5722222222222223,Weighted Ensemble
-0,Docetaxel,Extern,0.703125,Weighted Ensemble
-0,Paclitaxel,Extern,0.7000000000000001,Weighted Ensemble
-0,Cetuximab,Extern,0.4036363636363637,Weighted Ensemble
-0,Gemcitabine with PDX,Extern,0.7063492063492063,Weighted Ensemble
-0,Erlotinib,Extern,0.5555555555555556,Weighted Ensemble
-0,Gemcitabine with TCGA,Extern,0.6164021164021163,Weighted Ensemble

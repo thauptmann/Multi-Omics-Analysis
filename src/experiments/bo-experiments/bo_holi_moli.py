@@ -57,8 +57,8 @@ epoch_lower = 10
 epoch_upper = 50
 
 drugs = {
-    'Gemcitabine_tcga': 'TCGA',
-    'Gemcitabine_pdx': 'PDX',
+   #  'Gemcitabine_tcga': 'TCGA',
+   #  'Gemcitabine_pdx': 'PDX',
     'Cisplatin': 'TCGA',
     'Docetaxel': 'TCGA',
     'Erlotinib': 'PDX',
