@@ -121,10 +121,8 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory):
         auc_validate = network_training_util.validate(validation_loader, moli_model, device)
         aucs_validate.append(auc_validate)
 
-    mean = np.mean(aucs_validate),
-    standard_error = scipy.stats.sem(aucs_validate)
-
-    return [mean, standard_error]
+    mean = np.mean(aucs_validate)
+    return {'auroc': mean}
 
 
 def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory):
