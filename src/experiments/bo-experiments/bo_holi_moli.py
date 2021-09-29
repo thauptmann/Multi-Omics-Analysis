@@ -4,36 +4,25 @@ from pathlib import Path
 import torch
 import pickle
 import time
-from ax import (
-    ParameterType,
-    RangeParameter,
-    SearchSpace,
-    Experiment,
-    FixedParameter,
-    OptimizationConfig,
-    Objective, Data,
+import numpy as np
+import argparse
+from tqdm import tqdm
 
-)
+from ax import optimize
+
 from ax.modelbridge.generation_strategy import GenerationStrategy, GenerationStep
-from ax.modelbridge.modelbridge_utils import get_pending_observation_features
 from ax.storage.json_store.save import save_experiment
-from ax.runners.synthetic import SyntheticRunner
 
 from sklearn.model_selection import StratifiedKFold
 from ax.modelbridge.registry import Models
-from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.choose_gpu import get_free_gpu
-import argparse
 from pathlib import Path
-import numpy as np
-from training_bo_holi_moli import MoliMetric, train_final
+from training_bo_holi_moli import train_final, train_and_validate
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc, test
-from ax.storage.metric_registry import register_metric
-
 
 depth_lower = 1
 depth_upper = 4
@@ -63,8 +52,7 @@ drugs = {
     'Docetaxel': 'TCGA',
     'Erlotinib': 'PDX',
     'Cetuximab': 'PDX',
-    'Paclitaxel': 'PDX',
-    # 'EGFR': 'PDX'
+    'Paclitaxel': 'PDX'
 }
 
 random_seed = 42
@@ -83,7 +71,6 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         device = torch.device("cpu")
         pin_memory = False
 
-    register_metric(MoliMetric)
     result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
 
@@ -129,17 +116,10 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         x_test_c = gdsc_c[test_index]
         y_test = gdsc_r[test_index]
 
-        optimization_config = OptimizationConfig(
-            objective=Objective(
-                metric=MoliMetric("auroc", x_train_e, x_train_m, x_train_c, y_train, device, pin_memory),
-                minimize=False,
-            ))
-        experiment = Experiment(
-            name="BO-MOLI",
-            search_space=moli_search_space,
-            optimization_config=optimization_config,
-            runner=SyntheticRunner()
-        )
+        evaluation_function = lambda parameterization: train_and_validate(parameterization,
+                                                                          x_train_e, x_train_m,
+                                                                          x_train_c,
+                                                                          y_train, device, pin_memory)
 
         if sampling_method == 'gp':
             log_file.write('Using sobol+GPEI')
@@ -152,7 +132,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                     GenerationStep(
                         model=Models.BOTORCH,
                         max_parallelism=1,
-                        num_trials=-1,
+                        num_trials=search_iterations - sobol_iterations,
                     ),
                 ],
                 name="Sobol+GPEI"
@@ -163,11 +143,10 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                 steps=[
                     GenerationStep(model=Models.SOBOL,
                                    num_trials=sobol_iterations,
-
-                                   ),
+                                   model_kwargs={"seed": random_seed}),
                     GenerationStep(
                         model=Models.FULLYBAYESIAN,
-                        num_trials=-1,
+                        num_trials=search_iterations - sobol_iterations,
                         model_kwargs={
                             "num_samples": 256,
                             "warmup_steps": 512,
@@ -189,26 +168,16 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                 name="Sobol"
             )
 
-        for i in range(0, search_iterations):
-            if i < sobol_iterations:
-                log_file.write(f"Running sobol optimization trial {i + 1} ...")
-            else:
-                log_file.write(f"Running {sampling_method} optimization trial {i - sobol_iterations + 1} ...")
-
-            # Reinitialize GP+EI model at each step with updated data.
-            generator_run = generation_strategy.gen(
-                experiment=experiment, n=1)
-            trial = experiment.new_trial(generator_run)
-            trial.run()
-
-            if i % 10 == 0 and i != 0:
-                best_parameters = extract_best_parameter(trial)
-                objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
-                save_auroc_plots(objectives, result_path, iteration, sobol_iterations)
-                log_file.write(best_parameters)
+        best_parameters, values, experiment, model = optimize(
+            experiment_name='Holi-Moli',
+            objective_name='auroc',
+            parameters=moli_search_space,
+            evaluation_function=evaluation_function,
+            minimize=False,
+            generation_strategy=generation_strategy
+        )
 
         # save results
-        best_parameters = extract_best_parameter(trial)
         max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
         objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
         save_experiment(experiment, str(checkpoint_path))
@@ -221,7 +190,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         result_file.write(f'\t\t{str(best_parameters) = }\n')
 
         model_final, scaler_final = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device,
-                                              pin_memory)
+                                                pin_memory)
         auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
         auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device,
                                         pin_memory)
@@ -266,115 +235,106 @@ def extract_best_parameter(experiment):
 
 def create_search_space(combination, small_search_space):
     if combination is None:
-        combination_parameter = RangeParameter(name='combination', lower=combination_lower, upper=combination_upper,
-                                               parameter_type=ParameterType.INT)
+        combination_parameter = {'name': 'combination', "bounds": [combination_lower, combination_upper],
+                                 "value_type": "int", 'type': 'range'}
     else:
-        combination_parameter = FixedParameter(name='combination', value=combination,
-                                               parameter_type=ParameterType.INT)
+        combination_parameter = {'name': 'combination', 'value': combination, 'type': 'fixed', "value_type": "int"}
 
     if combination is None and not small_search_space:
-        search_space = SearchSpace(
-            parameters=[
-                RangeParameter(name='mini_batch', lower=batch_size_lower, upper=batch_size_upper,
-                               parameter_type=ParameterType.INT),
-                RangeParameter(name="h_dim1", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="h_dim2", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="h_dim3", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="h_dim4", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="h_dim5", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="depth_1", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="depth_2", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="depth_3", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="depth_4", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="depth_5", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="lr_e", lower=learning_rate_lower, upper=learning_rate_upper,
-                               parameter_type=ParameterType.FLOAT, log_scale=True),
-                RangeParameter(name="lr_m", lower=learning_rate_lower, upper=learning_rate_upper,
-                               parameter_type=ParameterType.FLOAT, log_scale=True),
-                RangeParameter(name="lr_c", lower=learning_rate_lower, upper=learning_rate_upper,
-                               parameter_type=ParameterType.FLOAT, log_scale=True),
-                RangeParameter(name="lr_cl", lower=learning_rate_lower, upper=learning_rate_upper,
-                               parameter_type=ParameterType.FLOAT, log_scale=True),
-                RangeParameter(name="lr_middle", lower=learning_rate_lower, upper=learning_rate_upper,
-                               parameter_type=ParameterType.FLOAT, log_scale=True),
-                RangeParameter(name="dropout_rate_e", lower=drop_rate_lower, upper=drop_rate_upper,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name="dropout_rate_m", lower=drop_rate_lower, upper=drop_rate_upper,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name="dropout_rate_c", lower=drop_rate_lower, upper=drop_rate_upper,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name="dropout_rate_clf", lower=drop_rate_lower, upper=drop_rate_upper,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name="dropout_rate_middle", lower=drop_rate_lower, upper=drop_rate_upper,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name='weight_decay', lower=weight_decay_lower, upper=weight_decay_upper, log_scale=True,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name='gamma', lower=gamma_lower, upper=gamma_upper, parameter_type=ParameterType.FLOAT),
-                RangeParameter(name='epochs', lower=epoch_lower, upper=epoch_upper, parameter_type=ParameterType.INT),
-                combination_parameter,
-                RangeParameter(name='margin', lower=margin_lower, upper=margin_upper,
-                               parameter_type=ParameterType.FLOAT),
-            ]
-        )
+        search_space = [
+            {'name': 'mini_batch', 'bounds': [batch_size_lower, batch_size_upper], 'value_type': 'int',
+             'type': 'range'},
+            {'name': 'h_dim1', "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+            {'name': "h_dim2", "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+            {'name': "h_dim3", "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+            {'name': "h_dim4", "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+            {'name': "h_dim5", "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+            {'name': "depth_1", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+            {'name': "depth_2", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+            {'name': "depth_3", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+            {'name': "depth_4", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+            {'name': "depth_5", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+            {'name': "lr_e", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
+             'log_scale': True, 'type': 'range'},
+            {'name': "lr_m", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
+             'log_scale': True, 'type': 'range'},
+            {'name': "lr_c", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
+             'log_scale': True, 'type': 'range'},
+            {'name': "lr_cl", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
+             'log_scale': True, 'type': 'range'},
+            {'name': "lr_middle", "bounds": [learning_rate_lower, learning_rate_upper],
+             "value_type": "float", 'log_scale': True, 'type': 'range'},
+            {'name': "dropout_rate_e", "bounds": [drop_rate_lower, drop_rate_upper], "value_type": "float",
+             'type': 'range'},
+            {'name': "dropout_rate_m", "bounds": [drop_rate_lower, drop_rate_upper], "value_type": "float",
+             'type': 'range'},
+            {'name': "dropout_rate_c", "bounds": [drop_rate_lower, drop_rate_upper], "value_type": "float",
+             'type': 'range'},
+            {'name': "dropout_rate_clf", "bounds": [drop_rate_lower, drop_rate_upper], "value_type": "float",
+             'type': 'range'},
+            {'name': "dropout_rate_middle", "bounds": [drop_rate_lower, drop_rate_upper], "value_type": "float",
+             'type': 'range'},
+            {'name': 'weight_decay', "bounds": [weight_decay_lower, weight_decay_upper], 'log_scale': True,
+             "value_type": "float", 'type': 'range'},
+            {'name': 'gamma', "bounds": [gamma_lower, gamma_upper], "value_type": "float", 'type': 'range'},
+            {'name': 'epochs', "bounds": [epoch_lower, epoch_upper], "value_type": "int", 'type': 'range'},
+            combination_parameter,
+            {'name': 'margin', "bounds": [margin_lower, margin_upper], "value_type": "float", 'type': 'range'}
+        ]
+
     # moli
     elif combination is not None and not small_search_space:
-        search_space = SearchSpace(
-            parameters=[
-                RangeParameter(name='mini_batch', lower=batch_size_lower, upper=batch_size_upper,
-                               parameter_type=ParameterType.INT),
-                RangeParameter(name="h_dim1", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="h_dim2", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="h_dim3", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="h_dim5", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="depth_1", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="depth_2", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="depth_3", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="depth_5", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="lr_e", lower=learning_rate_lower, upper=learning_rate_upper,
-                               parameter_type=ParameterType.FLOAT, log_scale=True),
-                RangeParameter(name="lr_m", lower=learning_rate_lower, upper=learning_rate_upper,
-                               parameter_type=ParameterType.FLOAT, log_scale=True),
-                RangeParameter(name="lr_c", lower=learning_rate_lower, upper=learning_rate_upper,
-                               parameter_type=ParameterType.FLOAT, log_scale=True),
-                RangeParameter(name="lr_cl", lower=learning_rate_lower, upper=learning_rate_upper,
-                               parameter_type=ParameterType.FLOAT, log_scale=True),
-                RangeParameter(name="dropout_rate_e", lower=drop_rate_lower, upper=drop_rate_upper,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name="dropout_rate_m", lower=drop_rate_lower, upper=drop_rate_upper,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name="dropout_rate_c", lower=drop_rate_lower, upper=drop_rate_upper,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name="dropout_rate_clf", lower=drop_rate_lower, upper=drop_rate_upper,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name='weight_decay', lower=weight_decay_lower, upper=weight_decay_upper, log_scale=True,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name='gamma', lower=gamma_lower, upper=gamma_upper, parameter_type=ParameterType.FLOAT),
-                RangeParameter(name='epochs', lower=epoch_lower, upper=epoch_upper, parameter_type=ParameterType.INT),
-                combination_parameter,
-                RangeParameter(name='margin', lower=margin_lower, upper=margin_upper,
-                               parameter_type=ParameterType.FLOAT),
-            ]
-        )
+        search_space = [{'name': 'mini_batch', 'bounds': [batch_size_lower, batch_size_upper],
+                         'type': 'range', 'value_type': 'int', 'log_scale': True},
+                        {'name': "h_dim1", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+                        {'name': "h_dim2", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+                        {'name': "h_dim3", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+                        {'name': "h_dim5", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+                        {'name': "depth_1", 'bounds': [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+                        {'name': "depth_2", 'bounds': [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+                        {'name': "depth_3", 'bounds': [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+                        {'name': "depth_5", 'bounds': [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+                        {'name': "lr_e", 'bounds': [learning_rate_lower, learning_rate_upper],
+                         "value_type": "float", 'log_scale': True, 'type': 'range'},
+                        {'name': "lr_m", 'bounds': [learning_rate_lower, learning_rate_upper],
+                         "value_type": "float", 'log_scale': True, 'type': 'range'},
+                        {'name': "lr_c", 'bounds': [learning_rate_lower, learning_rate_upper],
+                         "value_type": "float", 'log_scale': True, 'type': 'range'},
+                        {'name': "lr_cl", 'bounds': [learning_rate_lower, learning_rate_upper],
+                         "value_type": "float", 'log_scale': True, 'type': 'range'},
+                        {'name': "dropout_rate_e", 'bounds': [drop_rate_lower, drop_rate_upper],
+                         "value_type": "float", 'type': 'range'},
+                        {'name': "dropout_rate_m", 'bounds': [drop_rate_lower, drop_rate_upper],
+                         "value_type": "float", 'type': 'range'},
+                        {'name': "dropout_rate_c", 'bounds': [drop_rate_lower, drop_rate_upper],
+                         "value_type": "float", 'type': 'range'},
+                        {'name': "dropout_rate_clf", 'bounds': [drop_rate_lower, drop_rate_upper],
+                         "value_type": "float", 'type': 'range'},
+                        {'name': 'weight_decay', 'bounds': [weight_decay_lower, weight_decay_upper], 'log_scale': True,
+                         "value_type": "float", 'type': 'range'},
+                        {'name': 'gamma', 'bounds': [gamma_lower, gamma_upper], "value_type": "float", 'type': 'range'},
+                        {'name': 'epochs', 'bounds': [epoch_lower, epoch_upper], "value_type": "int", 'type': 'range'},
+                        combination_parameter,
+                        {'name': 'margin', 'bounds': [margin_lower, margin_upper], "value_type": "float",
+                         'type': 'range'},
+                        ]
     else:
-        search_space = SearchSpace(
-            parameters=[
-                RangeParameter(name='mini_batch', lower=batch_size_lower, upper=batch_size_upper,
-                               parameter_type=ParameterType.INT),
-                RangeParameter(name="h_dim1", lower=dim_lower, upper=dim_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="depth_1", lower=depth_lower, upper=depth_upper, parameter_type=ParameterType.INT),
-                RangeParameter(name="lr_e", lower=learning_rate_lower, upper=learning_rate_upper,
-                               parameter_type=ParameterType.FLOAT, log_scale=True),
-                RangeParameter(name="dropout_rate_e", lower=drop_rate_lower, upper=drop_rate_upper,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name='weight_decay', lower=weight_decay_lower, upper=weight_decay_upper, log_scale=True,
-                               parameter_type=ParameterType.FLOAT),
-                RangeParameter(name='gamma', lower=gamma_lower, upper=gamma_upper, parameter_type=ParameterType.FLOAT),
-                RangeParameter(name='epochs', lower=epoch_lower, upper=epoch_upper, parameter_type=ParameterType.INT),
-                combination_parameter,
-                RangeParameter(name='margin', lower=margin_lower, upper=margin_upper,
-                               parameter_type=ParameterType.FLOAT),
-            ]
-        )
+        search_space = [
+            {'name': 'mini_batch', 'bounds': [batch_size_lower, batch_size_upper], "value_type": "int",
+             'type': 'range'},
+            {'name': "h_dim1", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+            {'name': "depth_1", 'bounds': [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+            {'name': "lr_e", 'bounds': [learning_rate_lower, learning_rate_upper],
+             "value_type": "float", 'log_scale': True, 'type': 'range'},
+            {'name': "dropout_rate_e", 'bounds': [drop_rate_lower, drop_rate_upper], "value_type": "float",
+             'type': 'range'},
+            {'name': 'weight_decay', 'bounds': [weight_decay_lower, weight_decay_upper], 'log_scale': True,
+             "value_type": "float", 'type': 'range'},
+            {'name': 'gamma', 'bounds': [gamma_lower, gamma_upper], "value_type": "float", 'type': 'range'},
+            {'name': 'epochs', 'bounds': [epoch_lower, epoch_upper], "value_type": "int", 'type': 'range'},
+            combination_parameter,
+            {'name': 'margin', 'bounds': [margin_lower, margin_upper], "value_type": "float", 'type': 'range'}
+        ]
     return search_space
 
 
