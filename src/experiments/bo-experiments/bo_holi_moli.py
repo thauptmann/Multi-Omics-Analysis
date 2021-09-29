@@ -132,7 +132,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                     GenerationStep(
                         model=Models.BOTORCH,
                         max_parallelism=1,
-                        num_trials=search_iterations - sobol_iterations,
+                        num_trials=-1,
                     ),
                 ],
                 name="Sobol+GPEI"
@@ -146,7 +146,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                                    model_kwargs={"seed": random_seed}),
                     GenerationStep(
                         model=Models.FULLYBAYESIAN,
-                        num_trials=search_iterations - sobol_iterations,
+                        num_trials=-1,
                         model_kwargs={
                             "num_samples": 256,
                             "warmup_steps": 512,
@@ -163,12 +163,13 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
             sobol_iterations = search_iterations
             generation_strategy = GenerationStrategy(
                 steps=[
-                    GenerationStep(model=Models.SOBOL, num_trials=search_iterations),
+                    GenerationStep(model=Models.SOBOL, num_trials=-1),
                 ],
                 name="Sobol"
             )
 
         best_parameters, values, experiment, model = optimize(
+            total_trials=search_iterations,
             experiment_name='Holi-Moli',
             objective_name='auroc',
             parameters=moli_search_space,
