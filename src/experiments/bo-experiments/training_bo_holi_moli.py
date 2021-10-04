@@ -10,7 +10,7 @@ from utils import network_training_util
 from utils.network_training_util import BceWithTripletsToss
 from scipy.stats import sem
 
-global best_auroc
+best_auroc = 0
 
 
 def reset_best_auroc():
@@ -138,12 +138,13 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, 
     mean = np.mean(aucs_validate)
     standard_error_of_mean = sem(aucs_validate)
 
-    if mean < best_auroc:
-        global best_auroc
-        best_auroc = mean
-
     return {'auroc': (mean, standard_error_of_mean)}
 
+
+def check_best_auroc(new_auroc):
+    global best_auroc
+    if new_auroc < best_auroc:
+        best_auroc = new_auroc
 
 def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory):
     combination = parameterization['combination']
