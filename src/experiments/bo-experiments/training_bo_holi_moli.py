@@ -10,7 +10,7 @@ from utils import network_training_util
 from utils.network_training_util import BceWithTripletsToss
 from scipy.stats import sem
 
-best_auroc = 0
+global best_auroc
 
 
 def reset_best_auroc():
