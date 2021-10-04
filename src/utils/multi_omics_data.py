@@ -167,6 +167,7 @@ def load_drug_data(data_path, drug, dataset):
     mutation_train = read_and_transpose_csv(sna_binary_path / f"GDSC_mutations.{drug}.tsv")
     cna_train = read_and_transpose_csv(cna_binary_path / f"GDSC_CNA.{drug}.tsv")
     cna_train = cna_train.loc[:, ~cna_train.columns.duplicated()]
+
     expression_extern = read_and_transpose_csv(expressions_homogenized_path /
                                                f"{dataset}_exprs.{drug}.eb_with.GDSC_exprs.{drug}.tsv")
     mutation_extern = read_and_transpose_csv(sna_binary_path / f"{dataset}_mutations.{drug}.tsv")

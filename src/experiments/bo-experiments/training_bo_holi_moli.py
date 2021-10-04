@@ -8,9 +8,17 @@ from models.bo_holi_moli_model import AdaptiveMoli
 from siamese_triplet.utils import AllTripletSelector
 from utils import network_training_util
 from utils.network_training_util import BceWithTripletsToss
+from scipy.stats import sem
+
+best_auroc = 0
 
 
-def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory):
+def reset_best_auroc():
+    global best_auroc
+    best_auroc = 0
+
+
+def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, skip_bad_iterations):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -44,6 +52,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory):
 
     aucs_validate = []
     cv_splits = 5
+    iteration = 1
     skf = StratifiedKFold(n_splits=cv_splits)
     for train_index, validate_index in tqdm(skf.split(x_e, y), total=skf.get_n_splits(),
                                             desc="k-fold"):
@@ -119,8 +128,21 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory):
         auc_validate = network_training_util.validate(validation_loader, moli_model, device)
         aucs_validate.append(auc_validate)
 
+        if skip_bad_iterations:
+            open_folds = cv_splits - iteration
+            remaining_best_results = np.ones(open_folds)
+            best_possible_mean = np.mean(np.concatenate([aucs_validate, remaining_best_results]))
+            if (best_possible_mean < best_auroc):
+                break
+
     mean = np.mean(aucs_validate)
-    return {'auroc': mean}
+    standard_error_of_mean = sem(aucs_validate)
+
+    if mean < best_auroc:
+        global best_auroc
+        best_auroc = mean
+
+    return {'auroc': (mean, standard_error_of_mean)}
 
 
 def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory):
