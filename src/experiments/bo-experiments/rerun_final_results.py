@@ -26,7 +26,8 @@ drugs = {
 random_seed = 42
 
 
-def rerun_final_architecture(method_name, gpu_number, drug_name, extern_dataset_name, best_parameters_list):
+def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name, extern_dataset_name,
+                             best_parameters_list):
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     cv_splits = 5
@@ -42,7 +43,10 @@ def rerun_final_architecture(method_name, gpu_number, drug_name, extern_dataset_
         device = torch.device("cpu")
         pin_memory = False
 
-    result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', drug_name, method_name)
+    if experiment_name is None:
+        result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', drug_name, method_name)
+    else:
+        result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
 
     result_file = open(result_path / 'rerun_results.txt', 'w')
@@ -104,6 +108,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu_number', type=int)
     parser.add_argument('--method_name', required=True)
+    parser.add_argument('--experiment_name', required=False, default=None)
     args = parser.parse_args()
 
     p = Path('../results')
@@ -127,4 +132,5 @@ if __name__ == '__main__':
                         # strip the string literals
                         best_parameters_list.append(eval(best_parameter_string[1:-1]))
 
-        rerun_final_architecture(args.method_name, args.gpu_number, drug_name, drugs[drug_name], best_parameters_list)
+        rerun_final_architecture(args.method_name, args.experiment_name, args.gpu_number, drug_name, drugs[drug_name],
+                                 best_parameters_list)
