@@ -59,7 +59,8 @@ random_seed = 42
 
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
-            sampling_method, drug_name, extern_dataset_name, gpu_number, small_search_space, skip_bad_iterations):
+            sampling_method, drug_name, extern_dataset_name, gpu_number, small_search_space,
+            deactivate_skip_bad_iterations):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -121,7 +122,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                                                                           x_train_e, x_train_m,
                                                                           x_train_c,
                                                                           y_train, device, pin_memory,
-                                                                          skip_bad_iterations)
+                                                                          deactivate_skip_bad_iterations)
 
         if sampling_method == 'gp':
             log_file.write('Using sobol+GPEI')
@@ -351,7 +352,7 @@ if __name__ == '__main__':
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     parser.add_argument('--gpu_number', type=int)
     parser.add_argument('--small_search_space', default=False, action='store_true')
-    parser.add_argument('--small_search_space', default=False, action='store_true')
+    parser.add_argument('--deactivate_skip_bad_iterations', default=True, action='store_false')
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     args = parser.parse_args()
@@ -365,4 +366,4 @@ if __name__ == '__main__':
         drug, extern_dataset = drugs[args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                 args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
-                args.small_search_space, args.skip_bad_iterations)
+                args.small_search_space, args.deactivate_skip_bad_iterations)

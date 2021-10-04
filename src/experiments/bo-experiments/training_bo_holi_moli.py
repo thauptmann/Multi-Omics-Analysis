@@ -18,7 +18,7 @@ def reset_best_auroc():
     best_auroc = 0
 
 
-def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, skip_bad_iterations):
+def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, deactivate_skip_bad_iterations):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -128,7 +128,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, 
         auc_validate = network_training_util.validate(validation_loader, moli_model, device)
         aucs_validate.append(auc_validate)
 
-        if skip_bad_iterations:
+        if not deactivate_skip_bad_iterations:
             open_folds = cv_splits - iteration
             remaining_best_results = np.ones(open_folds)
             best_possible_mean = np.mean(np.concatenate([aucs_validate, remaining_best_results]))

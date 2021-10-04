@@ -27,7 +27,7 @@ random_seed = 42
 
 
 def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name, extern_dataset_name,
-                             best_parameters_list):
+                             best_parameters_list, deactivate_triplet_loss, use_ensemble):
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     cv_splits = 5
@@ -72,17 +72,24 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
         x_test_c = gdsc_c[test_index]
         y_test = gdsc_r[test_index]
 
-        model_final, scaler_final = train_final(best_parameters_list[iteration], x_train_e, x_train_m, x_train_c,
-                                                y_train, device, pin_memory)
-        auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device,
-                                    pin_memory)
-        auc_list_test.append(auc_test)
-        auprc_list_test.append(auprc_test)
+        best_parameters = best_parameters_list[iteration]
 
-        auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c,
-                                        extern_r, device, pin_memory)
-        auc_list_extern.append(auc_extern)
-        auprc_list_extern.append(auprc_extern)
+        if deactivate_triplet_loss:
+            best_parameters['gamma'] = 0
+        if use_ensemble:
+            pass
+        else:
+            model_final, scaler_final = train_final(best_parameters, x_train_e, x_train_m, x_train_c,
+                                                    y_train, device, pin_memory)
+            auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device,
+                                        pin_memory)
+            auc_list_test.append(auc_test)
+            auprc_list_test.append(auprc_test)
+
+            auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c,
+                                            extern_r, device, pin_memory)
+            auc_list_extern.append(auc_extern)
+            auprc_list_extern.append(auprc_extern)
         iteration += 1
 
     result_dict = {
@@ -114,6 +121,8 @@ if __name__ == '__main__':
     p = Path('../results')
     logfile_name = 'logs.txt'
     cv_result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation')
+    parser.add_argument('--use_ensemble', default=False, action='store_true')
+    parser.add_argument('--deactivate_triplet_loss', default=False, action='store_true')
 
     drug_paths = [x for x in cv_result_path.iterdir()]
     for drug_path in drug_paths:
@@ -133,4 +142,4 @@ if __name__ == '__main__':
                         best_parameters_list.append(eval(best_parameter_string[1:-1]))
 
         rerun_final_architecture(args.method_name, args.experiment_name, args.gpu_number, drug_name, drugs[drug_name],
-                                 best_parameters_list)
+                                 best_parameters_list, args.deactivate_triplet_loss, args.use_ensemble)
