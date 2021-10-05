@@ -67,7 +67,7 @@ def validate(data_loader, moli_model, device, return_predictions=False):
     auc_validate = roc_auc_score(y_true, predictions)
     auprc_validate = average_precision_score(y_true, predictions)
     if return_predictions:
-        return auc_validate, y_true, predictions
+        return y_true, predictions
     else:
         return auc_validate, auprc_validate
 
@@ -138,6 +138,6 @@ def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, te
                                                       torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
         test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
                                                   num_workers=8, pin_memory=pin_memory)
-        _, y_true_list, prediction_list = validate(test_loader, model, device, True)
+        y_true_list, prediction_list = validate(test_loader, model, device, True)
         prediction_lists.append(prediction_list)
     return y_true_list, prediction_lists

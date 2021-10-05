@@ -70,7 +70,7 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
         y_test = gdsc_r[test_index]
 
         model, scaler = train_final(best_parameters_list[iteration], x_train_e, x_train_m, x_train_c,
-                                              y_train, device, pin_memory)
+                                    y_train, device, pin_memory)
         auc_test, auprc = test(model, scaler, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
         auc_list.append(auc_test)
         model_list.append(model)
@@ -92,7 +92,7 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
 
     # weighted vote
     weights = np.asarray(auc_list)
-    weighted_predictions = np.squeeze(prediction_lists)*weights[:, np.newaxis]
+    weighted_predictions = np.squeeze(prediction_lists) * weights[:, np.newaxis]
     normalised_weighted_predictions = (np.sum(weighted_predictions, axis=0)) / np.sum(weights)
 
     weighted_voting_auroc = roc_auc_score(y_true_list, normalised_weighted_predictions)

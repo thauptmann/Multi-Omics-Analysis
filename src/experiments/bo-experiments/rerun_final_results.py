@@ -3,12 +3,13 @@ import sys
 from pathlib import Path
 import numpy as np
 import torch
+from sklearn.metrics import roc_auc_score, average_precision_score
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils import multi_omics_data
-from utils.network_training_util import test, calculate_mean_and_std_auc
+from utils.network_training_util import test, calculate_mean_and_std_auc, test_ensemble
 
 from utils.choose_gpu import get_free_gpu
 from training_bo_holi_moli import train_final
@@ -25,9 +26,11 @@ drugs = {
 
 random_seed = 42
 
+number_of_bootstraps = 5
+
 
 def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name, extern_dataset_name,
-                             best_parameters_list, deactivate_triplet_loss, use_ensemble):
+                             best_parameters_list, deactivate_triplet_loss, use_bagging):
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     cv_splits = 5
@@ -76,20 +79,52 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
 
         if deactivate_triplet_loss:
             best_parameters['gamma'] = 0
-        if use_ensemble:
-            pass
+
+        if use_bagging:
+            bagging_models = []
+            bagging_scaler = []
+            positive_indices = np.where(y_train == 1)
+            negative_indices = np.where(y_train == 0)
+
+            for model, scaler in range(number_of_bootstraps):
+                positive_bootstrap_indices = np.random.choice(positive_indices, len(positive_indices), replace=True)
+                negative_bootstrap_indices = np.random.choice(negative_indices, len(negative_indices), replace=True)
+                bootstrap_indices = np.append(positive_bootstrap_indices, negative_bootstrap_indices)
+
+                bootstrap_e = x_train_e[bootstrap_indices]
+                bootstrap_m = x_train_m[bootstrap_indices]
+                bootstrap_c = x_train_c[bootstrap_indices]
+                bootstrap_y = y_train[bootstrap_indices]
+                model_bootstrap, scaler_boostrap = train_final(best_parameters, bootstrap_e, bootstrap_m, bootstrap_c,
+                                                               bootstrap_y, device, pin_memory)
+                bagging_models.append(model_bootstrap)
+                bagging_scaler.append(scaler_boostrap)
+
+            # soft vote on test
+            y_true_list, prediction_lists = test_ensemble(bagging_models, bagging_scaler, x_test_e, x_test_m,
+                                                          x_test_c, y_test, device, pin_memory)
+            prediction_sum = np.sum(prediction_lists, axis=0) / number_of_bootstraps
+            auc_test = roc_auc_score(y_true_list, prediction_sum)
+            auprc_test = average_precision_score(y_true_list, prediction_sum)
+
+            # soft vote on external
+            y_true_list, prediction_lists = test_ensemble(bagging_models, bagging_scaler, extern_e, extern_m, extern_c,
+                                                          extern_r, device, pin_memory)
+            prediction_sum = np.sum(prediction_lists, axis=0) / number_of_bootstraps
+            auc_extern = roc_auc_score(y_true_list, prediction_sum)
+            auprc_extern = average_precision_score(y_true_list, prediction_sum)
         else:
             model_final, scaler_final = train_final(best_parameters, x_train_e, x_train_m, x_train_c,
                                                     y_train, device, pin_memory)
             auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device,
                                         pin_memory)
-            auc_list_test.append(auc_test)
-            auprc_list_test.append(auprc_test)
-
             auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c,
                                             extern_r, device, pin_memory)
-            auc_list_extern.append(auc_extern)
-            auprc_list_extern.append(auprc_extern)
+
+        auc_list_test.append(auc_test)
+        auprc_list_test.append(auprc_test)
+        auc_list_extern.append(auc_extern)
+        auprc_list_extern.append(auprc_extern)
         iteration += 1
 
     result_dict = {
@@ -142,4 +177,4 @@ if __name__ == '__main__':
                         best_parameters_list.append(eval(best_parameter_string[1:-1]))
 
         rerun_final_architecture(args.method_name, args.experiment_name, args.gpu_number, drug_name, drugs[drug_name],
-                                 best_parameters_list, args.deactivate_triplet_loss, args.use_ensemble)
+                                 best_parameters_list, args.deactivate_triplet_loss, args.use_bagging)
