@@ -124,7 +124,6 @@ if __name__ == '__main__':
     logfile_name = 'logs.txt'
     cv_result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation')
 
-
     drug_paths = [x for x in cv_result_path.iterdir()]
     for drug_path in drug_paths:
         best_parameters_list = []

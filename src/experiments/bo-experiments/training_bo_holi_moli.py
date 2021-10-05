@@ -133,6 +133,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, 
             remaining_best_results = np.ones(open_folds)
             best_possible_mean = np.mean(np.concatenate([aucs_validate, remaining_best_results]))
             if best_possible_mean < best_auroc:
+                print('Skip remaining folds.')
                 break
 
     mean = np.mean(aucs_validate)
