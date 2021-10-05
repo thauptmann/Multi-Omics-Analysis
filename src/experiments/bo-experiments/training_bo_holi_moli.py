@@ -5,7 +5,8 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
 from models.bo_holi_moli_model import AdaptiveMoli
-from siamese_triplet.utils import AllTripletSelector
+from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, RandomNegativeTripletSelector, \
+    SemihardNegativeTripletSelector
 from utils import network_training_util
 from utils.network_training_util import BceWithTripletsToss
 from scipy.stats import sem
@@ -99,7 +100,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, 
         _, im_dim = x_train_m.shape
         _, ic_dim = x_train_c.shape
 
-        all_triplet_selector = AllTripletSelector()
+        triplet_selector = AllTripletSelector()
 
         depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
         input_sizes = [ie_dim, im_dim, ic_dim]
@@ -117,7 +118,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, 
 
         trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
 
-        bce_with_triplet_loss = BceWithTripletsToss(parameterization['gamma'], all_triplet_selector,
+        bce_with_triplet_loss = BceWithTripletsToss(parameterization['gamma'], triplet_selector,
                                                     trip_criterion)
         for _ in trange(epochs, desc='Epoch'):
             network_training_util.train(train_loader, moli_model, moli_optimiser,
@@ -148,7 +149,8 @@ def check_best_auroc(new_auroc):
         best_auroc = new_auroc
 
 
-def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory):
+def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory,
+                triplet_selector_type='all'):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -187,7 +189,14 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     _, im_dim = x_train_m.shape
     _, ic_dim = x_train_c.shape
 
-    all_triplet_selector = AllTripletSelector()
+    if triplet_selector_type == 'all':
+        all_triplet_selector = AllTripletSelector()
+    if triplet_selector_type == 'hardest':
+        all_triplet_selector = HardestNegativeTripletSelector(margin)
+    if triplet_selector_type == 'random':
+        all_triplet_selector = RandomNegativeTripletSelector(margin)
+    if triplet_selector_type == 'semi_hard':
+        all_triplet_selector = SemihardNegativeTripletSelector(margin)
 
     depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
     input_sizes = [ie_dim, im_dim, ic_dim]
