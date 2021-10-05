@@ -30,7 +30,7 @@ number_of_bootstraps = 10
 
 
 def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name, extern_dataset_name,
-                             best_parameters_list, deactivate_triplet_loss, use_bagging):
+                             best_parameters_list, deactivate_triplet_loss, use_bagging,triplet_selector_type='all'):
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     cv_splits = 5
@@ -95,7 +95,7 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
                 bootstrap_c = x_train_c[bootstrap_indices]
                 bootstrap_y = y_train[bootstrap_indices]
                 model_bootstrap, scaler_boostrap = train_final(best_parameters, bootstrap_e, bootstrap_m, bootstrap_c,
-                                                               bootstrap_y, device, pin_memory)
+                                                               bootstrap_y, device, pin_memory, triplet_selector_type)
                 bagging_models.append(model_bootstrap)
                 bagging_scaler.append(scaler_boostrap)
 
@@ -152,6 +152,7 @@ if __name__ == '__main__':
     parser.add_argument('--experiment_name', required=False, default=None)
     parser.add_argument('--use_bagging', default=False, action='store_true')
     parser.add_argument('--deactivate_triplet_loss', default=False, action='store_true')
+    parser.add_argument('-triplet_selector_type', default='all', choices=['all', 'hardest', 'random','semi_hard'])
     args = parser.parse_args()
 
     p = Path('../results')
@@ -176,4 +177,5 @@ if __name__ == '__main__':
                         best_parameters_list.append(eval(best_parameter_string[1:-1]))
 
         rerun_final_architecture(args.method_name, args.experiment_name, args.gpu_number, drug_name, drugs[drug_name],
-                                 best_parameters_list, args.deactivate_triplet_loss, args.use_bagging)
+                                 best_parameters_list, args.deactivate_triplet_loss, args.use_bagging,
+                                 args.triplet_selector_type)
