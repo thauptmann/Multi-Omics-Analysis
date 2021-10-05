@@ -26,7 +26,7 @@ drugs = {
 
 random_seed = 42
 
-number_of_bootstraps = 10
+number_of_bootstraps = 5
 
 
 def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name, extern_dataset_name,
