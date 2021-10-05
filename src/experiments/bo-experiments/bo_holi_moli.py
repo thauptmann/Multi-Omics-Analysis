@@ -368,7 +368,7 @@ if __name__ == '__main__':
         for drug, extern_dataset in drugs.items():
             bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                     args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
-                    args.small_search_space, args.skip_bad_iterations, args.deactivate_triplet_loss)
+                    args.small_search_space, args.deactivate_skip_bad_iterations, args.deactivate_triplet_loss)
     else:
         drug, extern_dataset = drugs[args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
