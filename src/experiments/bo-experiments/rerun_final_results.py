@@ -86,7 +86,7 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
             positive_indices = np.where(y_train == 1)
             negative_indices = np.where(y_train == 0)
 
-            for model, scaler in range(number_of_bootstraps):
+            for _ in range(number_of_bootstraps):
                 positive_bootstrap_indices = np.random.choice(positive_indices, len(positive_indices), replace=True)
                 negative_bootstrap_indices = np.random.choice(negative_indices, len(negative_indices), replace=True)
                 bootstrap_indices = np.append(positive_bootstrap_indices, negative_bootstrap_indices)
