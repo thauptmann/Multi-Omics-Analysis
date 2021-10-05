@@ -114,11 +114,11 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
             auprc_extern = average_precision_score(y_true_list, prediction_sum)
         else:
             model_final, scaler_final = train_final(best_parameters, x_train_e, x_train_m, x_train_c,
-                                                    y_train, device, pin_memory)
+                                                    y_train, device, pin_memory, triplet_selector_type)
             auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device,
                                         pin_memory)
             auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c,
-                                            extern_r, device, pin_memory, triplet_selector_type)
+                                            extern_r, device, pin_memory)
 
         auc_list_test.append(auc_test)
         auprc_list_test.append(auprc_test)

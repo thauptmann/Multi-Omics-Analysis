@@ -83,7 +83,6 @@ class BceWithTripletsToss:
     def __call__(self, predictions, target):
         prediction, zt = predictions
         triplets = self.triplet_selector.get_triplets(zt, target)
-        print(self.triplet_selector)
         target = target.view(-1, 1)
         loss = self.gamma * self.trip_criterion(zt[triplets[:, 0], :], zt[triplets[:, 1], :],
                                                 zt[triplets[:, 2], :]) + self.bce_with_logits(prediction, target)
