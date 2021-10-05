@@ -80,17 +80,17 @@ def train_and_validate_ensemble(experiment_name, gpu_number, drug_name, extern_d
 
     y_true_list, prediction_lists = test_ensemble(model_list, scaler_list, extern_e, extern_m, extern_c,
                                                   extern_r, device, pin_memory)
-    # todo soft vote
+    # soft vote
     prediction_sum = np.sum(prediction_lists, axis=0) / 5
     soft_voting_auroc = roc_auc_score(y_true_list, prediction_sum)
 
-    # todo hard vote
+    # hard vote
     prediction_round = np.around(prediction_lists)
     prediction_max = np.sum(prediction_round, axis=0)
     prediction_max = np.where(prediction_max >= 3, 1, 0)
     hard_voting_auroc = roc_auc_score(y_true_list, prediction_max)
 
-    # todo weighted vote
+    # weighted vote
     weights = np.asarray(auc_list)
     weighted_predictions = np.squeeze(prediction_lists)*weights[:, np.newaxis]
     normalised_weighted_predictions = (np.sum(weighted_predictions, axis=0)) / np.sum(weights)
