@@ -152,7 +152,7 @@ if __name__ == '__main__':
     parser.add_argument('--experiment_name', required=False, default=None)
     parser.add_argument('--use_bagging', default=False, action='store_true')
     parser.add_argument('--deactivate_triplet_loss', default=False, action='store_true')
-    parser.add_argument('-triplet_selector_type', default='all', choices=['all', 'hardest', 'random','semi_hard'])
+    parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'hardest', 'random','semi_hard'])
     args = parser.parse_args()
 
     p = Path('../results')
