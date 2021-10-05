@@ -151,7 +151,7 @@ if __name__ == '__main__':
     parser.add_argument('--gpu_number', type=int)
     parser.add_argument('--method_name', required=True)
     parser.add_argument('--experiment_name', required=False, default=None)
-    parser.add_argument('--use_ensemble', default=False, action='store_true')
+    parser.add_argument('--use_bagging', default=False, action='store_true')
     parser.add_argument('--deactivate_triplet_loss', default=False, action='store_true')
     args = parser.parse_args()
 
