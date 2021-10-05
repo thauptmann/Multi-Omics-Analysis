@@ -190,13 +190,13 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     _, ic_dim = x_train_c.shape
 
     if triplet_selector_type == 'all':
-        all_triplet_selector = AllTripletSelector()
+        triplet_selector = AllTripletSelector()
     if triplet_selector_type == 'hardest':
-        all_triplet_selector = HardestNegativeTripletSelector(margin)
+        triplet_selector = HardestNegativeTripletSelector(margin)
     if triplet_selector_type == 'random':
-        all_triplet_selector = RandomNegativeTripletSelector(margin)
+        triplet_selector = RandomNegativeTripletSelector(margin)
     if triplet_selector_type == 'semi_hard':
-        all_triplet_selector = SemihardNegativeTripletSelector(margin)
+        triplet_selector = SemihardNegativeTripletSelector(margin)
 
     depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
     input_sizes = [ie_dim, im_dim, ic_dim]
@@ -226,7 +226,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=mini_batch,
                                                shuffle=False,
                                                num_workers=8, sampler=sampler, pin_memory=pin_memory, drop_last=True)
-    bce_with_triplet_loss = BceWithTripletsToss(parameterization['gamma'], all_triplet_selector, trip_criterion)
+    bce_with_triplet_loss = BceWithTripletsToss(parameterization['gamma'], triplet_selector, trip_criterion)
     for _ in range(epochs):
         network_training_util.train(train_loader, moli_model, moli_optimiser,
                                     bce_with_triplet_loss, device, gamma)

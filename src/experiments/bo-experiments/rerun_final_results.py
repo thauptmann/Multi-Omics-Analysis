@@ -30,7 +30,7 @@ number_of_bootstraps = 5
 
 
 def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name, extern_dataset_name,
-                             best_parameters_list, deactivate_triplet_loss, use_bagging,triplet_selector_type='all'):
+                             best_parameters_list, deactivate_triplet_loss, use_bagging, triplet_selector_type='all'):
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     cv_splits = 5
@@ -118,7 +118,7 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
             auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device,
                                         pin_memory)
             auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c,
-                                            extern_r, device, pin_memory)
+                                            extern_r, device, pin_memory, triplet_selector_type)
 
         auc_list_test.append(auc_test)
         auprc_list_test.append(auprc_test)
