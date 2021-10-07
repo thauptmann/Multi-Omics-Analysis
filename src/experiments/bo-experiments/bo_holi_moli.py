@@ -361,7 +361,7 @@ if __name__ == '__main__':
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     parser.add_argument('--gpu_number', type=int)
     parser.add_argument('--small_search_space', default=False, action='store_true')
-    parser.add_argument('--deactivate_skip_bad_iterations', default=True, action='store_false')
+    parser.add_argument('--deactivate_skip_bad_iterations', default=False, action='store_true')
     parser.add_argument('--deactivate_triplet_loss', default=False, action='store_true')
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
@@ -372,7 +372,8 @@ if __name__ == '__main__':
         for drug, extern_dataset in drugs.items():
             bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                     args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
-                    args.small_search_space, args.deactivate_skip_bad_iterations, args.deactivate_triplet_loss)
+                    args.small_search_space, args.deactivate_skip_bad_iterations, args.deactivate_triplet_loss,
+                    args.triplet_selector_type)
     else:
         drug, extern_dataset = drugs[args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,

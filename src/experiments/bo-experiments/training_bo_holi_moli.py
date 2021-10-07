@@ -136,7 +136,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, 
                                         device, gamma)
 
         # validate
-        auc_validate = network_training_util.validate(validation_loader, moli_model, device)
+        auc_validate, _ = network_training_util.validate(validation_loader, moli_model, device)
         aucs_validate.append(auc_validate)
 
         if not deactivate_skip_bad_iterations:

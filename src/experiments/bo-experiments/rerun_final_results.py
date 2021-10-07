@@ -146,7 +146,7 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumrentParser()
     parser.add_argument('--gpu_number', type=int)
     parser.add_argument('--method_name', required=True)
     parser.add_argument('--experiment_name', required=False, default=None)
