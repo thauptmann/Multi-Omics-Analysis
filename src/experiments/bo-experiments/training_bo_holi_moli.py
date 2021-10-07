@@ -19,7 +19,8 @@ def reset_best_auroc():
     best_auroc = 0
 
 
-def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, deactivate_skip_bad_iterations):
+def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, deactivate_skip_bad_iterations,
+                       triplet_selector_type):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -100,7 +101,16 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, 
         _, im_dim = x_train_m.shape
         _, ic_dim = x_train_c.shape
 
-        triplet_selector = AllTripletSelector()
+        if triplet_selector_type == 'all':
+            triplet_selector = AllTripletSelector()
+        elif triplet_selector_type == 'hardest':
+            triplet_selector = HardestNegativeTripletSelector(margin)
+        elif triplet_selector_type == 'random':
+            triplet_selector = RandomNegativeTripletSelector(margin)
+        elif triplet_selector_type == 'semi_hard':
+            triplet_selector = SemihardNegativeTripletSelector(margin)
+        else:
+            triplet_selector = AllTripletSelector()
 
         depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
         input_sizes = [ie_dim, im_dim, ic_dim]
@@ -191,12 +201,14 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
 
     if triplet_selector_type == 'all':
         triplet_selector = AllTripletSelector()
-    if triplet_selector_type == 'hardest':
+    elif triplet_selector_type == 'hardest':
         triplet_selector = HardestNegativeTripletSelector(margin)
-    if triplet_selector_type == 'random':
+    elif triplet_selector_type == 'random':
         triplet_selector = RandomNegativeTripletSelector(margin)
-    if triplet_selector_type == 'semi_hard':
+    elif triplet_selector_type == 'semi_hard':
         triplet_selector = SemihardNegativeTripletSelector(margin)
+    else:
+        triplet_selector = AllTripletSelector()
 
     depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
     input_sizes = [ie_dim, im_dim, ic_dim]
