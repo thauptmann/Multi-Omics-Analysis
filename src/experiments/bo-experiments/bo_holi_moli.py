@@ -147,10 +147,12 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                 steps=[
                     GenerationStep(model=Models.SOBOL,
                                    num_trials=sobol_iterations,
+                                   max_parallelism=1,
                                    model_kwargs={"seed": random_seed}),
                     GenerationStep(
                         model=Models.FULLYBAYESIAN,
                         num_trials=-1,
+                        max_parallelism=1,
                         model_kwargs={
                             "num_samples": 256,
                             "warmup_steps": 512,
