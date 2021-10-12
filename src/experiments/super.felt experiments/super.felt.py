@@ -148,7 +148,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                 scalerGDSC = sk.StandardScaler()
                 scalerGDSC.fit(X_trainE)
                 X_trainE = scalerGDSC.transform(X_trainE)
-                X_valE = torch.FloatTensor(scalerGDSC.transform(X_valE))
+                X_valE = torch.FloatTensor(scalerGDSC.transform(X_valE)).to(device)
                 trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(X_trainE), torch.FloatTensor(X_trainM),
                                                               torch.FloatTensor(X_trainC),
                                                               torch.FloatTensor(Y_train.astype(int)))
@@ -187,7 +187,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                 for e_epoch in range(E_Supervised_Encoder_epoch):
                     final_E_Supervised_Encoder.train()
                     flag = 0
-                    for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
+                    for i, (dataE, _, _, target) in enumerate(trainLoader):
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                             dataE = dataE.to(device)
                             encoded_E = final_E_Supervised_Encoder(dataE)
@@ -230,7 +230,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                 for m_epoch in range(M_Supervised_Encoder_epoch):
                     final_M_Supervised_Encoder.train().to(device)
                     flag = 0
-                    for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
+                    for i, (_, dataM, _, target) in enumerate(trainLoader):
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                             dataM = dataM.to(device)
                             encoded_M = final_M_Supervised_Encoder(dataM)
@@ -251,7 +251,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                         """
                             validation
                         """
-                        encoded_val_M = final_M_Supervised_Encoder(torch.FloatTensor(X_valM))
+                        encoded_val_M = final_M_Supervised_Encoder(torch.FloatTensor(X_valM).to(device))
                         M_Triplets_list = TripSel(encoded_val_M, torch.FloatTensor(Y_val))
                         val_M_loss = trip_loss_fun(encoded_val_M[M_Triplets_list[:, 0], :],
                                                    encoded_val_M[M_Triplets_list[:, 1], :],
@@ -272,7 +272,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                 for c_epoch in range(C_Supervised_Encoder_epoch):
                     final_C_Supervised_Encoder.train()
                     flag = 0
-                    for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
+                    for i, (_, _, dataC, target) in enumerate(trainLoader):
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                             dataC = dataC.to(device)
                             encoded_C = final_C_Supervised_Encoder(dataC)
@@ -295,11 +295,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                         """
                             inner validation
                         """
-                        encoded_val_C = final_C_Supervised_Encoder(torch.FloatTensor(X_valC))
+                        encoded_val_C = final_C_Supervised_Encoder(torch.FloatTensor(X_valC).to(device))
                         C_Triplets_list = TripSel(encoded_val_C, torch.FloatTensor(Y_val))
                         val_C_loss = trip_loss_fun(encoded_val_C[C_Triplets_list[:, 0], :],
-                                                    encoded_val_C[C_Triplets_list[:, 1], :],
-                                                    encoded_val_C[C_Triplets_list[:, 2], :])
+                                                   encoded_val_C[C_Triplets_list[:, 1], :],
+                                                   encoded_val_C[C_Triplets_list[:, 2], :])
                         if pre_loss <= val_C_loss:
                             break_num += 1
 
@@ -356,8 +356,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                             inner validation
                         """
                         encoded_val_E = final_E_Supervised_Encoder(X_valE)
-                        encoded_val_M = final_M_Supervised_Encoder(torch.FloatTensor(X_valM))
-                        encoded_val_C = final_C_Supervised_Encoder(torch.FloatTensor(X_valC))
+                        encoded_val_M = final_M_Supervised_Encoder(torch.FloatTensor(X_valM).to(device))
+                        encoded_val_C = final_C_Supervised_Encoder(torch.FloatTensor(X_valC).to(device))
 
                         intergrated_test_omics = torch.cat((encoded_val_E, encoded_val_M, encoded_val_C), 1)
                         test_Pred = final_Clas(intergrated_test_omics)
