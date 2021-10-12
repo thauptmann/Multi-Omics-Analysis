@@ -154,7 +154,7 @@ def get_non_zero_variance_gen_indices(data):
     return selector.fit(data).get_support(indices=True)
 
 
-def load_drug_data(data_path, drug, dataset):
+def load_drug_data(data_path, drug, dataset, return_data_frames=False):
     drug = drug.split('_')[0]
     cna_binary_path = data_path / 'CNA_binary'
     response_path = data_path / 'response'
@@ -216,5 +216,9 @@ def load_drug_data(data_path, drug, dataset):
 
     y_train = response_train.response.to_numpy(dtype=int)
     y_extern = response_extern.response.to_numpy(dtype=int)
-    return expression_train.to_numpy(), mutation_train.to_numpy(), cna_train.to_numpy(), y_train, \
+    if return_data_frames:
+        return expression_train, mutation_train, cna_train, y_train, expression_extern, \
+               mutation_extern, cna_extern, y_extern
+    else:
+        return expression_train.to_numpy(), mutation_train.to_numpy(), cna_train.to_numpy(), y_train, \
            expression_extern.to_numpy(), mutation_extern.to_numpy(), cna_extern.to_numpy(), y_extern
