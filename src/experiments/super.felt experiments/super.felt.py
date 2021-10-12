@@ -523,8 +523,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
         # Extern
         ExternalE = torch.FloatTensor(final_scalerGDSC.transform(ExternalE))
         encoded_external_E = final_E_Supervised_Encoder(torch.FloatTensor(ExternalE).to(device))
-        encoded_external_M = final_M_Supervised_Encoder(torch.FloatTensor(ExternalM).to(device))
-        encoded_external_C = final_C_Supervised_Encoder(torch.FloatTensor(ExternalC).to(device))
+        encoded_external_M = final_M_Supervised_Encoder(torch.FloatTensor(ExternalM.to_numpy()).to(device))
+        encoded_external_C = final_C_Supervised_Encoder(torch.FloatTensor(ExternalC.to_numpy()).to(device))
         intergrated_test_omics = torch.cat((encoded_external_E, encoded_external_M, encoded_external_C), 1)
         external_Pred = final_Clas(intergrated_test_omics)
         external_y_true = ExternalY
