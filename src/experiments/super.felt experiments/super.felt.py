@@ -12,9 +12,8 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
 
-from siamese_triplet.utils import AllTripletSelector
-
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+from siamese_triplet.utils import AllTripletSelector
 from utils.network_training_util import calculate_mean_and_std_auc
 from utils import multi_omics_data
 
