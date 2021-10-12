@@ -167,7 +167,7 @@ def get_triplet_selector(margin, triplet_selector_type):
 
 
 def get_loss_fn(margin, gamma, triplet_selector):
-    if triplet_selector is not None:
+    if triplet_selector is not None and gamma > 0:
         trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
         return BceWithTripletsToss(gamma, triplet_selector, trip_criterion)
     else:
