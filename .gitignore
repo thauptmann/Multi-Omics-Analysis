@@ -130,7 +130,6 @@ dmypy.json
 
 # multi-omics data (several gigabytes)
 multi-omics_analysis/data/*
-*.ipynb
 .idea/
 results_*/*
 /runs/*
