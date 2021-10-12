@@ -43,7 +43,7 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma):
             else:
                 target = target.view(-1, 1)
                 loss = loss_fn(prediction[0], target)
-                prediction = sigmoid(prediction)
+                prediction = sigmoid(prediction[0])
             predictions.extend(prediction.cpu().detach())
             scaler.scale(loss).backward()
             scaler.step(moli_optimiser)
