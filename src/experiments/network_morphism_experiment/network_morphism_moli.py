@@ -14,10 +14,10 @@ from experiments.network_morphism_experiment.autokeras.nn.metric import Auroc
 import torch
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
-from siamese_triplet.utils import AllTripletSelector
 
 from utils.choose_gpu import get_free_gpu
-from utils.network_training_util import BceWithTripletsToss, calculate_mean_and_std_auc, test, test_ensemble
+from utils.network_training_util import BceWithTripletsToss, calculate_mean_and_std_auc, test, test_ensemble, \
+    get_triplet_selector, get_loss_fn
 from autokeras.search import BayesianSearcher
 from autokeras.nn.generator import DenseNetGenerator
 
@@ -27,12 +27,13 @@ drugs = {'Gemcitabine_tcga': 'TCGA',
          'Docetaxel': 'TCGA',
          'Erlotinib': 'PDX',
          'Cetuximab': 'PDX',
-         'Paclitaxel': 'PDX',
-         'EGFR': 'PDX'
+         'Paclitaxel': 'PDX'
          }
+MAX_EPOCH = 100
 
 
-def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, extern_dataset_name, gpu_number):
+def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, extern_dataset_name, gpu_number,
+                             triplet_selector_type):
     gamma = 0.2
     margin = 1
     batch_size = 16
@@ -74,10 +75,8 @@ def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, exte
     scaler_list = []
     path = Path('tmp')
     auroc_metric = Auroc
-    all_triplet_selector = AllTripletSelector()
-    trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
-    # loss = BceWithTripletsToss(gamma, all_triplet_selector, trip_criterion)
-    loss =
+    triplet_selector = get_triplet_selector(margin, triplet_selector_type)
+    loss_fn = get_loss_fn(margin, gamma, triplet_selector)
     path.mkdir(parents=True, exist_ok=True)
     now = datetime.now()
     result_file.write(f'Start experiment at {now}\n')
@@ -131,10 +130,10 @@ def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, exte
             validation_loader = torch.utils.data.DataLoader(dataset=validation_dataset, batch_size=batch_size,
                                                             shuffle=False, num_workers=8, sampler=sampler,
                                                             pin_memory=pin_memory,
-                                                            drop_last=True)
+                                                            drop_last=False)
 
             dense_generator_list = [DenseNetGenerator]
-            searcher = BayesianSearcher(1, input_shape_list, path, auroc_metric, loss, verbose=True,
+            searcher = BayesianSearcher(1, input_shape_list, path, auroc_metric, loss_fn, verbose=True,
                                         generators=dense_generator_list, skip_conn=False)
             for _ in range(search_iterations):
                 searcher.search(train_loader, validation_loader)
@@ -186,6 +185,8 @@ if __name__ == '__main__':
     parser.add_argument('--sobol_iterations', default=20, type=int)
     parser.add_argument('--experiment_name', required=True)
     parser.add_argument('--gpu_number', type=int)
+    parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'hardest', 'random', 'semi_hard'])
     args = parser.parse_args()
     for drug, extern_dataset in drugs.items():
-        bo_network_morphism_moli(args.search_iterations, args.experiment_name, drug, extern_dataset, args.gpu_number)
+        bo_network_morphism_moli(args.search_iterations, args.experiment_name, drug, extern_dataset, args.gpu_number,
+                                 args.triplet_selector_type)

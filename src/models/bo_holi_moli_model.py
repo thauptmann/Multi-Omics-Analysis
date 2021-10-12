@@ -112,4 +112,4 @@ class AdaptiveMoli(nn.Module):
         left_middle = torch.cat((left_out, middle_out), 1)
         left_middle_out = self.left_encoder(left_middle)
         left_middle_right = torch.cat((left_middle_out, right_out), 1)
-        return self.classifier(left_middle_right), left_middle_right
+        return [self.classifier(left_middle_right), left_middle_right]
