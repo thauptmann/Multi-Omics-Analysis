@@ -421,7 +421,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
         # train each Supervised_Encoder with triplet loss
         for e_epoch in range(E_Supervised_Encoder_epoch):
             final_E_Supervised_Encoder.train()
-            flag = 0
             for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                     dataE = dataE.to(device)
@@ -511,9 +510,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
 
         # Test
         X_testE = torch.FloatTensor(final_scalerGDSC.transform(X_testE))
-        encoded_test_E = final_E_Supervised_Encoder(torch.FloatTensor(X_testE))
-        encoded_test_M = final_M_Supervised_Encoder(torch.FloatTensor(X_testM))
-        encoded_test_C = final_C_Supervised_Encoder(torch.FloatTensor(X_testC))
+        encoded_test_E = final_E_Supervised_Encoder(torch.FloatTensor(X_testE).to(device))
+        encoded_test_M = final_M_Supervised_Encoder(torch.FloatTensor(X_testM).to(device))
+        encoded_test_C = final_C_Supervised_Encoder(torch.FloatTensor(X_testC).to(device))
         intergrated_test_omics = torch.cat((encoded_test_E, encoded_test_M, encoded_test_C), 1)
         test_Pred = final_Clas(intergrated_test_omics)
         test_y_true = Y_test.view(-1, 1).cpu()
@@ -523,9 +522,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
 
         # Extern
         ExternalE = torch.FloatTensor(final_scalerGDSC.transform(ExternalE))
-        encoded_external_E = final_E_Supervised_Encoder(torch.FloatTensor(ExternalE))
-        encoded_external_M = final_M_Supervised_Encoder(torch.FloatTensor(ExternalM))
-        encoded_external_C = final_C_Supervised_Encoder(torch.FloatTensor(ExternalC))
+        encoded_external_E = final_E_Supervised_Encoder(torch.FloatTensor(ExternalE).to(device))
+        encoded_external_M = final_M_Supervised_Encoder(torch.FloatTensor(ExternalM).to(device))
+        encoded_external_C = final_C_Supervised_Encoder(torch.FloatTensor(ExternalC).to(device))
         intergrated_test_omics = torch.cat((encoded_external_E, encoded_external_M, encoded_external_C), 1)
         external_Pred = final_Clas(intergrated_test_omics)
         external_y_true = ExternalY.view(-1, 1).cpu()
