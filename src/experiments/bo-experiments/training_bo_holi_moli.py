@@ -80,7 +80,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
 
         train_loader = create_data_loader(torch.FloatTensor(x_train_e), torch.FloatTensor(x_train_m),
                                           torch.FloatTensor(x_train_c),
-                                          torch.FloatTensor(y_train), True, pin_memory, sampler)
+                                          torch.FloatTensor(y_train), mini_batch, True, pin_memory, sampler)
 
         validation_loader = create_data_loader(torch.FloatTensor(x_validate_e),
                                                torch.FloatTensor(x_validate_m),
