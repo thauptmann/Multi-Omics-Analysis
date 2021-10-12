@@ -187,14 +187,13 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
     moli_optimiser = torch.optim.Adagrad([
-        {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle},
+        {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle,},
         {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
         {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
         {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c},
-        {'params': moli_model.classifier.parameters(), 'lr': lr_cl, 'weight_decay': weight_decay},
-    ])
+        {'params': moli_model.classifier.parameters(), 'lr': lr_cl}], weight_decay=weight_decay
+    )
 
-    trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
     class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
     weight = 1. / class_sample_count
     samples_weight = np.array([weight[t] for t in y_train])
@@ -204,7 +203,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
                                     replacement=True)
     train_loader = create_data_loader(torch.FloatTensor(x_train_e), torch.FloatTensor(x_train_m),
                                       torch.FloatTensor(x_train_c),
-                                      torch.FloatTensor(y_train), True, pin_memory, sampler)
+                                      torch.FloatTensor(y_train), mini_batch, True, pin_memory, sampler)
     for _ in range(epochs):
         network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma)
     return moli_model, train_scaler_gdsc
