@@ -8,7 +8,7 @@ from models.bo_holi_moli_model import AdaptiveMoli
 from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, RandomNegativeTripletSelector, \
     SemihardNegativeTripletSelector
 from utils import network_training_util
-from utils.network_training_util import BceWithTripletsToss
+from utils.network_training_util import BceWithTripletsToss, get_triplet_selector, get_loss_fn
 from scipy.stats import sem
 
 best_auroc = 0
@@ -101,16 +101,8 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, 
         _, im_dim = x_train_m.shape
         _, ic_dim = x_train_c.shape
 
-        if triplet_selector_type == 'all':
-            triplet_selector = AllTripletSelector()
-        elif triplet_selector_type == 'hardest':
-            triplet_selector = HardestNegativeTripletSelector(margin)
-        elif triplet_selector_type == 'random':
-            triplet_selector = RandomNegativeTripletSelector(margin)
-        elif triplet_selector_type == 'semi_hard':
-            triplet_selector = SemihardNegativeTripletSelector(margin)
-        else:
-            triplet_selector = AllTripletSelector()
+        triplet_selector = get_triplet_selector(margin, triplet_selector_type)
+        loss_fn = get_loss_fn(margin, gamma, triplet_selector)
 
         depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
         input_sizes = [ie_dim, im_dim, ic_dim]
@@ -126,14 +118,8 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, 
             {'params': moli_model.classifier.parameters(), 'lr': lr_cl, 'weight_decay': weight_decay},
         ])
 
-        trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
-
-        bce_with_triplet_loss = BceWithTripletsToss(parameterization['gamma'], triplet_selector,
-                                                    trip_criterion)
         for _ in trange(epochs, desc='Epoch'):
-            network_training_util.train(train_loader, moli_model, moli_optimiser,
-                                        bce_with_triplet_loss,
-                                        device, gamma)
+            network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma)
 
         # validate
         auc_validate, _ = network_training_util.validate(validation_loader, moli_model, device)
