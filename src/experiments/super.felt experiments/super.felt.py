@@ -516,9 +516,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
         intergrated_test_omics = torch.cat((encoded_test_E, encoded_test_M, encoded_test_C), 1)
         test_Pred = final_Clas(intergrated_test_omics)
         test_y_true = Y_test
-        test_y_pred = test_Pred.cpu()
-        test_AUC = roc_auc_score(test_y_true.detach().numpy(), test_y_pred.detach().numpy())
-        test_AUCPR = average_precision_score(test_y_true.detach().numpy(), test_y_pred.detach().numpy())
+        test_y_pred = test_Pred.cpu().detach().numpy()
+        test_AUC = roc_auc_score(test_y_true, test_y_pred)
+        test_AUCPR = average_precision_score(test_y_true, test_y_pred)
 
         # Extern
         ExternalE = torch.FloatTensor(final_scalerGDSC.transform(ExternalE))
@@ -528,9 +528,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
         intergrated_test_omics = torch.cat((encoded_external_E, encoded_external_M, encoded_external_C), 1)
         external_Pred = final_Clas(intergrated_test_omics)
         external_y_true = ExternalY
-        external_y_pred = external_Pred.cpu()
-        external_AUC = roc_auc_score(external_y_true.detach().numpy(), external_y_pred.detach().numpy())
-        external_AUCPR = average_precision_score(external_y_true.detach().numpy(), external_y_pred.detach().numpy())
+        external_y_pred = external_Pred.cpu().detach().numpy()
+        external_AUC = roc_auc_score(external_y_true, external_y_pred)
+        external_AUCPR = average_precision_score(external_y_true, external_y_pred)
 
         test_auc_list.append(test_AUC)
         extern_auc_list.append(external_AUC)
