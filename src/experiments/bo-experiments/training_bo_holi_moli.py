@@ -5,10 +5,8 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
 from models.bo_holi_moli_model import AdaptiveMoli
-from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, RandomNegativeTripletSelector, \
-    SemihardNegativeTripletSelector
 from utils import network_training_util
-from utils.network_training_util import BceWithTripletsToss, get_triplet_selector, get_loss_fn, create_data_loader
+from utils.network_training_util import get_triplet_selector, get_loss_fn, create_data_loader
 from scipy.stats import sem
 
 best_auroc = 0
@@ -102,13 +100,13 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
         output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
         moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
-        moli_optimiser = torch.optim.Adagrad([
+        moli_optimiser = torch.optim.Adam([
             {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle},
             {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
             {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
             {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c},
-            {'params': moli_model.classifier.parameters(), 'lr': lr_cl, 'weight_decay': weight_decay},
-        ])
+            {'params': moli_model.classifier.parameters(), 'lr': lr_cl}],
+            weight_decay=weight_decay)
 
         for _ in trange(epochs, desc='Epoch'):
             network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma)
@@ -186,13 +184,12 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
     moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
-    moli_optimiser = torch.optim.Adagrad([
-        {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle,},
+    moli_optimiser = torch.optim.Adam([
+        {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle},
         {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
         {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
         {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c},
-        {'params': moli_model.classifier.parameters(), 'lr': lr_cl}], weight_decay=weight_decay
-    )
+        {'params': moli_model.classifier.parameters(), 'lr': lr_cl}], weight_decay=weight_decay)
 
     class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
     weight = 1. / class_sample_count
