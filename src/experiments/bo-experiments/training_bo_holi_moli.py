@@ -119,7 +119,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
             open_folds = cv_splits - iteration
             remaining_best_results = np.ones(open_folds)
             best_possible_mean = np.mean(np.concatenate([aucs_validate, remaining_best_results]))
-            if best_possible_mean < best_auroc:
+            if check_best_auroc(best_possible_mean):
                 print('Skip remaining folds.')
                 break
 
@@ -131,7 +131,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
 
 def check_best_auroc(new_auroc):
     global best_auroc
-    if new_auroc < best_auroc:
+    if new_auroc > best_auroc:
         best_auroc = new_auroc
 
 

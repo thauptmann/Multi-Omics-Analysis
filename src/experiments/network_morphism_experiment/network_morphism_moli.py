@@ -3,6 +3,7 @@ import sys
 import time
 from pathlib import Path
 
+from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, WeightedRandomSampler
 from tqdm import tqdm
 from datetime import datetime
@@ -13,7 +14,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from experiments.network_morphism_experiment.autokeras.nn.metric import Auroc
 import torch
 import numpy as np
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, train_test_split
 
 from utils.choose_gpu import get_free_gpu
 from utils.network_training_util import BceWithTripletsToss, calculate_mean_and_std_auc, test, test_ensemble, \
@@ -90,23 +91,19 @@ def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, exte
         x_m = gdsc_m[index]
         x_c = gdsc_c[index]
         y = gdsc_r[index]
+
         x_test_e = gdsc_e[test_index]
         x_test_m = gdsc_m[test_index]
         x_test_c = gdsc_c[test_index]
         y_test = gdsc_r[test_index]
 
-
+        x_train_e, x_validate_e, x_train_m, x_validate_m, x_train_c, x_validate_c, y_train, y_validate \
+            = train_test_split((x_e, x_m, x_c, y), stratify=y, test_size=0.20, random_state=random_seed)
         best_model_list = []
-        x_train_e = x_e[train_index]
-        x_train_m = x_m[train_index]
-        x_train_c = x_c[train_index]
-        y_train = y[train_index]
 
-        x_validate_e = x_e[validate_index]
-        x_validate_m = x_m[validate_index]
-        x_validate_c = x_c[validate_index]
-        y_validate = y[validate_index]
-
+        scaler_gdsc = StandardScaler()
+        x_train_e = scaler_gdsc.fit_transform(x_train_e)
+        x_validate_e = scaler_gdsc.transform(x_validate_e)
         # Initialisation
         class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
         weight = 1. / class_sample_count
@@ -129,7 +126,7 @@ def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, exte
         searcher = BayesianSearcher(1, input_shape_list, path, auroc_metric, loss_fn, verbose=True,
                                     generators=dense_generator_list, skip_conn=False)
         for _ in range(search_iterations):
-            searcher.search(train_loader_list, validation_loader_list)
+            searcher.search(train_loader, validation_loader)
 
         best_model = searcher.load_best_model()
         best_model_list.append(best_model)
@@ -140,7 +137,11 @@ def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, exte
             objectives.append(searcher.get_metric_value_by_id(iteration_id))
 
         save_auroc_plots(objectives, result_path, iteration)
-        iteration += 1
+
+        # Test
+        auc_test, auprc_test = test(best_model, scaler_gdsc, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
+        auc_extern, auprc_extern = test(best_model, scaler_gdsc, extern_e, extern_m, extern_c, extern_r, device,
+                                        pin_memory)
 
         result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
         result_file.write(f'\t\t{drug} test Auroc = {auc_test}\n')
@@ -149,6 +150,8 @@ def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, exte
         max_objective_list.append(max_objective)
         test_auc_list.append(auc_test)
         extern_auc_list.append(auc_extern)
+
+        iteration += 1
 
     print("Done!")
 
