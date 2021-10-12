@@ -49,8 +49,8 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma):
             scaler.update()
     y_true = torch.FloatTensor(y_true)
     predictions = torch.FloatTensor(predictions)
-    auc = roc_auc_score(y_true, predictions)
-    return auc
+    auroc = roc_auc_score(y_true, predictions)
+    return auroc
 
 
 def validate(data_loader, moli_model, device, return_predictions=False):
@@ -117,13 +117,19 @@ def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device, pin_m
     x_test_c = torch.FloatTensor(x_test_c)
     test_y = torch.FloatTensor(test_y.astype(int))
 
+    test_loader = create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, False, pin_memory)
+    auc_test, auprc = validate(test_loader, moli_model, device)
+    return auc_test, auprc
+
+
+def create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, drop_last, pin_memory, sampler=None):
     test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e),
                                                   torch.FloatTensor(x_test_m),
                                                   torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
-                                              num_workers=8, pin_memory=pin_memory)
-    auc_test, auprc = validate(test_loader, moli_model, device)
-    return auc_test, auprc
+                                              num_workers=8, pin_memory=pin_memory, drop_last=drop_last,
+                                              sampler=sampler)
+    return test_loader
 
 
 def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):

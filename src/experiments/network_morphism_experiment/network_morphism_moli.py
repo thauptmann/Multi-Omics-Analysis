@@ -29,6 +29,7 @@ drugs = {'Gemcitabine_tcga': 'TCGA',
          'Cetuximab': 'PDX',
          'Paclitaxel': 'PDX'
          }
+MAX_EPOCH = 100
 
 
 def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, extern_dataset_name, gpu_number,
@@ -129,7 +130,7 @@ def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, exte
             validation_loader = torch.utils.data.DataLoader(dataset=validation_dataset, batch_size=batch_size,
                                                             shuffle=False, num_workers=8, sampler=sampler,
                                                             pin_memory=pin_memory,
-                                                            drop_last=True)
+                                                            drop_last=False)
 
             dense_generator_list = [DenseNetGenerator]
             searcher = BayesianSearcher(1, input_shape_list, path, auroc_metric, loss_fn, verbose=True,

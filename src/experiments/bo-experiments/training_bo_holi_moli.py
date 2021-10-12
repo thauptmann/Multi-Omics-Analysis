@@ -8,7 +8,7 @@ from models.bo_holi_moli_model import AdaptiveMoli
 from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, RandomNegativeTripletSelector, \
     SemihardNegativeTripletSelector
 from utils import network_training_util
-from utils.network_training_util import BceWithTripletsToss, get_triplet_selector, get_loss_fn
+from utils.network_training_util import BceWithTripletsToss, get_triplet_selector, get_loss_fn, create_data_loader
 from scipy.stats import sem
 
 best_auroc = 0
@@ -19,7 +19,7 @@ def reset_best_auroc():
     best_auroc = 0
 
 
-def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, deactivate_skip_bad_iterations,
+def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, deactivate_skip_bad_iterations,
                        triplet_selector_type):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
@@ -80,22 +80,14 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y,  device, pin_memory, 
         samples_weight = torch.from_numpy(samples_weight)
         sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight))
 
-        train_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_train_e),
-                                                       torch.FloatTensor(x_train_m),
-                                                       torch.FloatTensor(x_train_c),
-                                                       torch.FloatTensor(y_train))
-        train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=mini_batch,
-                                                   shuffle=False, num_workers=8, sampler=sampler,
-                                                   pin_memory=pin_memory,
-                                                   drop_last=True)
+        train_loader = create_data_loader(torch.FloatTensor(x_train_e), torch.FloatTensor(x_train_m),
+                                          torch.FloatTensor(x_train_c),
+                                          torch.FloatTensor(y_train), True, pin_memory, sampler)
 
-        validation_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_validate_e),
-                                                            torch.FloatTensor(x_validate_m),
-                                                            torch.FloatTensor(x_validate_c),
-                                                            torch.FloatTensor(y_validate))
-        validation_loader = torch.utils.data.DataLoader(dataset=validation_dataset, batch_size=mini_batch,
-                                                        shuffle=False, num_workers=8,
-                                                        pin_memory=pin_memory)
+        validation_loader = create_data_loader(torch.FloatTensor(x_validate_e),
+                                               torch.FloatTensor(x_validate_m),
+                                               torch.FloatTensor(x_validate_c),
+                                               torch.FloatTensor(y_validate), mini_batch*4, False, pin_memory)
 
         n_sample_e, ie_dim = x_train_e.shape
         _, im_dim = x_train_m.shape
@@ -185,16 +177,8 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     _, im_dim = x_train_m.shape
     _, ic_dim = x_train_c.shape
 
-    if triplet_selector_type == 'all':
-        triplet_selector = AllTripletSelector()
-    elif triplet_selector_type == 'hardest':
-        triplet_selector = HardestNegativeTripletSelector(margin)
-    elif triplet_selector_type == 'random':
-        triplet_selector = RandomNegativeTripletSelector(margin)
-    elif triplet_selector_type == 'semi_hard':
-        triplet_selector = SemihardNegativeTripletSelector(margin)
-    else:
-        triplet_selector = AllTripletSelector()
+    triplet_selector = get_triplet_selector(margin, triplet_selector_type)
+    loss_fn = get_loss_fn(margin, gamma, triplet_selector)
 
     depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
     input_sizes = [ie_dim, im_dim, ic_dim]
@@ -218,14 +202,9 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     samples_weight = torch.from_numpy(samples_weight)
     sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
                                     replacement=True)
-    train_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_train_e), torch.FloatTensor(x_train_m),
-                                                   torch.FloatTensor(x_train_c),
-                                                   torch.FloatTensor(y_train))
-    train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=mini_batch,
-                                               shuffle=False,
-                                               num_workers=8, sampler=sampler, pin_memory=pin_memory, drop_last=True)
-    bce_with_triplet_loss = BceWithTripletsToss(parameterization['gamma'], triplet_selector, trip_criterion)
+    train_loader = create_data_loader(torch.FloatTensor(x_train_e), torch.FloatTensor(x_train_m),
+                                      torch.FloatTensor(x_train_c),
+                                      torch.FloatTensor(y_train), True, pin_memory, sampler)
     for _ in range(epochs):
-        network_training_util.train(train_loader, moli_model, moli_optimiser,
-                                    bce_with_triplet_loss, device, gamma)
+        network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma)
     return moli_model, train_scaler_gdsc
