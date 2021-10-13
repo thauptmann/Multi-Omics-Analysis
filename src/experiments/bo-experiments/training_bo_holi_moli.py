@@ -9,7 +9,7 @@ from utils import network_training_util
 from utils.network_training_util import get_triplet_selector, get_loss_fn, create_data_loader
 from scipy.stats import sem
 
-best_auroc = 0
+best_auroc = -1
 
 
 def reset_best_auroc():
@@ -123,13 +123,20 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
                 print('Skip remaining folds.')
                 break
 
+
     mean = np.mean(aucs_validate)
+    set_best_auroc(mean)
     standard_error_of_mean = sem(aucs_validate)
 
     return {'auroc': (mean, standard_error_of_mean)}
 
 
 def check_best_auroc(new_auroc):
+    global best_auroc
+    return new_auroc > best_auroc
+
+
+def set_best_auroc(new_auroc):
     global best_auroc
     if new_auroc > best_auroc:
         best_auroc = new_auroc
