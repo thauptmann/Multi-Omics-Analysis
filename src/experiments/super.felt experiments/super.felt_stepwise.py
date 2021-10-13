@@ -176,8 +176,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                 C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
                 TripSel = OnlineTestTriplet(marg, triplet_selector2)
 
-                OCP_dim = OE_dim + OM_dim + OC_dim
-                final_Clas = Classifier(OCP_dim, 1, C_dr)
+                final_Clas = Classifier([OE_dim, OM_dim, OC_dim], 1, C_dr)
                 final_Clas.to(device)
                 Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
@@ -413,8 +412,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
         C_optimizer = optim.Adagrad(final_C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
         TripSel = OnlineTestTriplet(marg, triplet_selector2)
 
-        OCP_dim = OE_dim + OM_dim + OC_dim
-        final_Clas = Classifier(OCP_dim, 1, C_dr)
+        final_Clas = Classifier([OE_dim, + OM_dim, OC_dim], 1, C_dr)
         final_Clas.to(device)
         Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 

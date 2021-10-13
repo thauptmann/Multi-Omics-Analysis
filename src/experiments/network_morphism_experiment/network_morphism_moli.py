@@ -114,12 +114,12 @@ def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, exte
         train_loader = create_data_loader(torch.FloatTensor(x_train_e),
                                           torch.FloatTensor(x_train_m),
                                           torch.FloatTensor(x_train_c),
-                                          torch.FloatTensor(y_train), batch_size, True,
+                                          torch.FloatTensor(y_train), batch_size,
                                           pin_memory, sampler=sampler)
         validation_loader = create_data_loader(torch.FloatTensor(x_validate_e),
                                                torch.FloatTensor(x_validate_m),
                                                torch.FloatTensor(x_validate_c),
-                                               torch.FloatTensor(y_validate), batch_size * 4, False,
+                                               torch.FloatTensor(y_validate),  len(x_validate_e),
                                                pin_memory)
 
         dense_generator_list = [DenseNetGenerator]

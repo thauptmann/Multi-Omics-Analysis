@@ -67,8 +67,8 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
         y_validate = y[validate_index]
 
         scaler_gdsc = StandardScaler()
-        x_train_e = scaler_gdsc.fit_transform(x_train_e)
-        x_validate_e = scaler_gdsc.transform(x_validate_e)
+        scaler_gdsc.fit(x_train_e)
+        x_train_e = scaler_gdsc.transform(x_train_e)
 
         # Initialisation
         class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
@@ -76,12 +76,12 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
         samples_weight = np.array([weight[t] for t in y_train])
 
         samples_weight = torch.from_numpy(samples_weight)
-        sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight))
+        sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
+                                        replacement=True)
 
         train_loader = create_data_loader(torch.FloatTensor(x_train_e), torch.FloatTensor(x_train_m),
                                           torch.FloatTensor(x_train_c),
-                                          torch.FloatTensor(y_train), mini_batch, True, pin_memory, sampler)
-
+                                          torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
 
         n_sample_e, ie_dim = x_train_e.shape
         _, im_dim = x_train_m.shape
@@ -172,7 +172,8 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     margin = parameterization['margin']
 
     train_scaler_gdsc = StandardScaler()
-    x_train_e = train_scaler_gdsc.fit_transform(x_train_e)
+    train_scaler_gdsc.fit(x_train_e)
+    x_train_e = train_scaler_gdsc.transform(x_train_e)
 
     _, ie_dim = x_train_e.shape
     _, im_dim = x_train_m.shape
@@ -203,7 +204,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
                                     replacement=True)
     train_loader = create_data_loader(torch.FloatTensor(x_train_e), torch.FloatTensor(x_train_m),
                                       torch.FloatTensor(x_train_c),
-                                      torch.FloatTensor(y_train), mini_batch, True, pin_memory, sampler)
+                                      torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
     for _ in range(epochs):
         network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma)
     return moli_model, train_scaler_gdsc

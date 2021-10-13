@@ -98,17 +98,17 @@ def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device):
     return auc_validate, auprc_validate
 
 
-def create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, drop_last, pin_memory, sampler=None):
+def create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, pin_memory, sampler=None):
     test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e),
                                                   torch.FloatTensor(x_test_m),
                                                   torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
-                                              num_workers=8, pin_memory=pin_memory, drop_last=drop_last,
+                                              num_workers=8, pin_memory=pin_memory, drop_last=True,
                                               sampler=sampler)
     return test_loader
 
 
-def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
+def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, test_y, device):
     x_test_m = torch.FloatTensor(x_test_m)
     x_test_c = torch.FloatTensor(x_test_c)
     test_y = torch.FloatTensor(test_y.astype(int))
