@@ -119,6 +119,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
             if check_best_auroc(best_possible_mean):
                 print('Skip remaining folds.')
                 break
+        iteration += 1
 
     mean = np.mean(aucs_validate)
     set_best_auroc(mean)
