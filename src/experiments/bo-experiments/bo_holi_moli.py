@@ -42,8 +42,8 @@ combination_lower = 0
 combination_upper = 4
 batch_size_lower = 16
 batch_size_upper = 32
-epoch_lower = 10
-epoch_upper = 50
+epoch_lower = 1
+epoch_upper = 30
 
 drugs = {
     'Gemcitabine_tcga': 'TCGA',
@@ -60,7 +60,7 @@ random_seed = 42
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
             sampling_method, drug_name, extern_dataset_name, gpu_number, small_search_space,
-            deactivate_skip_bad_iterations, deactivate_triplet_loss, triplet_selector_type):
+            deactivate_skip_bad_iterations, triplet_selector_type):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -88,7 +88,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     else:
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name)
-    moli_search_space = create_search_space(combination, small_search_space, deactivate_triplet_loss)
+    moli_search_space = create_search_space(combination, small_search_space, triplet_selector_type)
 
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
@@ -240,14 +240,14 @@ def extract_best_parameter(experiment):
     return best_parameters
 
 
-def create_search_space(combination, small_search_space, deactivate_triplet_loss):
+def create_search_space(combination, small_search_space, triplet_selector_type):
     if combination is None:
         combination_parameter = {'name': 'combination', "bounds": [combination_lower, combination_upper],
                                  "value_type": "int", 'type': 'range'}
     else:
         combination_parameter = {'name': 'combination', 'value': combination, 'type': 'fixed', "value_type": "int"}
 
-    if deactivate_triplet_loss:
+    if triplet_selector_type == 'none':
         gamma = {'name': 'gamma', "value": 0, "value_type": "float", 'type': 'fixed'}
         margin = {'name': 'margin', "value": 0, "value_type": "float", 'type': 'fixed'}
     else:
@@ -362,21 +362,19 @@ if __name__ == '__main__':
     parser.add_argument('--gpu_number', type=int)
     parser.add_argument('--small_search_space', default=False, action='store_true')
     parser.add_argument('--deactivate_skip_bad_iterations', default=False, action='store_true')
-    parser.add_argument('--deactivate_triplet_loss', default=False, action='store_true')
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
-    parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'hardest', 'random', 'semi_hard'])
+    parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'hardest', 'random', 'semi_hard',
+                                                                           'none'])
     args = parser.parse_args()
 
     if args.drug == 'all':
         for drug, extern_dataset in drugs.items():
             bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                     args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
-                    args.small_search_space, args.deactivate_skip_bad_iterations, args.deactivate_triplet_loss,
-                    args.triplet_selector_type)
+                    args.small_search_space, args.deactivate_skip_bad_iterations, args.triplet_selector_type)
     else:
         drug, extern_dataset = drugs[args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                 args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
-                args.small_search_space, args.deactivate_skip_bad_iterations, args.deactivate_triplet_loss,
-                args.triplet_selector_type)
+                args.small_search_space, args.deactivate_skip_bad_iterations, args.triplet_selector_type)

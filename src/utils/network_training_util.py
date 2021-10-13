@@ -5,6 +5,9 @@ import torch.nn
 from sklearn.metrics import roc_auc_score, average_precision_score
 import pandas as pd
 
+from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, RandomNegativeTripletSelector, \
+    SemihardNegativeTripletSelector
+
 sigmoid = torch.nn.Sigmoid()
 
 
@@ -16,12 +19,10 @@ def create_dataloader(x_expression, x_mutation, x_cna, y_response, mini_batch, p
                                        num_workers=8, sampler=sampler, pin_memory=pin_memory, drop_last=drop_last)
 
 
-def train(train_loader, moli_model, moli_optimiser, bce_with_triplets_loss, device, gamma):
+def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma):
     y_true = []
-    use_amp = False if device == torch.device('cpu') else True
 
     predictions = []
-    scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
     moli_model.train()
     for (data_e, data_m, data_c, target) in train_loader:
         moli_optimiser.zero_grad()
@@ -31,24 +32,21 @@ def train(train_loader, moli_model, moli_optimiser, bce_with_triplets_loss, devi
             data_m = data_m.to(device)
             data_c = data_c.to(device)
             target = target.to(device)
-
-            with torch.cuda.amp.autocast(enabled=use_amp):
-                prediction, zt = moli_model.forward(data_e, data_m, data_c)
+            prediction = moli_model.forward(data_e, data_m, data_c)
             if gamma > 0:
-                loss = bce_with_triplets_loss((prediction, zt), target)
+                loss = loss_fn(prediction, target)
+                prediction = sigmoid(prediction[0])
             else:
-                bce_with_logits_loss = torch.nn.BCEWithLogitsLoss()
                 target = target.view(-1, 1)
-                loss = bce_with_logits_loss(prediction, target)
-            prediction = sigmoid(prediction)
+                loss = loss_fn(prediction[0], target)
+                prediction = sigmoid(prediction[0])
             predictions.extend(prediction.cpu().detach())
-            scaler.scale(loss).backward()
-            scaler.step(moli_optimiser)
-            scaler.update()
+            loss.backward()
+            moli_optimiser.step()
     y_true = torch.FloatTensor(y_true)
     predictions = torch.FloatTensor(predictions)
-    auc = roc_auc_score(y_true, predictions)
-    return auc
+    auroc = roc_auc_score(y_true, predictions)
+    return auroc
 
 
 def validate(data_loader, moli_model, device, return_predictions=False):
@@ -115,13 +113,19 @@ def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device, pin_m
     x_test_c = torch.FloatTensor(x_test_c)
     test_y = torch.FloatTensor(test_y.astype(int))
 
+    test_loader = create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, False, pin_memory)
+    auc_test, auprc = validate(test_loader, moli_model, device)
+    return auc_test, auprc
+
+
+def create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, drop_last, pin_memory, sampler=None):
     test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e),
                                                   torch.FloatTensor(x_test_m),
                                                   torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
-                                              num_workers=8, pin_memory=pin_memory)
-    auc_test, auprc = validate(test_loader, moli_model, device)
-    return auc_test, auprc
+                                              num_workers=8, pin_memory=pin_memory, drop_last=drop_last,
+                                              sampler=sampler)
+    return test_loader
 
 
 def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
@@ -141,3 +145,25 @@ def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, te
         y_true_list, prediction_list = validate(test_loader, model, device, True)
         prediction_lists.append(prediction_list)
     return y_true_list, prediction_lists
+
+
+def get_triplet_selector(margin, triplet_selector_type):
+    if triplet_selector_type == 'all':
+        triplet_selector = AllTripletSelector()
+    elif triplet_selector_type == 'hardest':
+        triplet_selector = HardestNegativeTripletSelector(margin)
+    elif triplet_selector_type == 'random':
+        triplet_selector = RandomNegativeTripletSelector(margin)
+    elif triplet_selector_type == 'semi_hard':
+        triplet_selector = SemihardNegativeTripletSelector(margin)
+    else:
+        triplet_selector = None
+    return triplet_selector
+
+
+def get_loss_fn(margin, gamma, triplet_selector):
+    if triplet_selector is not None and gamma > 0:
+        trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
+        return BceWithTripletsToss(gamma, triplet_selector, trip_criterion)
+    else:
+        return torch.nn.BCEWithLogitsLoss()
