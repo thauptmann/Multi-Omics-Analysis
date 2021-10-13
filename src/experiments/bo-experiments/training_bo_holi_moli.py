@@ -127,9 +127,9 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
     return {'auroc': (mean, standard_error_of_mean)}
 
 
-def check_best_auroc(new_auroc):
+def check_best_auroc(best_reachable_auroc):
     global best_auroc
-    return new_auroc > best_auroc
+    return best_reachable_auroc < best_auroc
 
 
 def set_best_auroc(new_auroc):
