@@ -42,8 +42,8 @@ combination_lower = 0
 combination_upper = 4
 batch_size_lower = 16
 batch_size_upper = 32
-epoch_lower = 10
-epoch_upper = 50
+epoch_lower = 1
+epoch_upper = 30
 
 drugs = {
     'Gemcitabine_tcga': 'TCGA',
