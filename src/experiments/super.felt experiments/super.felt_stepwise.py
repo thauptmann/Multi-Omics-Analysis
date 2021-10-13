@@ -13,8 +13,7 @@ from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-from siamese_triplet.utils import AllTripletSelector
-from utils.network_training_util import calculate_mean_and_std_auc
+from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector
 from utils import multi_omics_data
 
 from utils.choose_gpu import get_free_gpu
@@ -29,6 +28,8 @@ drugs = {
     'Paclitaxel': 'PDX'
 }
 
+
+
 # common hyperparameters
 mb_size = 55
 OE_dim = 256
@@ -40,8 +41,9 @@ lrM = 0.01
 lrC = 0.01
 lrCL = 0.01
 
+
 hyperparameters_set_list = []
-hyperparameters_set1 = {'E_dr': 0.1, 'C_dr': 0.1, 'Cwd': 0.0, 'Ewd': 0.0}
+hyperparameters_set1 = {'E_dr': 0.1, 'C_dr': 0.1, 'Cwd': 0.0, 'Ewd': 0.0, 'Classifier': Classifier}
 hyperparameters_set2 = {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.01}
 hyperparameters_set3 = {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.05}
 hyperparameters_set4 = {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.01, 'Ewd': 0.01}
@@ -67,7 +69,7 @@ Classifier_epoch = 5
 random_seed = 42
 
 
-def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
+def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, triplet_selector_type):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -80,7 +82,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
     np.random.seed(random_seed)
     torch.cuda.manual_seed_all(random_seed)
 
-    triplet_selector2 = AllTripletSelector()
+    triplet_selector = get_triplet_selector(marg, triplet_selector_type)
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=marg, p=2)
     BCE_loss_fun = torch.nn.BCELoss()
 
@@ -174,7 +176,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                 E_optimizer = optim.Adagrad(E_Supervised_Encoder.parameters(), lr=lrE, weight_decay=Ewd)
                 M_optimizer = optim.Adagrad(M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=Ewd)
                 C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
-                TripSel = OnlineTestTriplet(marg, triplet_selector2)
+                TripSel = OnlineTestTriplet(marg, triplet_selector)
 
                 final_Clas = Classifier([OE_dim, OM_dim, OC_dim], 1, C_dr)
                 final_Clas.to(device)
@@ -410,7 +412,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
         E_optimizer = optim.Adagrad(final_E_Supervised_Encoder.parameters(), lr=lrE, weight_decay=Ewd)
         M_optimizer = optim.Adagrad(final_M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=Ewd)
         C_optimizer = optim.Adagrad(final_C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
-        TripSel = OnlineTestTriplet(marg, triplet_selector2)
+        TripSel = OnlineTestTriplet(marg, triplet_selector)
 
         final_Clas = Classifier([OE_dim, + OM_dim, OC_dim], 1, C_dr)
         final_Clas.to(device)
@@ -585,62 +587,6 @@ class OnlineTestTriplet(nn.Module):
         return triplets
 
 
-class Classifier(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
-        super(Classifier, self).__init__()
-        self.model = torch.nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.Dropout(drop_rate),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        output = self.model(x)
-        return output
-
-
-class ClassifierEAndMFirst(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
-        super(ClassifierEAndMFirst, self).__init__()
-        self.model = torch.nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.Dropout(drop_rate),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        output = self.model(x)
-        return output
-
-
-class ClassifierEAndCFirst(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
-        super(ClassifierEAndCFirst, self).__init__()
-        self.model = torch.nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.Dropout(drop_rate),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        output = self.model(x)
-        return output
-
-
-class ClassifierMAndCFirst(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
-        super(ClassifierMAndCFirst, self).__init__()
-        self.model = torch.nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.Dropout(drop_rate),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        output = self.model(x)
-        return output
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiment_name', required=True)
@@ -652,4 +598,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     for drug, extern_dataset in drugs.items():
-        super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number)
+        super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.triplet_selector_type)

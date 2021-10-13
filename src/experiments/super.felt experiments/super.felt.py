@@ -191,7 +191,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                             dataE = dataE.to(device)
                             encoded_E = E_Supervised_Encoder(dataE)
-
                             E_Triplets_list = TripSel(encoded_E, target)
                             E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
                                                    encoded_E[E_Triplets_list[:, 1], :],
@@ -553,46 +552,6 @@ def feature_selection(GDSCE, GDSCM, GDSCC):
     GDSCC = GDSCC[GDSCC.columns[selector.get_support(indices=True)]]
 
     return GDSCE, GDSCM, GDSCC
-
-
-class SupervisedEncoder(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
-        super(SupervisedEncoder, self).__init__()
-        self.model = torch.nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.BatchNorm1d(output_dim),
-            nn.ReLU(),
-            nn.Dropout(drop_rate)
-        )
-
-    def forward(self, x):
-        output = self.model(x)
-        return output
-
-
-class OnlineTestTriplet(nn.Module):
-    def __init__(self, marg, triplet_selector):
-        super(OnlineTestTriplet, self).__init__()
-        self.marg = marg
-        self.triplet_selector = triplet_selector
-
-    def forward(self, embeddings, target):
-        triplets = self.triplet_selector.get_triplets(embeddings, target)
-        return triplets
-
-
-class Classifier(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
-        super(Classifier, self).__init__()
-        self.model = torch.nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.Dropout(drop_rate),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        output = self.model(x)
-        return output
 
 
 if __name__ == '__main__':
