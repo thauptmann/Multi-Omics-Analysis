@@ -106,7 +106,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     iteration = 0
 
     start_time = time.time()
-    for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc=" Outer k-fold"):
+    for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc="Outer k-fold"):
         result_file.write(f'\t{iteration = }. \n')
         x_train_validate_e = gdsc_e[train_index]
         x_train_validate_m = gdsc_m[train_index]
@@ -303,7 +303,7 @@ def create_search_space(combination, small_search_space, triplet_selector_type):
                         {'name': "h_dim1", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
                         {'name': "h_dim2", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
                         {'name': "h_dim3", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-                        {'name': "h_dim5", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+                        {'name': "h_dim5", 'value': 1, "value_type": "int", 'type': 'fixed'},
                         {'name': "depth_1", 'bounds': 1, "value_type": "int", 'type': 'fixed'},
                         {'name': "depth_2", 'bounds': 1, "value_type": "int", 'type': 'fixed'},
                         {'name': "depth_3", 'bounds': 1, "value_type": "int", 'type': 'fixed'},
@@ -335,7 +335,11 @@ def create_search_space(combination, small_search_space, triplet_selector_type):
         search_space = [
             {'name': 'mini_batch', 'bounds': [batch_size_lower, batch_size_upper], "value_type": "int",
              'type': 'range'},
-            {'name': "h_dim1", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'fixed'},
+            {'name': "h_dim1", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+            {'name': "h_dim2", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+            {'name': "h_dim3", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+            {'name': "h_dim4", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+            {'name': "h_dim5", 'value': 1, "value_type": "int", 'type': 'fixed'},
             {'name': "depth_1", 'bounds': 1, "value_type": "int", 'type': 'fixed'},
             {'name': "lr_e", 'bounds': [learning_rate_lower, learning_rate_upper],
              "value_type": "float", 'log_scale': True, 'type': 'range'},
