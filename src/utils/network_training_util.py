@@ -21,10 +21,8 @@ def create_dataloader(x_expression, x_mutation, x_cna, y_response, mini_batch, p
 
 def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma):
     y_true = []
-    use_amp = False if device == torch.device('cpu') else True
 
     predictions = []
-    scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
     moli_model.train()
     for (data_e, data_m, data_c, target) in train_loader:
         moli_optimiser.zero_grad()
@@ -34,9 +32,7 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma):
             data_m = data_m.to(device)
             data_c = data_c.to(device)
             target = target.to(device)
-
-            with torch.cuda.amp.autocast(enabled=use_amp):
-                prediction = moli_model.forward(data_e, data_m, data_c)
+            prediction = moli_model.forward(data_e, data_m, data_c)
             if gamma > 0:
                 loss = loss_fn(prediction, target)
                 prediction = sigmoid(prediction[0])
@@ -45,9 +41,8 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma):
                 loss = loss_fn(prediction[0], target)
                 prediction = sigmoid(prediction[0])
             predictions.extend(prediction.cpu().detach())
-            scaler.scale(loss).backward()
-            scaler.step(moli_optimiser)
-            scaler.update()
+            loss.backward()
+            moli_optimiser.step()
     y_true = torch.FloatTensor(y_true)
     predictions = torch.FloatTensor(predictions)
     auroc = roc_auc_score(y_true, predictions)
