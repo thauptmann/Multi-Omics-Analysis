@@ -100,7 +100,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
         output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
         moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
-        moli_optimiser = torch.optim.Adam([
+        moli_optimiser = torch.optim.Adagrad([
             {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle},
             {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
             {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
@@ -122,7 +122,6 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
             if check_best_auroc(best_possible_mean):
                 print('Skip remaining folds.')
                 break
-
 
     mean = np.mean(aucs_validate)
     set_best_auroc(mean)
@@ -191,7 +190,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
     moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
-    moli_optimiser = torch.optim.Adam([
+    moli_optimiser = torch.optim.Adagrad([
         {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle},
         {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
         {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
