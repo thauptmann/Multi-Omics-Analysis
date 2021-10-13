@@ -14,8 +14,8 @@ class AdaptiveEncoder(nn.Module):
         for i in range(depth-1):
             dense = torch.nn.Sequential(
                 nn.Linear(output_size, output_size),
-                nn.BatchNorm1d(output_size),
                 nn.ReLU(),
+                nn.BatchNorm1d(output_size),
                 nn.Dropout(dropout_rate))
             self.module_list.extend(dense)
 
@@ -30,19 +30,14 @@ class Classifier(nn.Module):
     def __init__(self, input_size, output_size, dropout_rate, depth):
         super(Classifier, self).__init__()
         self.module_list = nn.ModuleList()
-        self.module_list.extend(torch.nn.Sequential(
-            nn.Linear(input_size, output_size),
-            nn.ReLU(),
-            nn.BatchNorm1d(output_size),
-            nn.Dropout(dropout_rate)))
         for i in range(depth-1):
             dense = torch.nn.Sequential(
-                nn.Linear(output_size, output_size),
+                nn.Linear(input_size, output_size),
                 nn.BatchNorm1d(output_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_rate))
             self.module_list.extend(dense)
-        self.module_list.extend(torch.nn.Sequential(nn.Linear(output_size, 1)))
+        self.module_list.extend(torch.nn.Sequential(nn.Linear(input_size, 1)))
 
     def forward(self, x):
         output = x
