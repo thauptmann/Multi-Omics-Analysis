@@ -49,27 +49,6 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma):
     return auroc
 
 
-def validate(data_loader, moli_model, device, return_predictions=False):
-    y_true = []
-    predictions = []
-    moli_model.eval()
-    with torch.no_grad():
-        for (data_e, data_m, data_c, target) in data_loader:
-            validate_e = data_e.to(device)
-            validate_m = data_m.to(device)
-            validate_c = data_c.to(device)
-            y_true.extend(target.numpy())
-            logits, _ = moli_model.forward(validate_e, validate_m, validate_c)
-            probabilities = sigmoid(logits)
-            predictions.extend(probabilities.cpu().detach().numpy())
-    auc_validate = roc_auc_score(y_true, predictions)
-    auprc_validate = average_precision_score(y_true, predictions)
-    if return_predictions:
-        return y_true, predictions
-    else:
-        return auc_validate, auprc_validate
-
-
 class BceWithTripletsToss:
     def __init__(self, gamma, triplet_selector, trip_criterion):
         self.gamma = gamma
@@ -106,16 +85,17 @@ def calculate_mean_and_std_auc(result_dict, result_file, drug_name):
         result_file.write('\n')
 
 
-def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
-    train_batch_size = 512
-    x_test_e = torch.FloatTensor(scaler.transform(x_test_e))
-    x_test_m = torch.FloatTensor(x_test_m)
-    x_test_c = torch.FloatTensor(x_test_c)
-    test_y = torch.FloatTensor(test_y.astype(int))
-
-    test_loader = create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, False, pin_memory)
-    auc_test, auprc = validate(test_loader, moli_model, device)
-    return auc_test, auprc
+def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device):
+    x_test_e = torch.FloatTensor(scaler.transform(x_test_e)).to(device)
+    x_test_m = torch.FloatTensor(x_test_m).to(device)
+    x_test_c = torch.FloatTensor(x_test_c).to(device)
+    test_y = torch.FloatTensor(test_y.astype(int)).to(device)
+    moli_model.eval()
+    logits, _ = moli_model.forward(x_test_e, x_test_m, x_test_c)
+    probabilities = sigmoid(logits)
+    auc_validate = roc_auc_score(test_y, probabilities.cpu().detach().numpy())
+    auprc_validate = average_precision_score(test_y, probabilities.cpu().detach().numpy())
+    return auc_validate, auprc_validate
 
 
 def create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, drop_last, pin_memory, sampler=None):
@@ -129,20 +109,13 @@ def create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, d
 
 
 def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, test_y, device, pin_memory):
-    train_batch_size = 512
     x_test_m = torch.FloatTensor(x_test_m)
     x_test_c = torch.FloatTensor(x_test_c)
     test_y = torch.FloatTensor(test_y.astype(int))
     prediction_lists = []
     y_true_list = None
     for model, scaler in zip(moli_model_list, scaler_list):
-        x_test_e = torch.FloatTensor(scaler.transform(x_test_e))
-        test_dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e),
-                                                      torch.FloatTensor(x_test_m),
-                                                      torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
-        test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=train_batch_size, shuffle=False,
-                                                  num_workers=8, pin_memory=pin_memory)
-        y_true_list, prediction_list = validate(test_loader, model, device, True)
+        y_true_list, prediction_list = test(model, scaler, x_test_e, x_test_m, x_test_c, test_y, device)
         prediction_lists.append(prediction_list)
     return y_true_list, prediction_lists
 

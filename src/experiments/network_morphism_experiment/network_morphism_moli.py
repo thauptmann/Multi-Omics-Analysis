@@ -139,9 +139,8 @@ def bo_network_morphism_moli(search_iterations, experiment_name, drug_name, exte
         save_auroc_plots(objectives, result_path, iteration)
 
         # Test
-        auc_test, auprc_test = test(best_model, scaler_gdsc, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
-        auc_extern, auprc_extern = test(best_model, scaler_gdsc, extern_e, extern_m, extern_c, extern_r, device,
-                                        pin_memory)
+        auc_test, auprc_test = test(best_model, scaler_gdsc, x_test_e, x_test_m, x_test_c, y_test, device)
+        auc_extern, auprc_extern = test(best_model, scaler_gdsc, extern_e, extern_m, extern_c, extern_r, device)
 
         result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
         result_file.write(f'\t\t{drug} test Auroc = {auc_test}\n')

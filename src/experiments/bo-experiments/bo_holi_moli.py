@@ -108,10 +108,10 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     start_time = time.time()
     for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc=" Outer k-fold"):
         result_file.write(f'\t{iteration = }. \n')
-        x_train_e = gdsc_e[train_index]
-        x_train_m = gdsc_m[train_index]
-        x_train_c = gdsc_c[train_index]
-        y_train = gdsc_r[train_index]
+        x_train_validate_e = gdsc_e[train_index]
+        x_train_validate_m = gdsc_m[train_index]
+        x_train_validate_c = gdsc_c[train_index]
+        y_train_validate = gdsc_r[train_index]
         x_test_e = gdsc_e[test_index]
         x_test_m = gdsc_m[test_index]
         x_test_c = gdsc_c[test_index]
@@ -119,9 +119,9 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         reset_best_auroc()
         evaluation_function = lambda parameterization: train_and_validate(parameterization,
-                                                                          x_train_e, x_train_m,
-                                                                          x_train_c,
-                                                                          y_train, device, pin_memory,
+                                                                          x_train_validate_e, x_train_validate_m,
+                                                                          x_train_validate_c,
+                                                                          y_train_validate, device, pin_memory,
                                                                           deactivate_skip_bad_iterations,
                                                                           triplet_selector_type)
 
@@ -196,11 +196,11 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         result_file.write(f'\t\t{str(best_parameters) = }\n')
 
-        model_final, scaler_final = train_final(best_parameters, x_train_e, x_train_m, x_train_c, y_train, device,
+        model_final, scaler_final = train_final(best_parameters, x_train_validate_e, x_train_validate_m,
+                                                x_train_validate_c, y_train_validate, device,
                                                 pin_memory)
-        auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device, pin_memory)
-        auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device,
-                                        pin_memory)
+        auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
+        auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device)
 
         result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
         result_file.write(f'\t\t{drug} test Auroc = {auc_test}\n')

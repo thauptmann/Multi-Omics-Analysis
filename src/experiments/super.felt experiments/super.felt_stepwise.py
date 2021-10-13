@@ -487,7 +487,13 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
 
                     intergrated_omics = torch.cat((encoded_E, encoded_M, encoded_C), 1)
                     Pred = final_Clas(intergrated_omics)
+
+                    y_true = target.view(-1, 1).cpu()
+
                     cl_loss = BCE_loss_fun(Pred, target.view(-1, 1))
+                    y_pred = Pred.cpu()
+                    AUC = roc_auc_score(y_true.detach().numpy(), y_pred.detach().numpy())
+
                     Cl_optimizer.zero_grad()
                     cl_loss.backward()
                     Cl_optimizer.step()
@@ -584,6 +590,48 @@ class OnlineTestTriplet(nn.Module):
 class Classifier(nn.Module):
     def __init__(self, input_dim, output_dim, drop_rate):
         super(Classifier, self).__init__()
+        self.model = torch.nn.Sequential(
+            nn.Linear(input_dim, output_dim),
+            nn.Dropout(drop_rate),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        output = self.model(x)
+        return output
+
+
+class ClassifierEAndMFirst(nn.Module):
+    def __init__(self, input_dim, output_dim, drop_rate):
+        super(ClassifierEAndMFirst, self).__init__()
+        self.model = torch.nn.Sequential(
+            nn.Linear(input_dim, output_dim),
+            nn.Dropout(drop_rate),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        output = self.model(x)
+        return output
+
+
+class ClassifierEAndCFirst(nn.Module):
+    def __init__(self, input_dim, output_dim, drop_rate):
+        super(ClassifierEAndCFirst, self).__init__()
+        self.model = torch.nn.Sequential(
+            nn.Linear(input_dim, output_dim),
+            nn.Dropout(drop_rate),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        output = self.model(x)
+        return output
+
+
+class ClassifierMAndCFirst(nn.Module):
+    def __init__(self, input_dim, output_dim, drop_rate):
+        super(ClassifierMAndCFirst, self).__init__()
         self.model = torch.nn.Sequential(
             nn.Linear(input_dim, output_dim),
             nn.Dropout(drop_rate),

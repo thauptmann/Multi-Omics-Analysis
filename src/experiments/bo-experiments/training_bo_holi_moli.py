@@ -82,10 +82,6 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
                                           torch.FloatTensor(x_train_c),
                                           torch.FloatTensor(y_train), mini_batch, True, pin_memory, sampler)
 
-        validation_loader = create_data_loader(torch.FloatTensor(x_validate_e),
-                                               torch.FloatTensor(x_validate_m),
-                                               torch.FloatTensor(x_validate_c),
-                                               torch.FloatTensor(y_validate), mini_batch*4, False, pin_memory)
 
         n_sample_e, ie_dim = x_train_e.shape
         _, im_dim = x_train_m.shape
@@ -112,7 +108,8 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
             network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma)
 
         # validate
-        auc_validate, _ = network_training_util.validate(validation_loader, moli_model, device)
+        auc_validate, _ = network_training_util.test(moli_model, scaler_gdsc, x_validate_e, x_validate_m, x_validate_c,
+                                                     y_validate,  device)
         aucs_validate.append(auc_validate)
 
         if not deactivate_skip_bad_iterations:
