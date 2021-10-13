@@ -538,6 +538,10 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
         'extern auprc': extern_auprc_list
     }
     calculate_mean_and_std_auc(result_dict, result_file, drug_name)
+    result_file.write(f'\n test auroc list: {test_auc_list} \n')
+    result_file.write(f'\n test auprc list: {test_auprc_list} \n')
+    result_file.write(f'\n extern auroc list: {extern_auc_list} \n')
+    result_file.write(f'\n extern auprc list: {extern_auprc_list} \n')
     result_file.close()
 
 
