@@ -25,25 +25,25 @@ from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc, test
 
 depth_lower = 1
-depth_upper = 4
+depth_upper = 1
 drop_rate_lower = 0.0
 drop_rate_upper = 0.9
-weight_decay_lower = 0.0001
+weight_decay_lower = 0.01
 weight_decay_upper = 0.1
 gamma_lower = 0.0
 gamma_upper = 0.6
 dim_lower = 8
 dim_upper = 256
 margin_lower = 0.5
-margin_upper = 3.5
-learning_rate_lower = 0.00001
+margin_upper = 2
+learning_rate_lower = 0.001
 learning_rate_upper = 0.01
 combination_lower = 0
 combination_upper = 4
 batch_size_lower = 16
-batch_size_upper = 32
+batch_size_upper = 64
 epoch_lower = 1
-epoch_upper = 30
+epoch_upper = 25
 
 drugs = {
     'Gemcitabine_tcga': 'TCGA',
@@ -263,11 +263,11 @@ def create_search_space(combination, small_search_space, triplet_selector_type):
             {'name': "h_dim3", "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
             {'name': "h_dim4", "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
             {'name': "h_dim5", "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-            {'name': "depth_1", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
-            {'name': "depth_2", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
-            {'name': "depth_3", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
-            {'name': "depth_4", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
-            {'name': "depth_5", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+            {'name': "depth_1", "bounds": 1, "value_type": "int", 'type': 'fixed'},
+            {'name': "depth_2", "bounds": 1, "value_type": "int", 'type': 'fixed'},
+            {'name': "depth_3", "bounds": 1, "value_type": "int", 'type': 'fixed'},
+            {'name': "depth_4", "bounds": 1, "value_type": "int", 'type': 'fixed'},
+            {'name': "depth_5", "bounds": 1, "value_type": "int", 'type': 'fixed'},
             {'name': "lr_e", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
              'log_scale': True, 'type': 'range'},
             {'name': "lr_m", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
@@ -304,10 +304,10 @@ def create_search_space(combination, small_search_space, triplet_selector_type):
                         {'name': "h_dim2", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
                         {'name': "h_dim3", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
                         {'name': "h_dim5", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-                        {'name': "depth_1", 'bounds': [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
-                        {'name': "depth_2", 'bounds': [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
-                        {'name': "depth_3", 'bounds': [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
-                        {'name': "depth_5", 'bounds': [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+                        {'name': "depth_1", 'bounds': 1, "value_type": "int", 'type': 'fixed'},
+                        {'name': "depth_2", 'bounds': 1, "value_type": "int", 'type': 'fixed'},
+                        {'name': "depth_3", 'bounds': 1, "value_type": "int", 'type': 'fixed'},
+                        {'name': "depth_5", 'bounds': 1, "value_type": "int", 'type': 'fixed'},
                         {'name': "lr_e", 'bounds': [learning_rate_lower, learning_rate_upper],
                          "value_type": "float", 'log_scale': True, 'type': 'range'},
                         {'name': "lr_m", 'bounds': [learning_rate_lower, learning_rate_upper],
@@ -335,8 +335,8 @@ def create_search_space(combination, small_search_space, triplet_selector_type):
         search_space = [
             {'name': 'mini_batch', 'bounds': [batch_size_lower, batch_size_upper], "value_type": "int",
              'type': 'range'},
-            {'name': "h_dim1", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-            {'name': "depth_1", 'bounds': [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+            {'name': "h_dim1", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'fixed'},
+            {'name': "depth_1", 'bounds': 1, "value_type": "int", 'type': 'fixed'},
             {'name': "lr_e", 'bounds': [learning_rate_lower, learning_rate_upper],
              "value_type": "float", 'log_scale': True, 'type': 'range'},
             {'name': "dropout_rate_e", 'bounds': [drop_rate_lower, drop_rate_upper], "value_type": "float",
