@@ -12,6 +12,8 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
 
+from models.bo_holi_moli_model import Classifier
+
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector
 from utils import multi_omics_data
@@ -28,8 +30,6 @@ drugs = {
     'Paclitaxel': 'PDX'
 }
 
-
-
 # common hyperparameters
 mb_size = 55
 OE_dim = 256
@@ -43,7 +43,7 @@ lrCL = 0.01
 
 
 hyperparameters_set_list = []
-hyperparameters_set1 = {'E_dr': 0.1, 'C_dr': 0.1, 'Cwd': 0.0, 'Ewd': 0.0, 'Classifier': Classifier}
+hyperparameters_set1 = {'E_dr': 0.1, 'C_dr': 0.1, 'Cwd': 0.0, 'Ewd': 0.0}
 hyperparameters_set2 = {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.01}
 hyperparameters_set3 = {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.05}
 hyperparameters_set4 = {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.01, 'Ewd': 0.01}
@@ -52,14 +52,13 @@ hyperparameters_set6 = {'E_dr': 0.3, 'C_dr': 0.5, 'Cwd': 0.01, 'Ewd': 0.01}
 hyperparameters_set7 = {'E_dr': 0.4, 'C_dr': 0.4, 'Cwd': 0.01, 'Ewd': 0.01}
 hyperparameters_set8 = {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.1, 'Ewd': 0.1}
 
-hyperparameters_set_list.append(hyperparameters_set1)
-hyperparameters_set_list.append(hyperparameters_set2)
-hyperparameters_set_list.append(hyperparameters_set3)
-hyperparameters_set_list.append(hyperparameters_set4)
-hyperparameters_set_list.append(hyperparameters_set5)
-hyperparameters_set_list.append(hyperparameters_set6)
-hyperparameters_set_list.append(hyperparameters_set7)
-hyperparameters_set_list.append(hyperparameters_set8)
+for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperparameters_set3,
+                           hyperparameters_set4, hyperparameters_set5, hyperparameters_set6, hyperparameters_set7,
+                           hyperparameters_set8):
+    for classifier in ('standard', 'em_first', 'ec_first', 'mc_first'):
+        hyperparameter_set['classifier'] = classifier
+        hyperparameters_set_list.append(hyperparameter_set.copy())
+
 
 E_Supervised_Encoder_epoch = 10
 C_Supervised_Encoder_epoch = 5
@@ -128,7 +127,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
             C_dr = hyperparameters_set['C_dr']
             Cwd = hyperparameters_set['Cwd']
             Ewd = hyperparameters_set['Ewd']
-
             all_validation_aurocs = []
             for train_index, validate_index in tqdm(skf.split(X_train_valE, Y_train_val), total=skf.get_n_splits(),
                                                     desc="k-fold"):
