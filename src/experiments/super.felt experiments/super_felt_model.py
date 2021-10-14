@@ -59,10 +59,15 @@ class ClassifierEAndCFirst(nn.Module):
 
 
 class ClassifierMAndCFirst(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
+    def __init__(self, input_dims, layer_dim, drop_rate):
         super(ClassifierMAndCFirst, self).__init__()
-        self.model = torch.nn.Sequential(
-            nn.Linear(input_dim, output_dim),
+        self.dense = torch.nn.Sequential(
+            nn.Linear(input_dims[1] + input_dims[2], layer_dim),
+            nn.ReLU(),
+            nn.Dropout(drop_rate),
+        )
+        self.linear = torch.nn.Sequential(
+            nn.Linear(sum(input_dims), 1),
             nn.Dropout(drop_rate),
             nn.Sigmoid()
         )

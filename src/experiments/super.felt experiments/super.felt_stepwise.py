@@ -12,11 +12,11 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
 
-
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector
 from utils import multi_omics_data
-from super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier
+from super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier, ClassifierEAndCFirst,\
+    ClassifierEAndMFirst, ClassifierMAndCFirst
 
 from utils.choose_gpu import get_free_gpu
 
@@ -41,7 +41,6 @@ lrM = 0.01
 lrC = 0.01
 lrCL = 0.01
 
-
 hyperparameters_set_list = []
 hyperparameters_set1 = {'E_dr': 0.1, 'C_dr': 0.1, 'Cwd': 0.0, 'Ewd': 0.0}
 hyperparameters_set2 = {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.01}
@@ -58,7 +57,6 @@ for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperpara
     for classifier in ('standard', 'em_first', 'ec_first', 'mc_first'):
         hyperparameter_set['classifier'] = classifier
         hyperparameters_set_list.append(hyperparameter_set.copy())
-
 
 E_Supervised_Encoder_epoch = 10
 C_Supervised_Encoder_epoch = 5
@@ -127,6 +125,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
             C_dr = hyperparameters_set['C_dr']
             Cwd = hyperparameters_set['Cwd']
             Ewd = hyperparameters_set['Ewd']
+            classifier_type = hyperparameters_set['classifier']
             all_validation_aurocs = []
             for train_index, validate_index in tqdm(skf.split(X_train_valE, Y_train_val), total=skf.get_n_splits(),
                                                     desc="k-fold"):
@@ -176,7 +175,14 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                 C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
                 TripSel = OnlineTestTriplet(marg, triplet_selector)
 
-                final_Clas = Classifier([OE_dim, OM_dim, OC_dim], 1, C_dr)
+                if classifier_type == 'standard':
+                    final_Clas = Classifier(OE_dim + OM_dim + OC_dim, 1, C_dr)
+                elif classifier_type == 'em_first':
+                    final_Clas = ClassifierEAndMFirst([OE_dim, OM_dim, OC_dim], 128, C_dr)
+                elif classifier_type == 'ec_first':
+                    final_Clas = ClassifierEAndCFirst([OE_dim, OM_dim, OC_dim], 128, C_dr)
+                else:
+                    final_Clas = ClassifierMAndCFirst([OE_dim, OM_dim, OC_dim], 128, C_dr)
                 final_Clas.to(device)
                 Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
@@ -378,6 +384,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
         C_dr = best_hyperparameter['C_dr']
         Cwd = best_hyperparameter['Cwd']
         Ewd = best_hyperparameter['Ewd']
+        classifier_type = best_hyperparameter['classifier']
         class_sample_count = np.array([len(np.where(Y_train_val == t)[0]) for t in np.unique(Y_train_val)])
         weight = 1. / class_sample_count
         samples_weight = np.array([weight[t] for t in Y_train_val])
@@ -412,7 +419,14 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
         C_optimizer = optim.Adagrad(final_C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
         TripSel = OnlineTestTriplet(marg, triplet_selector)
 
-        final_Clas = Classifier([OE_dim, + OM_dim, OC_dim], 1, C_dr)
+        if classifier_type == 'standard':
+            final_Clas = Classifier(OE_dim + OM_dim + OC_dim, 1, C_dr)
+        elif classifier_type == 'em_first':
+            final_Clas = ClassifierEAndMFirst([OE_dim, OM_dim, OC_dim], 128, C_dr)
+        elif classifier_type == 'ec_first':
+            final_Clas = ClassifierEAndCFirst([OE_dim, OM_dim, OC_dim], 128, C_dr)
+        else:
+            final_Clas = ClassifierMAndCFirst([OE_dim, OM_dim, OC_dim], 128, C_dr)
         final_Clas.to(device)
         Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
