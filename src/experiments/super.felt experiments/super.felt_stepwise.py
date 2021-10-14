@@ -12,11 +12,11 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
 
-from models.bo_holi_moli_model import Classifier
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector
 from utils import multi_omics_data
+from super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier
 
 from utils.choose_gpu import get_free_gpu
 
