@@ -26,7 +26,7 @@ class ClassifierEAndMFirst(nn.Module):
             nn.Dropout(drop_rate),
         )
         self.linear = torch.nn.Sequential(
-            nn.Linear(sum(input_dims), 1),
+            nn.Linear(layer_dim + input_dims[2], 1),
             nn.Dropout(drop_rate),
             nn.Sigmoid()
         )
@@ -47,7 +47,7 @@ class ClassifierEAndCFirst(nn.Module):
             nn.Dropout(drop_rate),
         )
         self.linear = torch.nn.Sequential(
-            nn.Linear(sum(input_dims), 1),
+            nn.Linear(input_dims[1] + layer_dim, 1),
             nn.Dropout(drop_rate),
             nn.Sigmoid()
         )
@@ -68,7 +68,7 @@ class ClassifierMAndCFirst(nn.Module):
             nn.Dropout(drop_rate),
         )
         self.linear = torch.nn.Sequential(
-            nn.Linear(sum(input_dims), 1),
+            nn.Linear(input_dims[0] + layer_dim, 1),
             nn.Dropout(drop_rate),
             nn.Sigmoid()
         )
