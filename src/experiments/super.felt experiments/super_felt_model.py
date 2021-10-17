@@ -11,8 +11,9 @@ class Classifier(nn.Module):
             nn.Sigmoid()
         )
 
-    def forward(self, x):
-        output = self.model(x)
+    def forward(self, encoded_e, encoded_m, encoded_c):
+        intergrated_test_omics = torch.cat((encoded_e, encoded_m, encoded_c), 1)
+        output = self.model(intergrated_test_omics)
         return output
 
 
