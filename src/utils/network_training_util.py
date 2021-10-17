@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.utils.data
 import torch.nn
+from sklearn.feature_selection import VarianceThreshold
 from sklearn.metrics import roc_auc_score, average_precision_score
 import pandas as pd
 
@@ -140,3 +141,19 @@ def get_loss_fn(margin, gamma, triplet_selector):
         return BceWithTripletsToss(gamma, triplet_selector, trip_criterion)
     else:
         return torch.nn.BCEWithLogitsLoss()
+
+
+def feature_selection(gdsce, gdscm, gdscc):
+    selector = VarianceThreshold(0.05 * 20)
+    selector.fit_transform(gdsce)
+    gdsce = gdsce[gdsce.columns[selector.get_support(indices=True)]]
+
+    selector = VarianceThreshold(0.00001 * 15)
+    selector.fit_transform(gdscm)
+    gdscm = gdscm[gdscm.columns[selector.get_support(indices=True)]]
+
+    selector = VarianceThreshold(0.01 * 20)
+    selector.fit_transform(gdscc)
+    gdscc = gdscc[gdscc.columns[selector.get_support(indices=True)]]
+
+    return gdsce, gdscm, gdscc

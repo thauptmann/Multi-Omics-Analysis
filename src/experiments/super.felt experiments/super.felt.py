@@ -10,7 +10,6 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 from torch import optim
 import numpy as np
 import torch
-from sklearn.feature_selection import VarianceThreshold
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
@@ -18,7 +17,7 @@ from tqdm import tqdm
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier
 from siamese_triplet.utils import AllTripletSelector
-from utils.network_training_util import calculate_mean_and_std_auc
+from utils.network_training_util import calculate_mean_and_std_auc, feature_selection
 from utils import multi_omics_data
 
 from utils.choose_gpu import get_free_gpu
@@ -544,22 +543,6 @@ def train_final(BCE_loss_fun, X_train_valE, X_train_valM, X_train_valC, Y_train_
         final_Classifier.eval()
     return final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
            final_scalerGDSC
-
-
-def feature_selection(gdsce, gdscm, gdscc):
-    selector = VarianceThreshold(0.05 * 20)
-    selector.fit_transform(gdsce)
-    gdsce = gdsce[gdsce.columns[selector.get_support(indices=True)]]
-
-    selector = VarianceThreshold(0.00001 * 15)
-    selector.fit_transform(gdscm)
-    gdscm = gdscm[gdscm.columns[selector.get_support(indices=True)]]
-
-    selector = VarianceThreshold(0.01 * 20)
-    selector.fit_transform(gdscc)
-    gdscc = gdscc[gdscc.columns[selector.get_support(indices=True)]]
-
-    return gdsce, gdscm, gdscc
 
 
 def get_search_space():

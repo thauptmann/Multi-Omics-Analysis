@@ -333,8 +333,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                             encoded_M = M_Supervised_Encoder(dataM)
                             encoded_C = C_Supervised_Encoder(dataC)
 
-                            intergrated_omics = torch.cat((encoded_E, encoded_M, encoded_C), 1)
-                            Pred = final_Clas(intergrated_omics)
+                            Pred = final_Clas(encoded_E, encoded_M, encoded_C)
 
                             y_true = target.view(-1, 1).cpu()
 
@@ -364,8 +363,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                         encoded_val_M = M_Supervised_Encoder(torch.FloatTensor(X_valM).to(device))
                         encoded_val_C = C_Supervised_Encoder(torch.FloatTensor(X_valC).to(device))
 
-                        intergrated_test_omics = torch.cat((encoded_val_E, encoded_val_M, encoded_val_C), 1)
-                        test_Pred = final_Clas(intergrated_test_omics)
+                        test_Pred = final_Clas(encoded_val_E, encoded_val_M, encoded_val_C)
 
                         test_y_true = Y_val
                         test_y_pred = test_Pred.cpu()

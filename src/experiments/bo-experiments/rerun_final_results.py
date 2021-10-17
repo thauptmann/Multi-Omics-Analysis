@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils import multi_omics_data
-from utils.network_training_util import test, calculate_mean_and_std_auc, test_ensemble
+from utils.network_training_util import test, calculate_mean_and_std_auc, test_ensemble, feature_selection
 
 from utils.choose_gpu import get_free_gpu
 from training_bo_holi_moli import train_final
@@ -30,7 +30,8 @@ number_of_bootstraps = 5
 
 
 def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name, extern_dataset_name,
-                             best_parameters_list, deactivate_triplet_loss, use_bagging, triplet_selector_type='all'):
+                             best_parameters_list, deactivate_triplet_loss, use_bagging, triplet_selector_type='all',
+                             use_elbow_method=False):
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     cv_splits = 5
@@ -57,8 +58,19 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
     print(f"Start for {drug_name}")
 
     data_path = Path('..', '..', '..', 'data')
-    gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
-        = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name)
+    if not use_elbow_method:
+        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
+            = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name)
+    else:
+        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
+            = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name, return_data_frames=True)
+        GDSCE, GDSCM, GDSCC = feature_selection(gdsc_e, gdsc_m, gdsc_c)
+        expression_intersection_genes_index = GDSCE.columns.intersection(extern_e.columns)
+        mutation_intersection_genes_index = GDSCM.columns.intersection(extern_m.columns)
+        cna_intersection_genes_index = GDSCC.columns.intersection(extern_c.columns)
+        extern_e = extern_e.loc[:, expression_intersection_genes_index].to_numpy()
+        extern_m = extern_m.loc[:, mutation_intersection_genes_index].to_numpy()
+        extern_c = extern_c.loc[:, cna_intersection_genes_index].to_numpy()
 
     iteration = 0
     auc_list_test = []
@@ -151,6 +163,7 @@ if __name__ == '__main__':
     parser.add_argument('--experiment_name', required=False, default=None)
     parser.add_argument('--use_bagging', default=False, action='store_true')
     parser.add_argument('--deactivate_triplet_loss', default=False, action='store_true')
+    parser.add_argument('--use_elbow_method', default=False, action='store_true')
     parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'hardest', 'random', 'semi_hard'])
     args = parser.parse_args()
 
@@ -177,4 +190,4 @@ if __name__ == '__main__':
 
         rerun_final_architecture(args.method_name, args.experiment_name, args.gpu_number, drug_name, drugs[drug_name],
                                  best_parameters_list, args.deactivate_triplet_loss, args.use_bagging,
-                                 args.triplet_selector_type)
+                                 args.triplet_selector_type, args.use_elbow_method)

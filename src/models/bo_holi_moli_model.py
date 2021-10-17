@@ -55,7 +55,6 @@ class Classifier(nn.Module):
             )
             )
 
-
     def forward(self, x):
         output = x
         for layer in self.module_list:
