@@ -426,8 +426,7 @@ def test(X_testE, X_testM, X_testC, Y_test, device, final_C_Supervised_Encoder, 
     encoded_test_E = final_E_Supervised_Encoder(torch.FloatTensor(X_testE).to(device))
     encoded_test_M = final_M_Supervised_Encoder(torch.FloatTensor(X_testM).to(device))
     encoded_test_C = final_C_Supervised_Encoder(torch.FloatTensor(X_testC).to(device))
-    integrated_test_omics = torch.cat((encoded_test_E, encoded_test_M, encoded_test_C), 1)
-    test_Pred = final_Classifier(integrated_test_omics)
+    test_Pred = final_Classifier(encoded_test_E, encoded_test_M, encoded_test_C)
     test_y_true = Y_test
     test_y_pred = test_Pred.cpu().detach().numpy()
     test_AUC = roc_auc_score(test_y_true, test_y_pred)
@@ -533,8 +532,7 @@ def train_final(BCE_loss_fun, X_train_valE, X_train_valM, X_train_valC, Y_train_
                 encoded_M = final_M_Supervised_Encoder(dataM)
                 encoded_C = final_C_Supervised_Encoder(dataC)
 
-                integrated_omics = torch.cat((encoded_E, encoded_M, encoded_C), 1)
-                Pred = final_Classifier(integrated_omics)
+                Pred = final_Classifier(encoded_E, encoded_M, encoded_C)
                 cl_loss = BCE_loss_fun(Pred, target.view(-1, 1))
                 Cl_optimizer.zero_grad()
                 cl_loss.backward()

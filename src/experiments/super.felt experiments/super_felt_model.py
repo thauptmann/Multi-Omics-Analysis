@@ -12,8 +12,8 @@ class Classifier(nn.Module):
         )
 
     def forward(self, encoded_e, encoded_m, encoded_c):
-        intergrated_test_omics = torch.cat((encoded_e, encoded_m, encoded_c), 1)
-        output = self.model(intergrated_test_omics)
+        integrated_test_omics = torch.cat((encoded_e, encoded_m, encoded_c), 1)
+        output = self.model(integrated_test_omics)
         return output
 
 
@@ -76,7 +76,7 @@ class ClassifierMAndCFirst(nn.Module):
     def forward(self, encoded_e, encoded_m, encoded_c):
         integrated_m_c = torch.cat((encoded_m, encoded_c), 1)
         encoded_m_c = self.dense(integrated_m_c)
-        integrated_e_m_c = torch.cat((encoded_m_c, encoded_m), 1)
+        integrated_e_m_c = torch.cat((encoded_m_c, encoded_e), 1)
         return self.linear(integrated_e_m_c)
 
 
