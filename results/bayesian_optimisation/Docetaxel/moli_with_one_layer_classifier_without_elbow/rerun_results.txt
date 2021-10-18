@@ -1,0 +1,33 @@
+Start for Docetaxel
+	Mean Result for Docetaxel:
+
+		test auroc max: 0.9079939668174961
+		test auroc min: 0.4934640522875817
+		test auroc mean: 0.6797974385435686
+		test auroc std: 0.14759149634850394
+
+		test_auprc max: 0.3967863206976097
+		test_auprc min: 0.0783132530120482
+		test_auprc mean: 0.2500543783163616
+		test_auprc std: 0.13947826126035862
+
+		extern auroc max: 0.625
+		extern auroc min: 0.5
+		extern auroc mean: 0.571875
+		extern auroc std: 0.053764532919016415
+
+		extern auprc max: 0.5946886446886447
+		extern auprc min: 0.5
+		extern auprc mean: 0.5515516428016427
+		extern auprc std: 0.03933362232501102
+
+
+ No skill predictor extern AUPRC: 0.5 
+
+ test auroc list: [0.5696329813976873, 0.4934640522875817, 0.6520864756158874, 0.9079939668174961, 0.7758097165991903] 
+
+ test auprc list: [0.09367147965065162, 0.0783132530120482, 0.2890856576255054, 0.39241518059599323, 0.3967863206976097] 
+
+ extern auroc list: [0.515625, 0.5, 0.625, 0.625, 0.59375] 
+
+ extern auprc list: [0.5089743589743589, 0.5, 0.5698232323232323, 0.584271978021978, 0.5946886446886447] 
