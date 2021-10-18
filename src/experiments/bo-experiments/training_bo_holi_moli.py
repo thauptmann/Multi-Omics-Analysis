@@ -10,6 +10,7 @@ from utils.network_training_util import get_triplet_selector, get_loss_fn, creat
 from scipy.stats import sem
 
 best_auroc = -1
+cv_splits_inner = 5
 
 
 def reset_best_auroc():
@@ -51,9 +52,8 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
     margin = parameterization['margin']
 
     aucs_validate = []
-    cv_splits = 5
     iteration = 1
-    skf = StratifiedKFold(n_splits=cv_splits)
+    skf = StratifiedKFold(n_splits=cv_splits_inner)
     for train_index, validate_index in tqdm(skf.split(x_e, y), total=skf.get_n_splits(),
                                             desc="k-fold"):
         x_train_e = x_e[train_index]
@@ -113,7 +113,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
         aucs_validate.append(auc_validate)
 
         if not deactivate_skip_bad_iterations:
-            open_folds = cv_splits - iteration
+            open_folds = cv_splits_inner - iteration
             remaining_best_results = np.ones(open_folds)
             best_possible_mean = np.mean(np.concatenate([aucs_validate, remaining_best_results]))
             if check_best_auroc(best_possible_mean):

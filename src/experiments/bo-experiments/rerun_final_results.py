@@ -64,13 +64,17 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
     else:
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name, return_data_frames=True)
-        GDSCE, GDSCM, GDSCC = feature_selection(gdsc_e, gdsc_m, gdsc_c)
-        expression_intersection_genes_index = GDSCE.columns.intersection(extern_e.columns)
-        mutation_intersection_genes_index = GDSCM.columns.intersection(extern_m.columns)
-        cna_intersection_genes_index = GDSCC.columns.intersection(extern_c.columns)
+
+        gdsc_e, gdsc_m, gdsc_c = feature_selection(gdsc_e, gdsc_m, gdsc_c)
+        expression_intersection_genes_index = gdsc_e.columns.intersection(extern_e.columns)
+        mutation_intersection_genes_index = gdsc_m.columns.intersection(extern_m.columns)
+        cna_intersection_genes_index = gdsc_c.columns.intersection(extern_c.columns)
         extern_e = extern_e.loc[:, expression_intersection_genes_index].to_numpy()
         extern_m = extern_m.loc[:, mutation_intersection_genes_index].to_numpy()
         extern_c = extern_c.loc[:, cna_intersection_genes_index].to_numpy()
+        gdsc_e = gdsc_e.to_numpy()
+        gdsc_m = gdsc_m.to_numpy()
+        gdsc_c = gdsc_c.to_numpy()
 
     iteration = 0
     auc_list_test = []
@@ -92,44 +96,11 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
         if deactivate_triplet_loss:
             best_parameters['gamma'] = 0
 
-        if use_bagging:
-            bagging_models = []
-            bagging_scaler = []
-            positive_indices = np.nonzero(y_train == 1)[0]
-            negative_indices = np.nonzero(y_train == 0)[0]
-            for _ in range(number_of_bootstraps):
-                positive_bootstrap_indices = np.random.choice(positive_indices, len(positive_indices), replace=True)
-                negative_bootstrap_indices = np.random.choice(negative_indices, len(negative_indices), replace=True)
-                bootstrap_indices = np.append(positive_bootstrap_indices, negative_bootstrap_indices)
-
-                bootstrap_e = x_train_e[bootstrap_indices]
-                bootstrap_m = x_train_m[bootstrap_indices]
-                bootstrap_c = x_train_c[bootstrap_indices]
-                bootstrap_y = y_train[bootstrap_indices]
-                model_bootstrap, scaler_boostrap = train_final(best_parameters, bootstrap_e, bootstrap_m, bootstrap_c,
-                                                               bootstrap_y, device, pin_memory, triplet_selector_type)
-                bagging_models.append(model_bootstrap)
-                bagging_scaler.append(scaler_boostrap)
-
-            # soft vote on test
-            y_true_list, prediction_lists = test_ensemble(bagging_models, bagging_scaler, x_test_e, x_test_m,
-                                                          x_test_c, y_test, device, pin_memory)
-            prediction_sum = np.sum(prediction_lists, axis=0) / number_of_bootstraps
-            auc_test = roc_auc_score(y_true_list, prediction_sum)
-            auprc_test = average_precision_score(y_true_list, prediction_sum)
-
-            # soft vote on external
-            y_true_list, prediction_lists = test_ensemble(bagging_models, bagging_scaler, extern_e, extern_m, extern_c,
-                                                          extern_r, device, pin_memory)
-            prediction_sum = np.sum(prediction_lists, axis=0) / number_of_bootstraps
-            auc_extern = roc_auc_score(y_true_list, prediction_sum)
-            auprc_extern = average_precision_score(y_true_list, prediction_sum)
-        else:
-            model_final, scaler_final = train_final(best_parameters, x_train_e, x_train_m, x_train_c,
-                                                    y_train, device, pin_memory, triplet_selector_type)
-            auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
-            auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c,
-                                            extern_r, device)
+        model_final, scaler_final = train_final(best_parameters, x_train_e, x_train_m, x_train_c,
+                                                y_train, device, pin_memory, triplet_selector_type)
+        auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
+        auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c,
+                                        extern_r, device)
 
         auc_list_test.append(auc_test)
         auprc_list_test.append(auprc_test)

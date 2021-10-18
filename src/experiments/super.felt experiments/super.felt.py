@@ -42,14 +42,14 @@ lrE = 0.01
 lrM = 0.01
 lrC = 0.01
 lrCL = 0.01
-cv_splits = 5
 
 E_Supervised_Encoder_epoch = 10
 C_Supervised_Encoder_epoch = 5
 M_Supervised_Encoder_epoch = 3
 Classifier_epoch = 5
-
 random_seed = 42
+
+cv_splits = 5
 
 
 def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, iterations):
@@ -80,6 +80,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, iter
     mutation_intersection_genes_index = GDSCM.columns.intersection(extern_m.columns)
     cna_intersection_genes_index = GDSCC.columns.intersection(extern_c.columns)
     GDSCR = gdsc_r
+    GDSCE = GDSCE.to_numpy()
+    GDSCM = GDSCM.to_numpy()
+    GDSCC = GDSCC.to_numpy()
 
     ExternalE = extern_e.loc[:, expression_intersection_genes_index].to_numpy()
     ExternalM = extern_m.loc[:, mutation_intersection_genes_index].to_numpy()
@@ -94,12 +97,12 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, iter
     skf_outer = StratifiedKFold(n_splits=cv_splits, random_state=random_seed, shuffle=True)
     for train_index_outer, test_index in tqdm(skf_outer.split(GDSCE, GDSCR), total=skf_outer.get_n_splits(),
                                               desc=" Outer k-fold"):
-        X_train_valE = GDSCE.to_numpy()[train_index_outer]
-        X_testE = GDSCE.to_numpy()[test_index]
-        X_train_valM = GDSCM.to_numpy()[train_index_outer]
-        X_testM = GDSCM.to_numpy()[test_index]
-        X_train_valC = GDSCC.to_numpy()[train_index_outer]
-        X_testC = GDSCC.to_numpy()[test_index]
+        X_train_valE = GDSCE[train_index_outer]
+        X_testE = GDSCE[test_index]
+        X_train_valM = GDSCM[train_index_outer]
+        X_testM = GDSCM[test_index]
+        X_train_valC = GDSCC[train_index_outer]
+        X_testC = GDSCC[test_index]
         Y_train_val = GDSCR[train_index_outer]
         Y_test = GDSCR[test_index]
         evaluation_function = lambda parameterization: train_validate_hyperparameter_set(BCE_loss_fun, X_train_valE,
@@ -313,7 +316,6 @@ def train_validate_hyperparameter_set(BCE_loss_fun, X_train_valE, X_train_valM, 
                     C_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
                                            encoded_C[C_Triplets_list[:, 1], :],
                                            encoded_C[C_Triplets_list[:, 2], :])
-
                     C_optimizer.zero_grad()
                     C_loss.backward()
                     C_optimizer.step()
@@ -360,8 +362,7 @@ def train_validate_hyperparameter_set(BCE_loss_fun, X_train_valE, X_train_valM, 
                     encoded_M = M_Supervised_Encoder(dataM)
                     encoded_C = C_Supervised_Encoder(dataC)
 
-                    integrated_omics = torch.cat((encoded_E, encoded_M, encoded_C), 1)
-                    Pred = classifier(integrated_omics)
+                    Pred = classifier(encoded_E, encoded_M, encoded_C)
 
                     y_true = target.view(-1, 1).cpu()
 
@@ -391,8 +392,7 @@ def train_validate_hyperparameter_set(BCE_loss_fun, X_train_valE, X_train_valM, 
                 encoded_val_M = M_Supervised_Encoder(torch.FloatTensor(X_valM).to(device))
                 encoded_val_C = C_Supervised_Encoder(torch.FloatTensor(X_valC).to(device))
 
-                integrated_test_omics = torch.cat((encoded_val_E, encoded_val_M, encoded_val_C), 1)
-                test_Pred = classifier(integrated_test_omics)
+                test_Pred = classifier(encoded_val_E, encoded_val_M, encoded_val_C)
 
                 test_y_true = Y_val
                 test_y_pred = test_Pred.cpu()

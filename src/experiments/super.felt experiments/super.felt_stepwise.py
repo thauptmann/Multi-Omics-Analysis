@@ -4,7 +4,7 @@ from pathlib import Path
 
 import sklearn.preprocessing as sk
 from sklearn.metrics import roc_auc_score, average_precision_score
-from torch import nn, optim
+from torch import optim
 import numpy as np
 import torch
 from sklearn.feature_selection import VarianceThreshold
@@ -13,7 +13,7 @@ from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector
+from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, feature_selection
 from utils import multi_omics_data
 from super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier, ClassifierEAndCFirst,\
     ClassifierEAndMFirst, ClassifierMAndCFirst
@@ -178,11 +178,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                 if classifier_type == 'standard':
                     final_Clas = Classifier(OE_dim + OM_dim + OC_dim, 1, C_dr)
                 elif classifier_type == 'em_first':
-                    final_Clas = ClassifierEAndMFirst([OE_dim, OM_dim, OC_dim], 128, C_dr)
+                    final_Clas = ClassifierEAndMFirst([OE_dim, OM_dim, OC_dim], 64, C_dr)
                 elif classifier_type == 'ec_first':
-                    final_Clas = ClassifierEAndCFirst([OE_dim, OM_dim, OC_dim], 128, C_dr)
+                    final_Clas = ClassifierEAndCFirst([OE_dim, OM_dim, OC_dim], 64, C_dr)
                 else:
-                    final_Clas = ClassifierMAndCFirst([OE_dim, OM_dim, OC_dim], 128, C_dr)
+                    final_Clas = ClassifierMAndCFirst([OE_dim, OM_dim, OC_dim], 64, C_dr)
                 final_Clas.to(device)
                 Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
@@ -553,48 +553,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
     result_file.write(f'\n extern auroc list: {extern_auc_list} \n')
     result_file.write(f'\n extern auprc list: {extern_auprc_list} \n')
     result_file.close()
-
-
-def feature_selection(GDSCE, GDSCM, GDSCC):
-    selector = VarianceThreshold(0.05 * 20)
-    selector.fit_transform(GDSCE)
-    GDSCE = GDSCE[GDSCE.columns[selector.get_support(indices=True)]]
-
-    selector = VarianceThreshold(0.00001 * 15)
-    selector.fit_transform(GDSCM)
-    GDSCM = GDSCM[GDSCM.columns[selector.get_support(indices=True)]]
-
-    selector = VarianceThreshold(0.01 * 20)
-    selector.fit_transform(GDSCC)
-    GDSCC = GDSCC[GDSCC.columns[selector.get_support(indices=True)]]
-
-    return GDSCE, GDSCM, GDSCC
-
-
-class SupervisedEncoder(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
-        super(SupervisedEncoder, self).__init__()
-        self.model = torch.nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.BatchNorm1d(output_dim),
-            nn.ReLU(),
-            nn.Dropout(drop_rate)
-        )
-
-    def forward(self, x):
-        output = self.model(x)
-        return output
-
-
-class OnlineTestTriplet(nn.Module):
-    def __init__(self, marg, triplet_selector):
-        super(OnlineTestTriplet, self).__init__()
-        self.marg = marg
-        self.triplet_selector = triplet_selector
-
-    def forward(self, embeddings, target):
-        triplets = self.triplet_selector.get_triplets(embeddings, target)
-        return triplets
 
 
 if __name__ == '__main__':
