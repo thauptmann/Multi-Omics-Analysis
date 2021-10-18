@@ -44,6 +44,7 @@ batch_size_lower = 16
 batch_size_upper = 64
 epoch_lower = 1
 epoch_upper = 25
+cv_splits_outer = 5
 
 drugs = {
     'Gemcitabine_tcga': 'TCGA',
@@ -60,7 +61,7 @@ random_seed = 42
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
             sampling_method, drug_name, extern_dataset_name, gpu_number, small_search_space,
-            deactivate_skip_bad_iterations, triplet_selector_type):
+            deactivate_skip_bad_iterations, triplet_selector_type, use_elbow_method):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -101,8 +102,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     objectives_list = []
     now = datetime.now()
     result_file.write(f'Start experiment at {now}\n')
-    cv_splits = 5
-    skf = StratifiedKFold(n_splits=cv_splits, random_state=random_seed, shuffle=True)
+    skf = StratifiedKFold(n_splits=cv_splits_outer, random_state=random_seed, shuffle=True)
     iteration = 0
 
     start_time = time.time()
@@ -370,6 +370,7 @@ if __name__ == '__main__':
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'hardest', 'random', 'semi_hard',
                                                                            'none'])
+    parser.add_argument('--use_elbow_method', default=False, action='store_true')
     args = parser.parse_args()
 
     if args.drug == 'all':
@@ -381,4 +382,5 @@ if __name__ == '__main__':
         drug, extern_dataset = drugs[args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                 args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
-                args.small_search_space, args.deactivate_skip_bad_iterations, args.triplet_selector_type)
+                args.small_search_space, args.deactivate_skip_bad_iterations, args.triplet_selector_type,
+                args.use_elbow_method)
