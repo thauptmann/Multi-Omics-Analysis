@@ -27,33 +27,13 @@ class AdaptiveEncoder(nn.Module):
 
 
 class Classifier(nn.Module):
-    def __init__(self, input_size, output_size, dropout_rate, depth):
+    def __init__(self, input_size,dropout_rate):
         super(Classifier, self).__init__()
-        self.module_list = nn.ModuleList()
-        if depth > 1:
-            self.module_list.extend(torch.nn.Sequential(
-                nn.Linear(input_size, output_size),
-                nn.BatchNorm1d(output_size),
-                nn.ReLU(),
-                nn.Dropout(dropout_rate)))
-            for i in range(depth - 2):
-                dense = torch.nn.Sequential(
-                        nn.Linear(output_size, output_size),
-                        nn.BatchNorm1d(output_size),
-                        nn.ReLU(),
-                        nn.Dropout(dropout_rate))
-                self.module_list.extend(dense)
-            self.module_list.extend(torch.nn.Sequential(
-                nn.Linear(output_size, 1),
-                nn.Dropout(dropout_rate)
-            )
-            )
-        else:
-            self.module_list.extend(torch.nn.Sequential(
-                nn.Linear(input_size, 1),
-                nn.Dropout(dropout_rate)
-            )
-            )
+        self.module_list = nn.ModuleList(torch.nn.Sequential(
+            nn.Linear(input_size, 1),
+            nn.Dropout(dropout_rate)
+        )
+        )
 
     def forward(self, x):
         output = x
@@ -74,30 +54,25 @@ class AdaptiveMoli(nn.Module):
         if combination == 0:
             self.left_encoder = AdaptiveEncoder(output_sizes[0] + output_sizes[1], output_sizes[3], dropout_rates[3],
                                                 depths[3])
-            self.classifier = Classifier(output_sizes[3] + output_sizes[2], output_sizes[4],
-                                         dropout_rates[4], depths[4])
+            self.classifier = Classifier(output_sizes[3] + output_sizes[2], dropout_rates[4])
 
         elif combination == 1:
             self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[1], output_sizes[3], dropout_rates[3],
                                                 depths[3])
-            self.classifier = Classifier(output_sizes[3] + output_sizes[0], output_sizes[4],
-                                         dropout_rates[4], depths[4])
+            self.classifier = Classifier(output_sizes[3] + output_sizes[0], dropout_rates[4])
         elif combination == 2:
             self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[0], output_sizes[3], dropout_rates[3],
                                                 depths[3])
-            self.classifier = Classifier(output_sizes[3] + output_sizes[1], output_sizes[4], dropout_rates[4],
-                                         depths[4])
+            self.classifier = Classifier(output_sizes[3] + output_sizes[1], dropout_rates[4])
         elif combination == 3:
             self.left_encoder = nn.Identity()
-            self.classifier = Classifier(output_sizes[0] + output_sizes[1] + output_sizes[2], output_sizes[4],
-                                         dropout_rates[4], depths[4])
+            self.classifier = Classifier(output_sizes[0] + output_sizes[1] + output_sizes[2], dropout_rates[4])
         elif combination == 4:
             self.expression_encoder = nn.Identity()
             self.mutation_encoder = nn.Identity()
             self.cna_encoder = nn.Identity()
             self.left_encoder = nn.Identity()
-            self.classifier = Classifier(input_sizes[0] + input_sizes[1] + input_sizes[2], output_sizes[4],
-                                         dropout_rates[4], depths[4])
+            self.classifier = Classifier(input_sizes[0] + input_sizes[1] + input_sizes[2], dropout_rates[4])
 
     def forward(self, expression, mutation, cna):
         if self.combination == 0:

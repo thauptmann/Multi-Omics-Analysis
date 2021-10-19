@@ -26,12 +26,10 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
     h_dim2 = parameterization['h_dim2'] if 'h_dim2' in parameterization else parameterization['h_dim1']
     h_dim3 = parameterization['h_dim3'] if 'h_dim3' in parameterization else parameterization['h_dim1']
     h_dim4 = parameterization['h_dim4'] if 'h_dim4' in parameterization else parameterization['h_dim1']
-    h_dim5 = parameterization['h_dim5'] if 'h_dim5' in parameterization else parameterization['h_dim1']
     depth_1 = parameterization['depth_1']
     depth_2 = parameterization['depth_2'] if 'depth_2' in parameterization else parameterization['depth_1']
     depth_3 = parameterization['depth_3'] if 'depth_3' in parameterization else parameterization['depth_1']
     depth_4 = parameterization['depth_4'] if 'depth_4' in parameterization else parameterization['depth_1']
-    depth_5 = parameterization['depth_5'] if 'depth_5' in parameterization else parameterization['depth_1']
     lr_e = parameterization['lr_e']
     lr_m = parameterization['lr_m'] if 'lr_m' in parameterization else parameterization['lr_e']
     lr_c = parameterization['lr_c'] if 'lr_c' in parameterization else parameterization['lr_e']
@@ -147,12 +145,10 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     h_dim2 = parameterization['h_dim2'] if 'h_dim2' in parameterization else parameterization['h_dim1']
     h_dim3 = parameterization['h_dim3'] if 'h_dim3' in parameterization else parameterization['h_dim1']
     h_dim4 = parameterization['h_dim4'] if 'h_dim4' in parameterization else parameterization['h_dim1']
-    h_dim5 = parameterization['h_dim5'] if 'h_dim5' in parameterization else parameterization['h_dim1']
     depth_1 = parameterization['depth_1']
     depth_2 = parameterization['depth_2'] if 'depth_2' in parameterization else parameterization['depth_1']
     depth_3 = parameterization['depth_3'] if 'depth_3' in parameterization else parameterization['depth_1']
     depth_4 = parameterization['depth_4'] if 'depth_4' in parameterization else parameterization['depth_1']
-    depth_5 = parameterization['depth_5'] if 'depth_5' in parameterization else parameterization['depth_1']
     lr_e = parameterization['lr_e']
     lr_m = parameterization['lr_m'] if 'lr_m' in parameterization else parameterization['lr_e']
     lr_c = parameterization['lr_c'] if 'lr_c' in parameterization else parameterization['lr_e']
@@ -183,10 +179,10 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     triplet_selector = get_triplet_selector(margin, triplet_selector_type)
     loss_fn = get_loss_fn(margin, gamma, triplet_selector)
 
-    depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
+    depths = [depth_1, depth_2, depth_3, depth_4]
     input_sizes = [ie_dim, im_dim, ic_dim]
     dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_middle, dropout_rate_clf]
-    output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
+    output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4]
     moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
     moli_optimiser = torch.optim.Adagrad([
