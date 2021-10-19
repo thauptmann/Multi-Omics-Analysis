@@ -88,10 +88,10 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
         triplet_selector = get_triplet_selector(margin, triplet_selector_type)
         loss_fn = get_loss_fn(margin, gamma, triplet_selector)
 
-        depths = [depth_1, depth_2, depth_3, depth_4, depth_5]
+        depths = [depth_1, depth_2, depth_3, depth_4]
         input_sizes = [ie_dim, im_dim, ic_dim]
         dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_middle, dropout_rate_clf]
-        output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4, h_dim5]
+        output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4]
         moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
 
         moli_optimiser = torch.optim.Adagrad([
