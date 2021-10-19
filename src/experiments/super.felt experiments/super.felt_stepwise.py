@@ -495,8 +495,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                     encoded_M = final_M_Supervised_Encoder(dataM)
                     encoded_C = final_C_Supervised_Encoder(dataC)
 
-                    intergrated_omics = torch.cat((encoded_E, encoded_M, encoded_C), 1)
-                    Pred = final_Clas(intergrated_omics)
+                    Pred = final_Clas(encoded_E, encoded_M, encoded_C)
 
                     y_true = target.view(-1, 1).cpu()
 
@@ -515,8 +514,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
         encoded_test_E = final_E_Supervised_Encoder(torch.FloatTensor(X_testE).to(device))
         encoded_test_M = final_M_Supervised_Encoder(torch.FloatTensor(X_testM).to(device))
         encoded_test_C = final_C_Supervised_Encoder(torch.FloatTensor(X_testC).to(device))
-        intergrated_test_omics = torch.cat((encoded_test_E, encoded_test_M, encoded_test_C), 1)
-        test_Pred = final_Clas(intergrated_test_omics)
+        test_Pred = final_Clas(encoded_test_E, encoded_test_M, encoded_test_C)
         test_y_true = Y_test
         test_y_pred = test_Pred.cpu().detach().numpy()
         test_AUC = roc_auc_score(test_y_true, test_y_pred)
@@ -527,8 +525,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
         encoded_external_E = final_E_Supervised_Encoder(torch.FloatTensor(ExternalE).to(device))
         encoded_external_M = final_M_Supervised_Encoder(torch.FloatTensor(ExternalM.to_numpy()).to(device))
         encoded_external_C = final_C_Supervised_Encoder(torch.FloatTensor(ExternalC.to_numpy()).to(device))
-        intergrated_test_omics = torch.cat((encoded_external_E, encoded_external_M, encoded_external_C), 1)
-        external_Pred = final_Clas(intergrated_test_omics)
+        external_Pred = final_Clas(encoded_external_E, encoded_external_M, encoded_external_C)
         external_y_true = ExternalY
         external_y_pred = external_Pred.cpu().detach().numpy()
         external_AUC = roc_auc_score(external_y_true, external_y_pred)
