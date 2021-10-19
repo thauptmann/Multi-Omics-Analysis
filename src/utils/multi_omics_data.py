@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_selection import VarianceThreshold
 
-from utils.network_training_util import read_and_transpose_csv
+from utils.network_training_util import read_and_transpose_csv, feature_selection
 
 
 def load_egfr_data(data_path):
@@ -222,3 +222,20 @@ def load_drug_data(data_path, drug, dataset, return_data_frames=False):
     else:
         return expression_train.to_numpy(), mutation_train.to_numpy(), cna_train.to_numpy(), y_train, \
            expression_extern.to_numpy(), mutation_extern.to_numpy(), cna_extern.to_numpy(), y_extern
+
+
+def load_drug_data_with_elbow(data_path, drug, dataset):
+    gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
+                = load_drug_data(data_path, drug, dataset, return_data_frames=True)
+
+    gdsc_e, gdsc_m, gdsc_c = feature_selection(gdsc_e, gdsc_m, gdsc_c)
+    expression_intersection_genes_index = gdsc_e.columns.intersection(extern_e.columns)
+    mutation_intersection_genes_index = gdsc_m.columns.intersection(extern_m.columns)
+    cna_intersection_genes_index = gdsc_c.columns.intersection(extern_c.columns)
+    extern_e = extern_e.loc[:, expression_intersection_genes_index].to_numpy()
+    extern_m = extern_m.loc[:, mutation_intersection_genes_index].to_numpy()
+    extern_c = extern_c.loc[:, cna_intersection_genes_index].to_numpy()
+    gdsc_e = gdsc_e.to_numpy()
+    gdsc_m = gdsc_m.to_numpy()
+    gdsc_c = gdsc_c.to_numpy()
+    return gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r

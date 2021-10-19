@@ -22,28 +22,22 @@ from pathlib import Path
 from training_bo_holi_moli import train_final, train_and_validate, reset_best_auroc
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
-from utils.network_training_util import calculate_mean_and_std_auc, test
+from utils.network_training_util import calculate_mean_and_std_auc, test, feature_selection
 
 depth_lower = 1
-depth_upper = 1
-drop_rate_lower = 0.0
-drop_rate_upper = 0.9
-weight_decay_lower = 0.01
-weight_decay_upper = 0.1
+depth_upper = 2
+drop_rate_choices = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+weight_decay_choices = [0.1, 0.01, 0.001, 0.1, 0.0001]
 gamma_lower = 0.0
 gamma_upper = 0.6
-dim_lower = 8
-dim_upper = 256
-margin_lower = 0.5
-margin_upper = 2
-learning_rate_lower = 0.001
-learning_rate_upper = 0.01
-combination_lower = 0
-combination_upper = 4
-batch_size_lower = 16
-batch_size_upper = 64
-epoch_lower = 1
-epoch_upper = 25
+dim_choice = [32, 64, 128, 256, 512]
+margin_choices = [0.2, 0.5, 1]
+learning_rate_choices = [0.001, 0.01]
+combination_choices = [0, 1, 2, 3, 4]
+batch_size_choices = [8, 16, 32]
+batch_size_hard_triplets_choices = [512, 1024]
+epoch_lower = 2
+epoch_upper = 20
 cv_splits_outer = 5
 
 drugs = {
@@ -83,12 +77,13 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     log_file.write(f"Start for {drug_name}\n")
 
     data_path = Path('..', '..', '..', 'data')
-    if drug_name == 'EGFR':
-        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
-            = multi_omics_data.load_egfr_data(data_path)
-    else:
+    if not use_elbow_method:
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name)
+    else:
+        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
+            = multi_omics_data.load_drug_data_with_elbow(data_path, drug_name, extern_dataset_name)
+
     moli_search_space = create_search_space(combination, small_search_space, triplet_selector_type)
 
     torch.manual_seed(random_seed)
@@ -242,7 +237,7 @@ def extract_best_parameter(experiment):
 
 def create_search_space(combination, small_search_space, triplet_selector_type):
     if combination is None:
-        combination_parameter = {'name': 'combination', "bounds": [combination_lower, combination_upper],
+        combination_parameter = {'name': 'combination', "values": combination_choices,
                                  "value_type": "int", 'type': 'range'}
     else:
         combination_parameter = {'name': 'combination', 'value': combination, 'type': 'fixed', "value_type": "int"}
@@ -252,22 +247,20 @@ def create_search_space(combination, small_search_space, triplet_selector_type):
         margin = {'name': 'margin', "value": 0, "value_type": "float", 'type': 'fixed'}
     else:
         gamma = {'name': 'gamma', "bounds": [gamma_lower, gamma_upper], "value_type": "float", 'type': 'range'}
-        margin = {'name': 'margin', "bounds": [margin_lower, margin_upper], "value_type": "float", 'type': 'range'}
+        margin = {'name': 'margin', "values": margin_choices, "value_type": "float", 'type': 'choice'}
 
     if combination is None and not small_search_space:
         search_space = [
             {'name': 'mini_batch', 'bounds': [batch_size_lower, batch_size_upper], 'value_type': 'int',
              'type': 'range'},
-            {'name': 'h_dim1', "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-            {'name': "h_dim2", "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-            {'name': "h_dim3", "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-            {'name': "h_dim4", "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-            {'name': "h_dim5", "bounds": [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-            {'name': "depth_1", "value": 1, "value_type": "int", 'type': 'fixed'},
-            {'name': "depth_2", "value": 1, "value_type": "int", 'type': 'fixed'},
-            {'name': "depth_3", "value": 1, "value_type": "int", 'type': 'fixed'},
-            {'name': "depth_4", "value": 1, "value_type": "int", 'type': 'fixed'},
-            {'name': "depth_5", "value": 1, "value_type": "int", 'type': 'fixed'},
+            {'name': 'h_dim1', "values": [dim_lower, dim_upper], "value_type": "int", 'type': 'choice'},
+            {'name': "h_dim2", "values": [dim_lower, dim_upper], "value_type": "int", 'type': 'choice'},
+            {'name': "h_dim3", "values": [dim_lower, dim_upper], "value_type": "int", 'type': 'choice'},
+            {'name': "h_dim4", "values": [dim_lower, dim_upper], "value_type": "int", 'type': 'choice'},
+            {'name': "depth_1", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+            {'name': "depth_2", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+            {'name': "depth_3", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
+            {'name': "depth_4", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
             {'name': "lr_e", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
              'log_scale': True, 'type': 'range'},
             {'name': "lr_m", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
@@ -303,11 +296,9 @@ def create_search_space(combination, small_search_space, triplet_selector_type):
                         {'name': "h_dim1", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
                         {'name': "h_dim2", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
                         {'name': "h_dim3", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-                        {'name': "h_dim5", 'value': 1, "value_type": "int", 'type': 'fixed'},
                         {'name': "depth_1", 'value': 1, "value_type": "int", 'type': 'fixed'},
                         {'name': "depth_2", 'value': 1, "value_type": "int", 'type': 'fixed'},
                         {'name': "depth_3", 'value': 1, "value_type": "int", 'type': 'fixed'},
-                        {'name': "depth_5", 'value': 1, "value_type": "int", 'type': 'fixed'},
                         {'name': "lr_e", 'bounds': [learning_rate_lower, learning_rate_upper],
                          "value_type": "float", 'log_scale': True, 'type': 'range'},
                         {'name': "lr_m", 'bounds': [learning_rate_lower, learning_rate_upper],
@@ -339,7 +330,6 @@ def create_search_space(combination, small_search_space, triplet_selector_type):
             {'name': "h_dim2", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
             {'name': "h_dim3", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
             {'name': "h_dim4", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-            {'name': "h_dim5", 'value': 1, "value_type": "int", 'type': 'fixed'},
             {'name': "depth_1", 'value': 1, "value_type": "int", 'type': 'fixed'},
             {'name': "lr_e", 'bounds': [learning_rate_lower, learning_rate_upper],
              "value_type": "float", 'log_scale': True, 'type': 'range'},
