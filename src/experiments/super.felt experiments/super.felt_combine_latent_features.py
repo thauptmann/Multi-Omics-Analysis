@@ -182,7 +182,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                 integration_optimizer = optim.Adagrad(integration_Supervised_Encoder.parameters(), lr=lrE,
                                                       weight_decay=Ewd)
 
-                final_Clas = Classifier(integration_width, 1, C_dr)
+                final_Clas = Classifier(integration_width, 1, C_dr).to(device)
                 Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
                 # train each Supervised_Encoder with triplet loss
