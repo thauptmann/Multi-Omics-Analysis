@@ -133,11 +133,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                 X_trainE = X_train_valE[train_index]
                 X_valE = X_train_valE[validate_index]
                 X_trainM = X_train_valM[train_index]
-                X_valM = torch.FloatTensor(X_train_valM[validate_index]).to(device)
+                X_valM = torch.FloatTensor(X_train_valM[validate_index])
                 X_trainC = X_train_valC[train_index]
-                X_valC = torch.FloatTensor(X_train_valC[validate_index]).to(device)
+                X_valC = torch.FloatTensor(X_train_valC[validate_index])
                 Y_train = Y_train_val[train_index]
-                Y_val = torch.FloatTensor(Y_train_val[validate_index]).to(device)
+                Y_val = torch.FloatTensor(Y_train_val[validate_index])
                 class_sample_count = np.array([len(np.where(Y_train == t)[0]) for t in np.unique(Y_train)])
                 weight = 1. / class_sample_count
                 samples_weight = np.array([weight[t] for t in Y_train])
@@ -347,9 +347,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                         """
                             validation
                         """
-                        encoded_E = E_Supervised_Encoder(X_valE)
-                        encoded_M = M_Supervised_Encoder(X_valM)
-                        encoded_C = C_Supervised_Encoder(X_valC)
+                        encoded_E = E_Supervised_Encoder(X_valE.to(device))
+                        encoded_M = M_Supervised_Encoder(X_valM.to(device))
+                        encoded_C = C_Supervised_Encoder(X_valC.to(device))
                         concat_encoded = torch.cat((encoded_E, encoded_M, encoded_C), 1)
                         concat_encoded = integration_Supervised_Encoder(concat_encoded)
                         encoded_Triplets_list = TripSel(concat_encoded, Y_val)
