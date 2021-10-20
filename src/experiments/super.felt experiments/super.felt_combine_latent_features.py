@@ -386,7 +386,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                             encoded_C = C_Supervised_Encoder(dataC)
                             concat_encoded = torch.cat((encoded_E, encoded_M, encoded_C), 1)
                             concat_encoded = integration_Supervised_Encoder(concat_encoded)
-                            Pred = final_Clas(concat_encoded, torch.FloatTensor(), torch.FloatTensor())
+                            Pred = final_Clas(concat_encoded, torch.FloatTensor().to(device),
+                                              torch.FloatTensor().to(device))
 
                             y_true = target.view(-1, 1).cpu()
 
@@ -418,7 +419,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
 
                         concat_encoded = torch.cat((encoded_val_E, encoded_val_M, encoded_val_C), 1)
                         concat_encoded = integration_Supervised_Encoder(concat_encoded)
-                        test_pred = final_Clas(concat_encoded, torch.FloatTensor(), torch.FloatTensor())
+                        test_pred = final_Clas(concat_encoded, torch.FloatTensor().to(device),
+                                               torch.FloatTensor().to(device))
 
                         test_y_true = Y_val
                         test_y_pred = test_pred.cpu()
@@ -573,7 +575,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                     encoded_C = final_C_Supervised_Encoder(dataC)
                     concat_encoded = torch.cat((encoded_E, encoded_M, encoded_C), 1)
                     concat_encoded = integration_Supervised_Encoder(concat_encoded)
-                    Pred = final_Clas(concat_encoded, torch.FloatTensor(), torch.FloatTensor())
+                    Pred = final_Clas(concat_encoded, torch.FloatTensor().to(device),
+                                      torch.FloatTensor().to(device))
                     cl_loss = BCE_loss_fun(Pred, target.view(-1, 1))
 
                     Cl_optimizer.zero_grad()
@@ -589,7 +592,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
         encoded_test_C = final_C_Supervised_Encoder(torch.FloatTensor(X_testC).to(device))
         concat_encoded = torch.cat((encoded_test_E, encoded_test_M, encoded_test_C), 1)
         concat_encoded = integration_Supervised_Encoder(concat_encoded)
-        test_Pred = final_Clas(concat_encoded, torch.FloatTensor(), torch.FloatTensor())
+        test_Pred = final_Clas(concat_encoded, torch.FloatTensor().to(device), torch.FloatTensor().to(device))
         test_y_true = Y_test
         test_y_pred = test_Pred.cpu().detach().numpy()
         test_AUC = roc_auc_score(test_y_true, test_y_pred)
@@ -602,7 +605,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
         encoded_external_C = final_C_Supervised_Encoder(torch.FloatTensor(ExternalC.to_numpy()).to(device))
         concat_encoded = torch.cat((encoded_external_E, encoded_external_M, encoded_external_C), 1)
         concat_encoded = integration_Supervised_Encoder(concat_encoded)
-        external_Pred = final_Clas(concat_encoded, torch.FloatTensor(), torch.FloatTensor())
+        external_Pred = final_Clas(concat_encoded, torch.FloatTensor().to(device), torch.FloatTensor().to(device))
         external_y_true = ExternalY
         external_y_pred = external_Pred.cpu().detach().numpy()
         external_AUC = roc_auc_score(external_y_true, external_y_pred)
