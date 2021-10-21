@@ -195,9 +195,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                             dataE = dataE.to(device)
                             encoded_E = E_Supervised_Encoder(dataE)
                             if e_epoch < (E_Supervised_Encoder_epoch-2):
-                                E_Triplets_list = semi_hard_triplet_selector(encoded_E, target)
+                                E_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_E, target)
                             else:
-                                E_Triplets_list = hardest_triplet_selector(encoded_E, target)
+                                E_Triplets_list = hardest_triplet_selector.get_triplets(encoded_E, target)
                             E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
                                                    encoded_E[E_Triplets_list[:, 1], :],
                                                    encoded_E[E_Triplets_list[:, 2], :])
@@ -215,7 +215,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                             inner validation
                         """
                         encoded_val_E = E_Supervised_Encoder(X_valE)
-                        E_Triplets_list = hardest_triplet_selector(encoded_val_E, torch.FloatTensor(Y_val))
+                        E_Triplets_list = hardest_triplet_selector.get_triplets(encoded_val_E, torch.FloatTensor(Y_val))
                         val_E_loss = trip_loss_fun(encoded_val_E[E_Triplets_list[:, 0], :],
                                                    encoded_val_E[E_Triplets_list[:, 1], :],
                                                    encoded_val_E[E_Triplets_list[:, 2], :])
@@ -240,9 +240,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                             dataM = dataM.to(device)
                             encoded_M = M_Supervised_Encoder(dataM)
                             if m_epoch < (M_Supervised_Encoder_epoch - 2):
-                                M_Triplets_list = semi_hard_triplet_selector(encoded_M, target)
+                                M_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_M, target)
                             else:
-                                M_Triplets_list = hardest_triplet_selector(encoded_M, target)
+                                M_Triplets_list = hardest_triplet_selector.get_triplets(encoded_M, target)
                             M_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
                                                    encoded_M[M_Triplets_list[:, 1], :],
                                                    encoded_M[M_Triplets_list[:, 2], :])
@@ -260,7 +260,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                             validation
                         """
                         encoded_val_M = M_Supervised_Encoder(torch.FloatTensor(X_valM).to(device))
-                        M_Triplets_list = hardest_triplet_selector(encoded_val_M, torch.FloatTensor(Y_val))
+                        M_Triplets_list = hardest_triplet_selector.get_triplets(encoded_val_M, torch.FloatTensor(Y_val))
                         val_M_loss = trip_loss_fun(encoded_val_M[M_Triplets_list[:, 0], :],
                                                    encoded_val_M[M_Triplets_list[:, 1], :],
                                                    encoded_val_M[M_Triplets_list[:, 2], :])
@@ -286,9 +286,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                             encoded_C = C_Supervised_Encoder(dataC)
 
                             if c_epoch < (C_Supervised_Encoder_epoch - 2):
-                                C_Triplets_list = semi_hard_triplet_selector(encoded_C, target)
+                                C_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_C, target)
                             else:
-                                C_Triplets_list = hardest_triplet_selector(encoded_C, target)
+                                C_Triplets_list = hardest_triplet_selector.get_triplets(encoded_C, target)
                             C_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
                                                    encoded_C[C_Triplets_list[:, 1], :],
                                                    encoded_C[C_Triplets_list[:, 2], :])
@@ -307,7 +307,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                             inner validation
                         """
                         encoded_val_C = C_Supervised_Encoder(torch.FloatTensor(X_valC).to(device))
-                        C_Triplets_list = hardest_triplet_selector(encoded_val_C, torch.FloatTensor(Y_val))
+                        C_Triplets_list = hardest_triplet_selector.get_triplets(encoded_val_C, torch.FloatTensor(Y_val))
                         val_C_loss = trip_loss_fun(encoded_val_C[C_Triplets_list[:, 0], :],
                                                    encoded_val_C[C_Triplets_list[:, 1], :],
                                                    encoded_val_C[C_Triplets_list[:, 2], :])
@@ -440,9 +440,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                     encoded_E = final_E_Supervised_Encoder(dataE)
 
                     if e_epoch < (E_Supervised_Encoder_epoch - 2):
-                        E_Triplets_list = semi_hard_triplet_selector(encoded_E, target)
+                        E_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_E, target)
                     else:
-                        E_Triplets_list = hardest_triplet_selector(encoded_E, target)
+                        E_Triplets_list = hardest_triplet_selector.get_triplets(encoded_E, target)
                     E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
                                            encoded_E[E_Triplets_list[:, 1], :],
                                            encoded_E[E_Triplets_list[:, 2], :])
@@ -460,9 +460,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                     dataM = dataM.to(device)
                     encoded_M = final_M_Supervised_Encoder(dataM)
                     if m_epoch < (M_Supervised_Encoder_epoch - 2):
-                        M_Triplets_list = semi_hard_triplet_selector(encoded_M, target)
+                        M_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_M, target)
                     else:
-                        M_Triplets_list = hardest_triplet_selector(encoded_M, target)
+                        M_Triplets_list = hardest_triplet_selector.get_triplets(encoded_M, target)
                     M_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
                                            encoded_M[M_Triplets_list[:, 1], :],
                                            encoded_M[M_Triplets_list[:, 2], :])
@@ -481,9 +481,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                     encoded_C = final_C_Supervised_Encoder(dataC)
 
                     if c_epoch < (C_Supervised_Encoder_epoch - 2):
-                        C_Triplets_list = semi_hard_triplet_selector(encoded_C, target)
+                        C_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_C, target)
                     else:
-                        C_Triplets_list = hardest_triplet_selector(encoded_C, target)
+                        C_Triplets_list = hardest_triplet_selector.get_triplets(encoded_C, target)
                     C_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
                                            encoded_C[C_Triplets_list[:, 1], :],
                                            encoded_C[C_Triplets_list[:, 2], :])
