@@ -11,12 +11,11 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
 
-from siamese_triplet.utils import HardestNegativeTripletSelector, SemihardNegativeTripletSelector
-
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, feature_selection
+from siamese_triplet.utils import HardestNegativeTripletSelector, SemihardNegativeTripletSelector
+from utils.network_training_util import calculate_mean_and_std_auc, feature_selection
 from utils import multi_omics_data
-from super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier
+from super_felt_model import SupervisedEncoder, Classifier
 
 from utils.choose_gpu import get_free_gpu
 
