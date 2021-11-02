@@ -15,8 +15,7 @@ from tqdm import tqdm
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, feature_selection
 from utils import multi_omics_data
-from super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier, ClassifierEAndCFirst, \
-    ClassifierEAndMFirst, ClassifierMAndCFirst
+from super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier
 
 from utils.choose_gpu import get_free_gpu
 
@@ -51,18 +50,21 @@ hyperparameters_set6 = {'E_dr': 0.3, 'C_dr': 0.5, 'Cwd': 0.01, 'Ewd': 0.01}
 hyperparameters_set7 = {'E_dr': 0.4, 'C_dr': 0.4, 'Cwd': 0.01, 'Ewd': 0.01}
 hyperparameters_set8 = {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.1, 'Ewd': 0.1}
 
-for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperparameters_set3,
-                           hyperparameters_set4, hyperparameters_set5, hyperparameters_set6, hyperparameters_set7,
-                           hyperparameters_set8):
-    for width in (16, 32, 64, 128, 256, 512):
-        hyperparameter_set['width'] = width
-        hyperparameters_set_list.append(hyperparameter_set.copy())
-
 E_Supervised_Encoder_epoch = 10
 C_Supervised_Encoder_epoch = 5
 M_Supervised_Encoder_epoch = 3
 Classifier_epoch = 5
-integration_epoch = 10
+integration_epochs = [3, 4, 5, 6, 7, 8, 9, 10]
+integration_widths = [16, 32, 64, 128, 256, 512]
+
+for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperparameters_set3,
+                           hyperparameters_set4, hyperparameters_set5, hyperparameters_set6, hyperparameters_set7,
+                           hyperparameters_set8):
+    for width in integration_widths:
+        hyperparameter_set['width'] = width
+        for epoch in integration_epochs:
+            hyperparameter_set['integration_epochs'] = epoch
+            hyperparameters_set_list.append(hyperparameter_set.copy())
 
 random_seed = 42
 
@@ -127,6 +129,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
             Cwd = hyperparameters_set['Cwd']
             Ewd = hyperparameters_set['Ewd']
             integration_width = hyperparameters_set['width']
+            integration_epoch = hyperparameters_set['integration_epochs']
             all_validation_aurocs = []
             for train_index, validate_index in tqdm(skf.split(X_train_valE, Y_train_val), total=skf.get_n_splits(),
                                                     desc="k-fold"):
@@ -440,6 +443,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
         Cwd = best_hyperparameter['Cwd']
         Ewd = best_hyperparameter['Ewd']
         integration_width = best_hyperparameter['width']
+        integration_epoch = best_hyperparameter['integration_epochs']
         class_sample_count = np.array([len(np.where(Y_train_val == t)[0]) for t in np.unique(Y_train_val)])
         weight = 1. / class_sample_count
         samples_weight = np.array([weight[t] for t in Y_train_val])
@@ -559,6 +563,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                     integration_optimizer.zero_grad()
                     integrated_loss.backward()
                     integration_optimizer.step()
+
         integration_Supervised_Encoder.eval()
 
         # train classifier
