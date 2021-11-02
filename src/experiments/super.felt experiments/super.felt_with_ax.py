@@ -544,7 +544,6 @@ def train_final(BCE_loss_fun, X_train_valE, X_train_valM, X_train_valC, Y_train_
 
 
 def get_search_space():
-    hyperparameters_set_list = []
     hyperparameters_set1 = {'E_dr': 0.1, 'C_dr': 0.1, 'Cwd': 0.0, 'Ewd': 0.0}
     hyperparameters_set2 = {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.01}
     hyperparameters_set3 = {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.05}
@@ -553,15 +552,6 @@ def get_search_space():
     hyperparameters_set6 = {'E_dr': 0.3, 'C_dr': 0.5, 'Cwd': 0.01, 'Ewd': 0.01}
     hyperparameters_set7 = {'E_dr': 0.4, 'C_dr': 0.4, 'Cwd': 0.01, 'Ewd': 0.01}
     hyperparameters_set8 = {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.1, 'Ewd': 0.1}
-
-    hyperparameters_set_list.append(hyperparameters_set1)
-    hyperparameters_set_list.append(hyperparameters_set2)
-    hyperparameters_set_list.append(hyperparameters_set3)
-    hyperparameters_set_list.append(hyperparameters_set4)
-    hyperparameters_set_list.append(hyperparameters_set5)
-    hyperparameters_set_list.append(hyperparameters_set6)
-    hyperparameters_set_list.append(hyperparameters_set7)
-    hyperparameters_set_list.append(hyperparameters_set8)
 
     return [{'name': 'E_dr', 'values': [0.1, 0.3, 0.4, 0.5], 'type': 'choice'},
             {'name': 'C_dr', 'values': [0.1, 0.3,  0.4, 0.5, 0.7], 'type': 'choice'},
