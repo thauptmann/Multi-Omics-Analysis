@@ -52,7 +52,7 @@ hyperparameters_set8 = {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.1, 'Ewd': 0.1}
 for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperparameters_set3,
                            hyperparameters_set4, hyperparameters_set5, hyperparameters_set6, hyperparameters_set7,
                            hyperparameters_set8):
-    for smoothing in (0.5, 0.1, 0.2):
+    for smoothing in (0.05, 0.1, 0.01):
         hyperparameter_set['smoothing'] = smoothing
         hyperparameters_set_list.append(hyperparameter_set.copy())
 
@@ -186,6 +186,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                             dataE = dataE.to(device)
                             encoded_E = E_Supervised_Encoder(dataE)
+                            print(target)
 
                             E_Triplets_list = TripSel(encoded_E, target)
                             E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
