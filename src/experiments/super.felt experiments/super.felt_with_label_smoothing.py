@@ -186,7 +186,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                             dataE = dataE.to(device)
                             encoded_E = E_Supervised_Encoder(dataE)
-                            print(target)
 
                             E_Triplets_list = TripSel(encoded_E, target)
                             E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
