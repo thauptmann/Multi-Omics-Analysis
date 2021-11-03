@@ -52,7 +52,9 @@ hyperparameters_set8 = {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.1, 'Ewd': 0.1}
 for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperparameters_set3,
                            hyperparameters_set4, hyperparameters_set5, hyperparameters_set6, hyperparameters_set7,
                            hyperparameters_set8):
-    hyperparameters_set_list.append(hyperparameter_set.copy())
+    for smoothing in (0.5, 0.1, 0.2):
+        hyperparameter_set['smoothing'] = smoothing
+        hyperparameters_set_list.append(hyperparameter_set.copy())
 
 E_Supervised_Encoder_epoch = 10
 C_Supervised_Encoder_epoch = 5
@@ -121,6 +123,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
             C_dr = hyperparameters_set['C_dr']
             Cwd = hyperparameters_set['Cwd']
             Ewd = hyperparameters_set['Ewd']
+            smoothing = hyperparameters_set['smoothing']
             all_validation_aurocs = []
             for train_index, validate_index in tqdm(skf.split(X_train_valE, Y_train_val), total=skf.get_n_splits(),
                                                     desc="k-fold"):
@@ -135,7 +138,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                 class_sample_count = np.array([len(np.where(Y_train == t)[0]) for t in np.unique(Y_train)])
                 weight = 1. / class_sample_count
                 samples_weight = np.array([weight[t] for t in Y_train])
-                Y_train = abs(Y_train - 0.1)
+                Y_train = abs(Y_train - smoothing)
                 samples_weight = torch.from_numpy(samples_weight)
                 sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
                                                 replacement=True)
@@ -155,7 +158,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                 n_sampC, IC_dim = X_trainC.shape
 
                 cost_tr = []
-                auc_tr = []
 
                 E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr)
                 M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr)
@@ -363,6 +365,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
         C_dr = best_hyperparameter['C_dr']
         Cwd = best_hyperparameter['Cwd']
         Ewd = best_hyperparameter['Ewd']
+        smoothing = best_hyperparameter['smoothing']
         class_sample_count = np.array([len(np.where(Y_train_val == t)[0]) for t in np.unique(Y_train_val)])
         weight = 1. / class_sample_count
         samples_weight = np.array([weight[t] for t in Y_train_val])
@@ -373,9 +376,10 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
         final_scalerGDSC = sk.StandardScaler()
         final_scalerGDSC.fit(X_train_valE)
         X_train_valE = final_scalerGDSC.transform(X_train_valE)
+        Y_train_val = abs(Y_train_val - smoothing)
         trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(X_train_valE), torch.FloatTensor(X_train_valM),
                                                       torch.FloatTensor(X_train_valC),
-                                                      torch.FloatTensor(Y_train_val.astype(int)))
+                                                      torch.FloatTensor(Y_train_val.astype(float)))
 
         trainLoader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mb_size, shuffle=False,
                                                   num_workers=1, sampler=sampler)
@@ -474,7 +478,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
 
                     cl_loss = BCE_loss_fun(Pred, target.view(-1, 1))
                     y_pred = Pred.cpu()
-                    AUC = roc_auc_score(y_true.detach().numpy(), y_pred.detach().numpy())
 
                     Cl_optimizer.zero_grad()
                     cl_loss.backward()
