@@ -39,6 +39,7 @@ lrE = 0.01
 lrM = 0.01
 lrC = 0.01
 lrCL = 0.01
+hard_triplet_iteration = 2
 
 hyperparameters_set_list = []
 hyperparameters_set1 = {'E_dr': 0.1, 'C_dr': 0.1, 'Cwd': 0.0, 'Ewd': 0.0}
@@ -194,7 +195,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                             dataE = dataE.to(device)
                             encoded_E = E_Supervised_Encoder(dataE)
-                            if e_epoch < (E_Supervised_Encoder_epoch-2):
+                            if e_epoch < E_Supervised_Encoder_epoch - (1 + hard_triplet_iteration):
                                 E_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_E, target)
                             else:
                                 E_Triplets_list = hardest_triplet_selector.get_triplets(encoded_E, target)
@@ -239,7 +240,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                             dataM = dataM.to(device)
                             encoded_M = M_Supervised_Encoder(dataM)
-                            if m_epoch < (M_Supervised_Encoder_epoch - 2):
+                            if m_epoch < (M_Supervised_Encoder_epoch - (1 + hard_triplet_iteration)):
                                 M_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_M, target)
                             else:
                                 M_Triplets_list = hardest_triplet_selector.get_triplets(encoded_M, target)
@@ -285,7 +286,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                             dataC = dataC.to(device)
                             encoded_C = C_Supervised_Encoder(dataC)
 
-                            if c_epoch < (C_Supervised_Encoder_epoch - 2):
+                            if c_epoch < (C_Supervised_Encoder_epoch - (1 + hard_triplet_iteration)):
                                 C_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_C, target)
                             else:
                                 C_Triplets_list = hardest_triplet_selector.get_triplets(encoded_C, target)
@@ -439,7 +440,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                     dataE = dataE.to(device)
                     encoded_E = final_E_Supervised_Encoder(dataE)
 
-                    if e_epoch < (E_Supervised_Encoder_epoch - 2):
+                    if e_epoch < (E_Supervised_Encoder_epoch - (1 + hard_triplet_iteration)):
                         E_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_E, target)
                     else:
                         E_Triplets_list = hardest_triplet_selector.get_triplets(encoded_E, target)
@@ -459,7 +460,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                     dataM = dataM.to(device)
                     encoded_M = final_M_Supervised_Encoder(dataM)
-                    if m_epoch < (M_Supervised_Encoder_epoch - 2):
+                    if m_epoch < (M_Supervised_Encoder_epoch - (1 + hard_triplet_iteration)):
                         M_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_M, target)
                     else:
                         M_Triplets_list = hardest_triplet_selector.get_triplets(encoded_M, target)
@@ -480,7 +481,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                     dataC = dataC.to(device)
                     encoded_C = final_C_Supervised_Encoder(dataC)
 
-                    if c_epoch < (C_Supervised_Encoder_epoch - 2):
+                    if c_epoch < (C_Supervised_Encoder_epoch - (1 + hard_triplet_iteration)):
                         C_Triplets_list = semi_hard_triplet_selector.get_triplets(encoded_C, target)
                     else:
                         C_Triplets_list = hardest_triplet_selector.get_triplets(encoded_C, target)
@@ -513,7 +514,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
 
                     cl_loss = BCE_loss_fun(Pred, target.view(-1, 1))
                     y_pred = Pred.cpu()
-                    AUC = roc_auc_score(y_true.detach().numpy(), y_pred.detach().numpy())
 
                     Cl_optimizer.zero_grad()
                     cl_loss.backward()
