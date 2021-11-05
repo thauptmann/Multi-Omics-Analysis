@@ -22,20 +22,17 @@ from pathlib import Path
 from training_bo_holi_moli import train_final, train_and_validate, reset_best_auroc
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
-from utils.network_training_util import calculate_mean_and_std_auc, test, feature_selection
+from utils.network_training_util import calculate_mean_and_std_auc, test
 
-depth_lower = 1
-depth_upper = 2
 drop_rate_choices = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 weight_decay_choices = [0.1, 0.01, 0.001, 0.1, 0.0001]
-gamma_lower = 0.0
-gamma_upper = 0.6
+gamma_choices = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 dim_choice = [32, 64, 128, 256, 512]
 margin_choices = [0.2, 0.5, 1]
 learning_rate_choices = [0.001, 0.01]
 combination_choices = [0, 1, 2, 3, 4]
-batch_size_choices = [8, 16, 32]
-batch_size_hard_triplets_choices = [512, 1024]
+all_triplet_batch_size_choices = [8, 16, 32, 64]
+batch_size_hard_triplets_choices = [64, 128, 256, 512]
 epoch_lower = 2
 epoch_upper = 20
 cv_splits_outer = 5
@@ -55,7 +52,7 @@ random_seed = 42
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
             sampling_method, drug_name, extern_dataset_name, gpu_number, small_search_space,
-            deactivate_skip_bad_iterations, triplet_selector_type, use_elbow_method):
+            deactivate_skip_bad_iterations, triplet_selector_type, deactivate_elbow_method):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -77,7 +74,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     log_file.write(f"Start for {drug_name}\n")
 
     data_path = Path('..', '..', '..', 'data')
-    if not use_elbow_method:
+    if deactivate_elbow_method:
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name)
     else:
@@ -235,54 +232,42 @@ def extract_best_parameter(experiment):
     return best_parameters
 
 
-def create_search_space(combination, small_search_space, triplet_selector_type):
+def create_search_space(combination, small_search_space, hard_triplet_selector):
+    batch_size_choices = batch_size_hard_triplets_choices if hard_triplet_selector else all_triplet_batch_size_choices
     if combination is None:
         combination_parameter = {'name': 'combination', "values": combination_choices,
                                  "value_type": "int", 'type': 'range'}
     else:
         combination_parameter = {'name': 'combination', 'value': combination, 'type': 'fixed', "value_type": "int"}
 
-    if triplet_selector_type == 'none':
-        gamma = {'name': 'gamma', "value": 0, "value_type": "float", 'type': 'fixed'}
-        margin = {'name': 'margin', "value": 0, "value_type": "float", 'type': 'fixed'}
-    else:
-        gamma = {'name': 'gamma', "bounds": [gamma_lower, gamma_upper], "value_type": "float", 'type': 'range'}
-        margin = {'name': 'margin', "values": margin_choices, "value_type": "float", 'type': 'choice'}
+    gamma = {'name': 'gamma', "bounds": gamma_choices, "value_type": "float", 'type': 'choice'}
+    margin = {'name': 'margin', "values": margin_choices, "value_type": "float", 'type': 'choice'}
 
     if combination is None and not small_search_space:
         search_space = [
-            {'name': 'mini_batch', 'bounds': [batch_size_lower, batch_size_upper], 'value_type': 'int',
-             'type': 'range'},
-            {'name': 'h_dim1', "values": [dim_lower, dim_upper], "value_type": "int", 'type': 'choice'},
-            {'name': "h_dim2", "values": [dim_lower, dim_upper], "value_type": "int", 'type': 'choice'},
-            {'name': "h_dim3", "values": [dim_lower, dim_upper], "value_type": "int", 'type': 'choice'},
-            {'name': "h_dim4", "values": [dim_lower, dim_upper], "value_type": "int", 'type': 'choice'},
-            {'name': "depth_1", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
-            {'name': "depth_2", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
-            {'name': "depth_3", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
-            {'name': "depth_4", "bounds": [depth_lower, depth_upper], "value_type": "int", 'type': 'range'},
-            {'name': "lr_e", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
-             'log_scale': True, 'type': 'range'},
-            {'name': "lr_m", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
-             'log_scale': True, 'type': 'range'},
-            {'name': "lr_c", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
-             'log_scale': True, 'type': 'range'},
-            {'name': "lr_cl", "bounds": [learning_rate_lower, learning_rate_upper], "value_type": "float",
-             'log_scale': True, 'type': 'range'},
-            {'name': "lr_middle", "bounds": [learning_rate_lower, learning_rate_upper],
-             "value_type": "float", 'log_scale': True, 'type': 'range'},
-            {'name': "dropout_rate_e", "bounds": [drop_rate_lower, drop_rate_upper], "value_type": "float",
-             'type': 'range'},
-            {'name': "dropout_rate_m", "bounds": [drop_rate_lower, drop_rate_upper], "value_type": "float",
-             'type': 'range'},
-            {'name': "dropout_rate_c", "bounds": [drop_rate_lower, drop_rate_upper], "value_type": "float",
-             'type': 'range'},
-            {'name': "dropout_rate_clf", "bounds": [drop_rate_lower, drop_rate_upper], "value_type": "float",
-             'type': 'range'},
-            {'name': "dropout_rate_middle", "bounds": [drop_rate_lower, drop_rate_upper], "value_type": "float",
-             'type': 'range'},
-            {'name': 'weight_decay', "bounds": [weight_decay_lower, weight_decay_upper], 'log_scale': True,
-             "value_type": "float", 'type': 'range'},
+            {'name': 'mini_batch', 'bounds': batch_size_choices, 'value_type': 'int',
+             'type': 'choice'},
+            {'name': 'h_dim1', "values": dim_choice, "value_type": "int", 'type': 'choice'},
+            {'name': "h_dim2", "values": dim_choice, "value_type": "int", 'type': 'choice'},
+            {'name': "h_dim3", "values": dim_choice, "value_type": "int", 'type': 'choice'},
+            {'name': "h_dim4", "values": dim_choice, "value_type": "int", 'type': 'choice'},
+            {'name': "lr_e", "bounds": learning_rate_choices, "value_type": "float", 'log_scale': True,
+             'type': 'choice'},
+            {'name': "lr_m", "bounds": learning_rate_choices, "value_type": "float",
+             'log_scale': True, 'type': 'choice'},
+            {'name': "lr_c", "bounds": learning_rate_choices, "value_type": "float",
+             'log_scale': True, 'type': 'choice'},
+            {'name': "lr_cl", "bounds": learning_rate_choices, "value_type": "float", 'log_scale': True,
+             'type': 'choice'},
+            {'name': "lr_middle", "bounds": learning_rate_choices, "value_type": "float", 'log_scale': True,
+             'type': 'choice'},
+            {'name': "dropout_rate_e", "bounds": drop_rate_choices, "value_type": "float", 'type': 'choice'},
+            {'name': "dropout_rate_m", "bounds": drop_rate_choices, "value_type": "float", 'type': 'choice'},
+            {'name': "dropout_rate_c", "bounds": drop_rate_choices, "value_type": "float", 'type': 'choice'},
+            {'name': "dropout_rate_clf", "bounds": drop_rate_choices, "value_type": "float", 'type': 'choice'},
+            {'name': "dropout_rate_middle", "bounds": drop_rate_choices, "value_type": "float", 'type': 'choice'},
+            {'name': 'weight_decay', "bounds": weight_decay_choices, 'log_scale': True,
+             "value_type": "float", 'type': 'choice'},
             gamma,
             margin,
             {'name': 'epochs', "bounds": [epoch_lower, epoch_upper], "value_type": "int", 'type': 'range'},
@@ -291,51 +276,44 @@ def create_search_space(combination, small_search_space, triplet_selector_type):
 
     # moli
     elif combination is not None and not small_search_space:
-        search_space = [{'name': 'mini_batch', 'bounds': [batch_size_lower, batch_size_upper],
+        search_space = [{'name': 'mini_batch', 'bounds': batch_size_choices,
                          'type': 'range', 'value_type': 'int', 'log_scale': True},
-                        {'name': "h_dim1", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-                        {'name': "h_dim2", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-                        {'name': "h_dim3", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-                        {'name': "depth_1", 'value': 1, "value_type": "int", 'type': 'fixed'},
-                        {'name': "depth_2", 'value': 1, "value_type": "int", 'type': 'fixed'},
-                        {'name': "depth_3", 'value': 1, "value_type": "int", 'type': 'fixed'},
-                        {'name': "lr_e", 'bounds': [learning_rate_lower, learning_rate_upper],
-                         "value_type": "float", 'log_scale': True, 'type': 'range'},
-                        {'name': "lr_m", 'bounds': [learning_rate_lower, learning_rate_upper],
-                         "value_type": "float", 'log_scale': True, 'type': 'range'},
-                        {'name': "lr_c", 'bounds': [learning_rate_lower, learning_rate_upper],
-                         "value_type": "float", 'log_scale': True, 'type': 'range'},
-                        {'name': "lr_cl", 'bounds': [learning_rate_lower, learning_rate_upper],
-                         "value_type": "float", 'log_scale': True, 'type': 'range'},
-                        {'name': "dropout_rate_e", 'bounds': [drop_rate_lower, drop_rate_upper],
-                         "value_type": "float", 'type': 'range'},
-                        {'name': "dropout_rate_m", 'bounds': [drop_rate_lower, drop_rate_upper],
-                         "value_type": "float", 'type': 'range'},
-                        {'name': "dropout_rate_c", 'bounds': [drop_rate_lower, drop_rate_upper],
-                         "value_type": "float", 'type': 'range'},
-                        {'name': "dropout_rate_clf", 'bounds': [drop_rate_lower, drop_rate_upper],
-                         "value_type": "float", 'type': 'range'},
-                        {'name': 'weight_decay', 'bounds': [weight_decay_lower, weight_decay_upper], 'log_scale': True,
-                         "value_type": "float", 'type': 'range'},
-                       gamma,
+                        {'name': "h_dim1", 'bounds': dim_choice, "value_type": "int", 'type': 'choice'},
+                        {'name': "h_dim2", 'bounds': dim_choice, "value_type": "int", 'type': 'choice'},
+                        {'name': "h_dim3", 'bounds': dim_choice, "value_type": "int", 'type': 'choice'},
+                        {'name': "lr_e", 'bounds': learning_rate_choices,
+                         "value_type": "float", 'log_scale': True, 'type': 'choice'},
+                        {'name': "lr_m", 'bounds': learning_rate_choices, "value_type": "float", 'log_scale': True,
+                         'type': 'choice'},
+                        {'name': "lr_c", 'bounds': learning_rate_choices, "value_type": "float", 'type': 'choice'},
+                        {'name': "lr_cl", 'bounds': learning_rate_choices, "value_type": "float", 'type': 'choice'},
+                        {'name': "dropout_rate_e", 'bounds': drop_rate_choices,
+                         "value_type": "float", 'type': 'choice'},
+                        {'name': "dropout_rate_m", 'bounds': drop_rate_choices,
+                         "value_type": "float", 'type': 'choice'},
+                        {'name': "dropout_rate_c", 'bounds': drop_rate_choices,
+                         "value_type": "float", 'type': 'choice'},
+                        {'name': "dropout_rate_clf", 'bounds': drop_rate_choices, "value_type": "float",
+                         'type': 'choice'},
+                        {'name': 'weight_decay', 'bounds': weight_decay_choices, 'log_scale': True,
+                         "value_type": "float", 'type': 'choice'},
+                        gamma,
                         margin,
                         {'name': 'epochs', 'bounds': [epoch_lower, epoch_upper], "value_type": "int", 'type': 'range'},
                         combination_parameter
                         ]
     else:
         search_space = [
-            {'name': 'mini_batch', 'bounds': [batch_size_lower, batch_size_upper], "value_type": "int",
-             'type': 'range'},
-            {'name': "h_dim1", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-            {'name': "h_dim2", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-            {'name': "h_dim3", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
-            {'name': "h_dim4", 'bounds': [dim_lower, dim_upper], "value_type": "int", 'type': 'range'},
+            {'name': 'mini_batch', 'bounds': batch_size_choices, "value_type": "int",
+             'type': 'choices'},
+            {'name': "h_dim1", 'bounds': dim_choice, "value_type": "int", 'type': 'choice'},
+            {'name': "h_dim2", 'bounds': dim_choice, "value_type": "int", 'type': 'choice'},
+            {'name': "h_dim3", 'bounds': dim_choice, "value_type": "int", 'type': 'choice'},
+            {'name': "h_dim4", 'bounds': dim_choice, "value_type": "int", 'type': 'choice'},
             {'name': "depth_1", 'value': 1, "value_type": "int", 'type': 'fixed'},
-            {'name': "lr_e", 'bounds': [learning_rate_lower, learning_rate_upper],
-             "value_type": "float", 'log_scale': True, 'type': 'range'},
-            {'name': "dropout_rate_e", 'bounds': [drop_rate_lower, drop_rate_upper], "value_type": "float",
-             'type': 'range'},
-            {'name': 'weight_decay', 'bounds': [weight_decay_lower, weight_decay_upper], 'log_scale': True,
+            {'name': "lr_e", 'bounds': learning_rate_choices, "value_type": "float", 'type': 'choice'},
+            {'name': "dropout_rate_e", 'bounds': drop_rate_choices, "value_type": "float", 'type': 'choice'},
+            {'name': 'weight_decay', 'bounds': weight_decay_choices,
              "value_type": "float", 'type': 'range'},
             gamma,
             {'name': 'epochs', 'bounds': [epoch_lower, epoch_upper], "value_type": "int", 'type': 'range'},
@@ -360,17 +338,18 @@ if __name__ == '__main__':
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'hardest', 'random', 'semi_hard',
                                                                            'none'])
-    parser.add_argument('--use_elbow_method', default=False, action='store_true')
+    parser.add_argument('--deactivate_elbow_method', default=True, action='store_false')
     args = parser.parse_args()
 
     if args.drug == 'all':
         for drug, extern_dataset in drugs.items():
             bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                     args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
-                    args.small_search_space, args.deactivate_skip_bad_iterations, args.triplet_selector_type)
+                    args.small_search_space, args.deactivate_skip_bad_iterations, args.triplet_selector_type,
+                    args.use_elbow_method)
     else:
         drug, extern_dataset = drugs[args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                 args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
                 args.small_search_space, args.deactivate_skip_bad_iterations, args.triplet_selector_type,
-                args.use_elbow_method)
+                args.deactivate_elbow_method)
