@@ -52,7 +52,7 @@ hyperparameters_set8 = {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.1, 'Ewd': 0.1}
 for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperparameters_set3,
                            hyperparameters_set4, hyperparameters_set5, hyperparameters_set6, hyperparameters_set7,
                            hyperparameters_set8):
-    for smoothing in (0.05, 0.1, 0.01):
+    for smoothing in (0.05, 0.1, 0.01, 0.2, 0.3, 0.4):
         hyperparameter_set['smoothing'] = smoothing
         hyperparameters_set_list.append(hyperparameter_set.copy())
 
