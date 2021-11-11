@@ -398,8 +398,8 @@ def final_training_classifier(best_hyperparameters, x_train_validation_e, x_trai
     weight_decay = best_hyperparameters['weight_decay']
     mini_batch_size = best_hyperparameters['mini_batch_size']
     classifier = Classifier(input_dimension, dropout)
-    optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate, weight_decay=weight_decay)
     classifier.to(device)
+    optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     x_train_validation_e = scaler_e.transform(x_train_validation_e)
     x_train_validation_m = scaler_m.transform(x_train_validation_m)
