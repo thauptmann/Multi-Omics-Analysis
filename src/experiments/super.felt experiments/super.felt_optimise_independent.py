@@ -291,13 +291,12 @@ def train_validate_classifier_hyperparameter_set(hyperparameters, x_train_valida
                                                  best_encoder_e, best_encoder_m, best_encoder_c,
                                                  scaler_e, scaler_m, scaler_c,
                                                  splits, input_dimension,  device):
-    output_dimension = hyperparameters['dimension']
     dropout = hyperparameters['dropout']
     epochs = hyperparameters['epochs']
     weight_decay = hyperparameters['weight_decay']
     mini_batch_size = hyperparameters['mini_batch_size']
     auroc_list = list()
-    classifier = Classifier(input_dimension, output_dimension, dropout)
+    classifier = Classifier(input_dimension, dropout)
     classifier.to(device)
     optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
@@ -329,18 +328,17 @@ def train_validate_classifier_hyperparameter_set(hyperparameters, x_train_valida
         for _ in range(epochs):
             classifier.train()
             for i, (e, m, c, target) in enumerate(trainLoader):
-                if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                    e = e.to(device)
-                    m = m.to(device)
-                    c = c.to(device)
-                    encoded_e = best_encoder_e(e)
-                    encoded_m = best_encoder_m(m)
-                    encoded_c = best_encoder_c(c)
-                    predictions = classifier(encoded_e, encoded_m, encoded_c)
-                    loss = BCE_loss_fun(predictions, target)
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
+                e = e.to(device)
+                m = m.to(device)
+                c = c.to(device)
+                encoded_e = best_encoder_e(e)
+                encoded_m = best_encoder_m(m)
+                encoded_c = best_encoder_c(c)
+                predictions = classifier(encoded_e, encoded_m, encoded_c)
+                loss = BCE_loss_fun(predictions, target)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
         with torch.no_grad():
             classifier.eval()
@@ -490,7 +488,6 @@ def get_classifier_search_space():
     return [
         {'name': 'dropout', 'values': [0.1, 0.3, 0.4, 0.5], 'type': 'choice'},
         {'name': 'weight_decay', 'values': [0.0, 0.01, 0.1, 0.15], 'type': 'choice'},
-        {'name': 'dimension', 'values': dimension_choice, 'type': 'choice'},
         {'name': 'epochs', 'bounds': [epoch_lower, epoch_upper], 'type': 'range'},
         {'name': 'mini_batch_size', 'values': mini_batch_choice_classifier, 'type': 'choice'},
     ]
