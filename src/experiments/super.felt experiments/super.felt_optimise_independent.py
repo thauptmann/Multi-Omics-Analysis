@@ -342,9 +342,9 @@ def train_validate_classifier_hyperparameter_set(hyperparameters, x_train_valida
 
         with torch.no_grad():
             classifier.eval()
-            encoded_e = best_encoder_e(e_validation.to(device))
-            encoded_m = best_encoder_m(m_validation.to(device))
-            encoded_c = best_encoder_c(c_validation.to(device))
+            encoded_e = best_encoder_e(torch.FloatTensor(e_validation).to(device))
+            encoded_m = best_encoder_m(torch.FloatTensor(m_validation).to(device))
+            encoded_c = best_encoder_c(torch.FloatTensor(c_validation).to(device))
             test_prediction = classifier(encoded_e, encoded_m, encoded_c)
             val_AUC = roc_auc_score(y_validation, test_prediction.cpu().detach().numpy())
         auroc_list.append(val_AUC)
