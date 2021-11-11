@@ -330,6 +330,7 @@ def train_validate_classifier_hyperparameter_set(hyperparameters, x_train_valida
                 e = e.to(device)
                 m = m.to(device)
                 c = c.to(device)
+                target = target.to(device)
                 encoded_e = best_encoder_e(e)
                 encoded_m = best_encoder_m(m)
                 encoded_c = best_encoder_c(c)
@@ -345,7 +346,7 @@ def train_validate_classifier_hyperparameter_set(hyperparameters, x_train_valida
             encoded_m = best_encoder_m(m_validation.to(device))
             encoded_c = best_encoder_c(c_validation.to(device))
             test_prediction = classifier(encoded_e, encoded_m, encoded_c)
-            val_AUC = roc_auc_score(y_train, test_prediction.cpu().detach().numpy())
+            val_AUC = roc_auc_score(y_validation, test_prediction.cpu().detach().numpy())
         auroc_list.append(val_AUC)
     return np.mean(auroc_list)
 
@@ -414,18 +415,19 @@ def final_training_classifier(best_hyperparameters, x_train_validation_e, x_trai
     for _ in range(epochs):
         classifier.train()
         for i, (e, m, c, target) in enumerate(trainLoader):
-            if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                e = e.to(device)
-                m = m.to(device)
-                c = c.to(device)
-                encoded_e = best_encoder_e(e)
-                encoded_m = best_encoder_m(m)
-                encoded_c = best_encoder_c(c)
-                predictions = classifier(encoded_e, encoded_m, encoded_c)
-                loss = BCE_loss_fun(torch.squeeze(predictions), target)
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+            e = e.to(device)
+            m = m.to(device)
+            c = c.to(device)
+            target = target.to(device)
+
+            encoded_e = best_encoder_e(e)
+            encoded_m = best_encoder_m(m)
+            encoded_c = best_encoder_c(c)
+            predictions = classifier(encoded_e, encoded_m, encoded_c)
+            loss = BCE_loss_fun(torch.squeeze(predictions), target)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
     return classifier
 
