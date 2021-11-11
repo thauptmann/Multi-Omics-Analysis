@@ -42,18 +42,15 @@ lrCL = 0.01
 hard_triplet_iteration = 2
 
 hyperparameters_set_list = []
-hyperparameters_set1 = {'E_dr': 0.1, 'C_dr': 0.1, 'Cwd': 0.0, 'Ewd': 0.0}
-hyperparameters_set2 = {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.01}
-hyperparameters_set3 = {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.05}
-hyperparameters_set4 = {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.01, 'Ewd': 0.01}
-hyperparameters_set5 = {'E_dr': 0.5, 'C_dr': 0.7, 'Cwd': 0.15, 'Ewd': 0.1}
-hyperparameters_set6 = {'E_dr': 0.3, 'C_dr': 0.5, 'Cwd': 0.01, 'Ewd': 0.01}
-hyperparameters_set7 = {'E_dr': 0.4, 'C_dr': 0.4, 'Cwd': 0.01, 'Ewd': 0.01}
-hyperparameters_set8 = {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.1, 'Ewd': 0.1}
+hyperparameters_set1 = {'dropout': 0.1, 'weight_decay': 0.0}
+hyperparameters_set2 = {'dropout': 0.3, 'weight_decay': 0.3}
+hyperparameters_set4 = {'dropout': 0.5, 'weight_decay': 0.5}
+hyperparameters_set5 = {'dropout': 0.5, 'weight_decay': 0.7}
+hyperparameters_set6 = {'dropout': 0.3, 'weight_decay': 0.5}
+hyperparameters_set7 = {'dropout': 0.4, 'weight_decay': 0.4}
 
-for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperparameters_set3,
-                           hyperparameters_set4, hyperparameters_set5, hyperparameters_set6, hyperparameters_set7,
-                           hyperparameters_set8):
+for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperparameters_set4, hyperparameters_set5,
+                           hyperparameters_set6, hyperparameters_set7):
     for margin in margin_list:
         hyperparameter_set['margin'] = margin
         for batch_size in mb_size_list:
