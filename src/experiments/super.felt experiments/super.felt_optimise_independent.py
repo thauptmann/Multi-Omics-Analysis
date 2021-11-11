@@ -268,7 +268,7 @@ def train_validate_encoder(hyperparameters, x_train_validation, y_train_validati
             val_loss = trip_loss_fun(encoded_val[triplets_list[:, 0], :],
                                      encoded_val[triplets_list[:, 1], :],
                                      encoded_val[triplets_list[:, 2], :])
-        loss_list.append(val_loss)
+        loss_list.append(val_loss.detach().numpy())
 
     return np.mean(loss_list)
 
