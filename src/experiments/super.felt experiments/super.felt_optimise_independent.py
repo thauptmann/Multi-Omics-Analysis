@@ -146,9 +146,13 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
         best_encoder_m.eval()
         best_encoder_c.eval()
 
+        input_dimension = best_parameters_e['dimension'] + best_parameters_m['dimension'] \
+                          + best_parameters_c['dimension']
+
+
         evaluation_function_classifier = lambda parameterization: train_validate_classifier_hyperparameter_set(
             parameterization, X_train_valE, X_train_valM, X_train_valC, Y_train_val, best_encoder_e, best_encoder_m,
-            best_encoder_c, scaler_e, scaler_m, scaler_c, splits.copy(), device
+            best_encoder_c, scaler_e, scaler_m, scaler_c, splits, input_dimension, device
         )
 
         classifier_search_space = get_classifier_search_space()
@@ -166,7 +170,7 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
         best_classifier = final_training_classifier(best_parameters_classifier, X_train_valE, X_train_valM,
                                                     X_train_valC,
                                                     Y_train_val, best_encoder_e, best_encoder_m, best_encoder_c,
-                                                    scaler_e, scaler_m, scaler_c, device)
+                                                    scaler_e, scaler_m, scaler_c, input_dimension, device)
 
         best_classifier.eval()
 
@@ -286,14 +290,13 @@ def train_validate_classifier_hyperparameter_set(hyperparameters, x_train_valida
                                                  x_train_validation_c, y_train_validation,
                                                  best_encoder_e, best_encoder_m, best_encoder_c,
                                                  scaler_e, scaler_m, scaler_c,
-                                                 splits, device):
+                                                 splits, input_dimension,  device):
     output_dimension = hyperparameters['dimension']
     dropout = hyperparameters['dropout']
     epochs = hyperparameters['epochs']
     weight_decay = hyperparameters['weight_decay']
     mini_batch_size = hyperparameters['mini_batch_size']
     auroc_list = list()
-    input_dimension = x_train_validation_e.shape[-1] + x_train_validation_m.shape[-1] + x_train_validation_c.shape[-1]
     classifier = Classifier(input_dimension, output_dimension, dropout)
     classifier.to(device)
     optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -391,13 +394,12 @@ def final_training_encoder(best_parameter, data, y, device):
 
 def final_training_classifier(best_hyperparameters, x_train_validation_e, x_train_validation_m,
                               x_train_validation_c, y_train_validation, best_encoder_e, best_encoder_m, best_encoder_c,
-                              scaler_e, scaler_m, scaler_c, device):
+                              scaler_e, scaler_m, scaler_c, input_dimension, device):
     output_dimension = best_hyperparameters['dimension']
     dropout = best_hyperparameters['dropout']
     epochs = best_hyperparameters['epochs']
     weight_decay = best_hyperparameters['weight_decay']
     mini_batch_size = best_hyperparameters['mini_batch_size']
-    input_dimension = x_train_validation_e.shape[-1] + x_train_validation_m.shape[-1] + x_train_validation_c.shape[-1]
     classifier = Classifier(input_dimension, output_dimension, dropout)
     optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate, weight_decay=weight_decay)
     classifier.to(device)
