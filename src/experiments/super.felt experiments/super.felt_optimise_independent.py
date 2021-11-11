@@ -263,7 +263,7 @@ def train_validate_encoder(hyperparameters, x_train_validation, y_train_validati
 
         with torch.no_grad():
             supervised_encoder.eval()
-            encoded_val = supervised_encoder(X_validation)
+            encoded_val = supervised_encoder(X_validation.to(device))
             triplets_list = triplet_selector.get_triplets(encoded_val, torch.FloatTensor(y_validation))
             val_loss = trip_loss_fun(encoded_val[triplets_list[:, 0], :],
                                      encoded_val[triplets_list[:, 1], :],
@@ -341,9 +341,9 @@ def train_validate_classifier_hyperparameter_set(hyperparameters, x_train_valida
 
         with torch.no_grad():
             classifier.eval()
-            encoded_e = best_encoder_e(e_validation)
-            encoded_m = best_encoder_m(m_validation)
-            encoded_c = best_encoder_c(c_validation)
+            encoded_e = best_encoder_e(e_validation.to(device))
+            encoded_m = best_encoder_m(m_validation.to(device))
+            encoded_c = best_encoder_c(c_validation.to(device))
             test_prediction = classifier(encoded_e, encoded_m, encoded_c)
             val_AUC = roc_auc_score(y_train, test_prediction.detach().numpy())
         auroc_list.append(val_AUC)
