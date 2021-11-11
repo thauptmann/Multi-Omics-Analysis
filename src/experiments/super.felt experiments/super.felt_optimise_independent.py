@@ -393,12 +393,11 @@ def final_training_encoder(best_parameter, data, y, device):
 def final_training_classifier(best_hyperparameters, x_train_validation_e, x_train_validation_m,
                               x_train_validation_c, y_train_validation, best_encoder_e, best_encoder_m, best_encoder_c,
                               scaler_e, scaler_m, scaler_c, input_dimension, device):
-    output_dimension = best_hyperparameters['dimension']
     dropout = best_hyperparameters['dropout']
     epochs = best_hyperparameters['epochs']
     weight_decay = best_hyperparameters['weight_decay']
     mini_batch_size = best_hyperparameters['mini_batch_size']
-    classifier = Classifier(input_dimension, output_dimension, dropout)
+    classifier = Classifier(input_dimension, dropout)
     optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate, weight_decay=weight_decay)
     classifier.to(device)
 
@@ -424,7 +423,7 @@ def final_training_classifier(best_hyperparameters, x_train_validation_e, x_trai
                 encoded_m = best_encoder_m(m)
                 encoded_c = best_encoder_c(c)
                 predictions = classifier(encoded_e, encoded_m, encoded_c)
-                loss = BCE_loss_fun(predictions, y_train_validation)
+                loss = BCE_loss_fun(predictions, target)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
