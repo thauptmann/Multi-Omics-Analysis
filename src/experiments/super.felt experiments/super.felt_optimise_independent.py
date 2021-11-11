@@ -345,7 +345,7 @@ def train_validate_classifier_hyperparameter_set(hyperparameters, x_train_valida
             encoded_m = best_encoder_m(m_validation.to(device))
             encoded_c = best_encoder_c(c_validation.to(device))
             test_prediction = classifier(encoded_e, encoded_m, encoded_c)
-            val_AUC = roc_auc_score(y_train, test_prediction.detach().numpy())
+            val_AUC = roc_auc_score(y_train, test_prediction.cpu().detach().numpy())
         auroc_list.append(val_AUC)
     return np.mean(auroc_list)
 
