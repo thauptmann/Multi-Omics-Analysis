@@ -149,7 +149,6 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
         input_dimension = best_parameters_e['dimension'] + best_parameters_m['dimension'] \
                           + best_parameters_c['dimension']
 
-
         evaluation_function_classifier = lambda parameterization: train_validate_classifier_hyperparameter_set(
             parameterization, X_train_valE, X_train_valM, X_train_valC, Y_train_val, best_encoder_e, best_encoder_m,
             best_encoder_c, scaler_e, scaler_m, scaler_c, splits, input_dimension, device

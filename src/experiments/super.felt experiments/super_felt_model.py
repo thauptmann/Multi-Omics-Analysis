@@ -3,10 +3,10 @@ from torch import nn
 
 
 class Classifier(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
+    def __init__(self, input_dim, drop_rate):
         super(Classifier, self).__init__()
         self.model = torch.nn.Sequential(
-            nn.Linear(input_dim, output_dim),
+            nn.Linear(input_dim, 1),
             nn.Dropout(drop_rate),
             nn.Sigmoid()
         )
