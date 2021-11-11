@@ -337,7 +337,7 @@ def train_validate_classifier_hyperparameter_set(hyperparameters, x_train_valida
                     encoded_m = best_encoder_m(m)
                     encoded_c = best_encoder_c(c)
                     predictions = classifier(encoded_e, encoded_m, encoded_c)
-                    loss = BCE_loss_fun(predictions, y_validation)
+                    loss = BCE_loss_fun(predictions, target)
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
