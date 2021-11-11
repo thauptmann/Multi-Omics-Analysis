@@ -489,6 +489,7 @@ def get_classifier_search_space():
         {'name': 'dropout', 'values': [0.1, 0.3, 0.4, 0.5], 'type': 'choice'},
         {'name': 'weight_decay', 'values': [0.0, 0.01, 0.1, 0.15], 'type': 'choice'},
         {'name': 'dimension', 'values': dimension_choice, 'type': 'choice'},
+        {'name': 'epochs', 'bounds': [epoch_lower, epoch_upper], 'type': 'range'},
         {'name': 'mini_batch_size', 'values': mini_batch_choice_classifier, 'type': 'choice'},
     ]
 
