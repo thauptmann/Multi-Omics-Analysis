@@ -230,8 +230,8 @@ def train_validate_encoder(hyperparameters, x_train_validation, y_train_validati
     loss_list = list()
     input_dimension = x_train_validation.shape[-1]
     supervised_encoder = SupervisedEncoder(input_dimension, output_dimension, dropout)
-    optimizer = optim.Adagrad(supervised_encoder.parameters(), lr=learning_rate, weight_decay=weight_decay)
     supervised_encoder.to(device)
+    optimizer = optim.Adagrad(supervised_encoder.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     for train_index, validation_index in tqdm(splits, desc="k-fold"):
         X_train = x_train_validation[train_index]
@@ -295,8 +295,8 @@ def train_validate_classifier_hyperparameter_set(hyperparameters, x_train_valida
     auroc_list = list()
     input_dimension = x_train_validation_e.shape[-1] + x_train_validation_m.shape[-1] + x_train_validation_c.shape[-1]
     classifier = Classifier(input_dimension, output_dimension, dropout)
-    optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate, weight_decay=weight_decay)
     classifier.to(device)
+    optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     for train_index, validation_index in tqdm(splits, desc="k-fold"):
         e_train = x_train_validation_e[train_index]
@@ -366,8 +366,8 @@ def final_training_encoder(best_parameter, data, y, device):
     input_dimension = scaled_data.shape[-1]
 
     supervised_encoder = SupervisedEncoder(input_dimension, output_dimension, dropout)
-    optimizer = optim.Adagrad(supervised_encoder.parameters(), lr=learning_rate, weight_decay=weight_decay)
     supervised_encoder.to(device)
+    optimizer = optim.Adagrad(supervised_encoder.parameters(), lr=learning_rate, weight_decay=weight_decay)
     # triplet_selector = get_triplet_selector(margin, 'semi_hard')
     triplet_selector = get_triplet_selector(margin, 'all')
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
