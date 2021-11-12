@@ -424,7 +424,7 @@ def final_training_classifier(best_hyperparameters, x_train_validation_e, x_trai
             encoded_m = best_encoder_m(m)
             encoded_c = best_encoder_c(c)
             predictions = classifier(encoded_e, encoded_m, encoded_c)
-            if len(predictions.shape) > 1:
+            if predictions.shape[0] > 1:
                 loss = BCE_loss_fun(torch.squeeze(predictions), target)
             else:
                 loss = BCE_loss_fun(predictions, target)
