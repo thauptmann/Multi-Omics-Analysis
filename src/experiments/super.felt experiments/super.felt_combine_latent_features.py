@@ -7,7 +7,6 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 from torch import optim
 import numpy as np
 import torch
-from sklearn.feature_selection import VarianceThreshold
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
@@ -55,7 +54,7 @@ C_Supervised_Encoder_epoch = 5
 M_Supervised_Encoder_epoch = 3
 Classifier_epoch = 5
 integration_epochs = [5, 6]
-integration_widths = [128, 256, 512]
+integration_widths = [256, 512]
 
 for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperparameters_set3,
                            hyperparameters_set4, hyperparameters_set5, hyperparameters_set6, hyperparameters_set7,
@@ -186,7 +185,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                 integration_optimizer = optim.Adagrad(integration_Supervised_Encoder.parameters(), lr=lrE,
                                                       weight_decay=Ewd)
 
-                final_Clas = Classifier(integration_width, 1, C_dr).to(device)
+                final_Clas = Classifier(integration_width,  C_dr).to(device)
                 Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
                 # train each Supervised_Encoder with triplet loss
@@ -485,7 +484,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
         integration_optimizer = optim.Adagrad(integration_Supervised_Encoder.parameters(), lr=lrE,
                                               weight_decay=Ewd)
 
-        final_Clas = Classifier(integration_width, 1, C_dr)
+        final_Clas = Classifier(integration_width, C_dr)
         final_Clas.to(device)
         Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
