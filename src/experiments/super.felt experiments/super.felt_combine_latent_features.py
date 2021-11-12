@@ -32,8 +32,8 @@ drugs = {
 # common hyperparameters
 mb_size = 55
 OE_dim = 256
-OM_dim = 32
-OC_dim = 64
+OM_dim = 256
+OC_dim = 256
 margin = 1
 lrE = 0.01
 lrM = 0.01
@@ -54,8 +54,8 @@ E_Supervised_Encoder_epoch = 10
 C_Supervised_Encoder_epoch = 5
 M_Supervised_Encoder_epoch = 3
 Classifier_epoch = 5
-integration_epochs = [3, 4, 5, 6, 7, 8, 9, 10]
-integration_widths = [16, 32, 64, 128, 256, 512]
+integration_epochs = [5, 6]
+integration_widths = [128, 256, 512]
 
 for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperparameters_set3,
                            hyperparameters_set4, hyperparameters_set5, hyperparameters_set6, hyperparameters_set7,
@@ -65,6 +65,7 @@ for hyperparameter_set in (hyperparameters_set1, hyperparameters_set2, hyperpara
         for epoch in integration_epochs:
             hyperparameter_set['integration_epochs'] = epoch
             hyperparameters_set_list.append(hyperparameter_set.copy())
+
 
 random_seed = 42
 
