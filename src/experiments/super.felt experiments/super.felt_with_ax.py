@@ -32,23 +32,16 @@ drugs = {
     'Paclitaxel': 'PDX'
 }
 
-# common hyperparameters
-mb_size = 55
-OE_dim = 256
-OM_dim = 32
-OC_dim = 64
-margin = 1
-lrE = 0.01
-lrM = 0.01
-lrC = 0.01
-lrCL = 0.01
+dimensions = [32, 64, 128, 256]
+mini_batch_sizes = [64]
+margins = [0.2, 1]
+learning_rates = [0.001, 0.01]
+epochs_low = 3
+epochs_high = 10
+weight_decay = [0.0, 0.01, 0.05, 0.1, 0.15]
+dropout_values = [0.1, 0.3, 0.4, 0.5, 0.7]
 
-E_Supervised_Encoder_epoch = 10
-C_Supervised_Encoder_epoch = 5
-M_Supervised_Encoder_epoch = 3
-Classifier_epoch = 5
 random_seed = 42
-
 cv_splits = 5
 
 
@@ -66,7 +59,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, iter
     torch.cuda.manual_seed_all(random_seed)
 
     triplet_selector2 = AllTripletSelector()
-    trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
     BCE_loss_fun = torch.nn.BCELoss()
 
     data_path = Path('..', '..', '..', 'data')
@@ -109,7 +101,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, iter
                                                                                          X_train_valM, X_train_valC,
                                                                                          Y_train_val, device,
                                                                                          parameterization,
-                                                                                         trip_loss_fun,
                                                                                          triplet_selector2)
         generation_strategy = GenerationStrategy(
             steps=[
@@ -132,7 +123,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, iter
         final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
         final_scalerGDSC = train_final(
             BCE_loss_fun, X_train_valE, X_train_valM, X_train_valC, Y_train_val, best_parameters, device,
-            trip_loss_fun, triplet_selector2)
+            triplet_selector2)
 
         # Test
         test_AUC, test_AUCPR = test(X_testE, X_testM, X_testC, Y_test, device, final_C_Supervised_Encoder,
@@ -155,25 +146,39 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, iter
     print("Done!")
 
 
-def train_validate_hyperparameter_set(BCE_loss_fun, X_train_valE, X_train_valM, X_train_valC, Y_train_val, device,
-                                      hyperparameters, trip_loss_fun, triplet_selector2):
+def train_validate_hyperparameter_set(bce_loss_function, x_train_val_e, x_train_val_m, x_train_val_c, y_train_val,
+                                      device, hyperparameters, triplet_selector2):
     skf = StratifiedKFold(n_splits=cv_splits)
     all_validation_aurocs = []
-    E_dr = hyperparameters['E_dr']
-    C_dr = hyperparameters['C_dr']
-    Cwd = hyperparameters['Cwd']
-    Ewd = hyperparameters['Ewd']
+    encoder_dropout = hyperparameters['encoder_dropout']
+    classifier_dropout = hyperparameters['classifier_dropout']
+    classifier_weight_decay = hyperparameters['classifier_weight_decay']
+    encoder_weight_decay = hyperparameters['encoder_weight_decay']
+    lrE = hyperparameters['learning_rate']
+    lrM = hyperparameters['learning_rate']
+    lrC = hyperparameters['learning_rate']
+    lrCL = hyperparameters['learning_rate']
+    OE_dim = hyperparameters['e_dimension']
+    OM_dim = hyperparameters['m_dimension']
+    OC_dim = hyperparameters['c_dimension']
+    E_Supervised_Encoder_epoch = hyperparameters['e_epochs']
+    C_Supervised_Encoder_epoch = hyperparameters['m_epochs']
+    M_Supervised_Encoder_epoch = hyperparameters['c_epochs']
+    Classifier_epoch = hyperparameters['classifier_epochs']
+    mini_batch_size = hyperparameters['mini_batch_size']
+    margin = hyperparameters['margin']
+    trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
 
-    for train_index, validate_index in tqdm(skf.split(X_train_valE, Y_train_val), total=skf.get_n_splits(),
+    for train_index, validate_index in tqdm(skf.split(x_train_val_e, y_train_val), total=skf.get_n_splits(),
                                             desc="k-fold"):
-        X_trainE = X_train_valE[train_index]
-        X_valE = X_train_valE[validate_index]
-        X_trainM = X_train_valM[train_index]
-        X_valM = X_train_valM[validate_index]
-        X_trainC = X_train_valC[train_index]
-        X_valC = X_train_valC[validate_index]
-        Y_train = Y_train_val[train_index]
-        Y_val = Y_train_val[validate_index]
+        X_trainE = x_train_val_e[train_index]
+        X_valE = x_train_val_e[validate_index]
+        X_trainM = x_train_val_m[train_index]
+        X_valM = x_train_val_m[validate_index]
+        X_trainC = x_train_val_c[train_index]
+        X_valC = x_train_val_c[validate_index]
+        Y_train = y_train_val[train_index]
+        Y_val = y_train_val[validate_index]
         class_sample_count = np.array([len(np.where(Y_train == t)[0]) for t in np.unique(Y_train)])
         weight = 1. / class_sample_count
         samples_weight = np.array([weight[t] for t in Y_train])
@@ -189,7 +194,7 @@ def train_validate_hyperparameter_set(BCE_loss_fun, X_train_valE, X_train_valM, 
                                                       torch.FloatTensor(X_trainC),
                                                       torch.FloatTensor(Y_train.astype(int)))
 
-        trainLoader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mb_size, shuffle=False,
+        trainLoader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mini_batch_size, shuffle=False,
                                                   num_workers=1, sampler=sampler)
 
         n_sample_E, IE_dim = X_trainE.shape
@@ -199,23 +204,23 @@ def train_validate_hyperparameter_set(BCE_loss_fun, X_train_valE, X_train_valM, 
         cost_tr = []
         auc_tr = []
 
-        E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr)
-        M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr)
-        C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, E_dr)
+        E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, encoder_dropout)
+        M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, encoder_dropout)
+        C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, encoder_dropout)
 
         E_Supervised_Encoder.to(device)
         M_Supervised_Encoder.to(device)
         C_Supervised_Encoder.to(device)
 
-        E_optimizer = optim.Adagrad(E_Supervised_Encoder.parameters(), lr=lrE, weight_decay=Ewd)
-        M_optimizer = optim.Adagrad(M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=Ewd)
-        C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
+        E_optimizer = optim.Adagrad(E_Supervised_Encoder.parameters(), lr=lrE, weight_decay=encoder_weight_decay)
+        M_optimizer = optim.Adagrad(M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=encoder_weight_decay)
+        C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=encoder_weight_decay)
         TripSel = OnlineTestTriplet(margin, triplet_selector2)
 
         OCP_dim = OE_dim + OM_dim + OC_dim
-        classifier = Classifier(OCP_dim, 1, C_dr)
+        classifier = Classifier(OCP_dim, classifier_dropout)
         classifier.to(device)
-        Cl_optimizer = optim.Adagrad(classifier.parameters(), lr=lrCL, weight_decay=Cwd)
+        Cl_optimizer = optim.Adagrad(classifier.parameters(), lr=lrCL, weight_decay=classifier_weight_decay)
 
         # train each Supervised_Encoder with triplet loss
         pre_loss = 100
@@ -349,7 +354,7 @@ def train_validate_hyperparameter_set(BCE_loss_fun, X_train_valE, X_train_valM, 
         for cl_epoch in range(Classifier_epoch):
             epoch_cost = 0
             epoch_auc_list = []
-            num_minibatches = int(n_sample_E / mb_size)
+            num_minibatches = int(n_sample_E / mini_batch_size)
             flag = 0
             classifier.train()
             for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
@@ -366,7 +371,7 @@ def train_validate_hyperparameter_set(BCE_loss_fun, X_train_valE, X_train_valM, 
 
                     y_true = target.view(-1, 1).cpu()
 
-                    cl_loss = BCE_loss_fun(Pred, target.view(-1, 1))
+                    cl_loss = bce_loss_function(Pred, target.view(-1, 1))
                     y_pred = Pred.cpu()
                     AUC = roc_auc_score(y_true.detach().numpy(), y_pred.detach().numpy())
 
@@ -420,43 +425,58 @@ def write_results_to_file(drug_name, extern_auc_list, extern_auprc_list, result_
     calculate_mean_and_std_auc(result_dict, result_file, drug_name)
 
 
-def test(X_testE, X_testM, X_testC, Y_test, device, final_C_Supervised_Encoder, final_Classifier,
-         final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_scalerGDSC):
-    X_testE = torch.FloatTensor(final_scalerGDSC.transform(X_testE))
-    encoded_test_E = final_E_Supervised_Encoder(torch.FloatTensor(X_testE).to(device))
-    encoded_test_M = final_M_Supervised_Encoder(torch.FloatTensor(X_testM).to(device))
-    encoded_test_C = final_C_Supervised_Encoder(torch.FloatTensor(X_testC).to(device))
-    test_Pred = final_Classifier(encoded_test_E, encoded_test_M, encoded_test_C)
-    test_y_true = Y_test
+def test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encoder, final_classifier,
+         final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_scaler_gdsc):
+    x_test_e = torch.FloatTensor(final_scaler_gdsc.transform(x_test_e))
+    encoded_test_E = final_E_Supervised_Encoder(torch.FloatTensor(x_test_e).to(device))
+    encoded_test_M = final_M_Supervised_Encoder(torch.FloatTensor(x_test_m).to(device))
+    encoded_test_C = final_C_Supervised_Encoder(torch.FloatTensor(x_test_c).to(device))
+    test_Pred = final_classifier(encoded_test_E, encoded_test_M, encoded_test_C)
+    test_y_true = y_test
     test_y_pred = test_Pred.cpu().detach().numpy()
     test_AUC = roc_auc_score(test_y_true, test_y_pred)
     test_AUCPR = average_precision_score(test_y_true, test_y_pred)
     return test_AUC, test_AUCPR
 
 
-def train_final(BCE_loss_fun, X_train_valE, X_train_valM, X_train_valC, Y_train_val, best_hyperparameter, device,
-                trip_loss_fun, triplet_selector2):
-    E_dr = best_hyperparameter['E_dr']
-    C_dr = best_hyperparameter['C_dr']
-    Cwd = best_hyperparameter['Cwd']
-    Ewd = best_hyperparameter['Ewd']
-    class_sample_count = np.array([len(np.where(Y_train_val == t)[0]) for t in np.unique(Y_train_val)])
+def train_final(bce_loss_function, x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
+                device, triplet_selector2):
+    E_dr = best_hyperparameter['encoder_dropout']
+    C_dr = best_hyperparameter['classifier_dropout']
+    Cwd = best_hyperparameter['classifier_weight_decay']
+    Ewd = best_hyperparameter['encoder_weight_decay']
+    lrE = best_hyperparameter['learning_rate']
+    lrM = best_hyperparameter['learning_rate']
+    lrC = best_hyperparameter['learning_rate']
+    lrCL = best_hyperparameter['learning_rate']
+    OE_dim = best_hyperparameter['e_dimension']
+    OM_dim = best_hyperparameter['m_dimension']
+    OC_dim = best_hyperparameter['c_dimension']
+    margin = best_hyperparameter['margin']
+    E_Supervised_Encoder_epoch = best_hyperparameter['e_epochs']
+    C_Supervised_Encoder_epoch = best_hyperparameter['m_epochs']
+    M_Supervised_Encoder_epoch = best_hyperparameter['c_epochs']
+    classifier_epoch = best_hyperparameter['classifier_epochs']
+    mb_size = best_hyperparameter['mini_batch_size']
+
+    trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
+    class_sample_count = np.array([len(np.where(y_train_val == t)[0]) for t in np.unique(y_train_val)])
     weight = 1. / class_sample_count
-    samples_weight = np.array([weight[t] for t in Y_train_val])
+    samples_weight = np.array([weight[t] for t in y_train_val])
     samples_weight = torch.from_numpy(samples_weight)
     sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
                                     replacement=True)
-    final_scalerGDSC = sk.StandardScaler()
-    final_scalerGDSC.fit(X_train_valE)
-    X_train_valE = final_scalerGDSC.transform(X_train_valE)
-    trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(X_train_valE), torch.FloatTensor(X_train_valM),
-                                                  torch.FloatTensor(X_train_valC),
-                                                  torch.FloatTensor(Y_train_val.astype(int)))
+    final_scaler_gdsc = sk.StandardScaler()
+    final_scaler_gdsc.fit(x_train_val_e)
+    x_train_val_e = final_scaler_gdsc.transform(x_train_val_e)
+    trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_train_val_e), torch.FloatTensor(x_train_val_m),
+                                                  torch.FloatTensor(x_train_val_c),
+                                                  torch.FloatTensor(y_train_val.astype(int)))
     trainLoader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mb_size, shuffle=False,
                                               num_workers=1, sampler=sampler)
-    n_sample_E, IE_dim = X_train_valE.shape
-    n_sample_M, IM_dim = X_train_valM.shape
-    n_sample_C, IC_dim = X_train_valC.shape
+    n_sample_E, IE_dim = x_train_val_e.shape
+    n_sample_M, IM_dim = x_train_val_m.shape
+    n_sample_C, IC_dim = x_train_val_c.shape
     final_E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr)
     final_M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr)
     final_C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, E_dr)
@@ -468,7 +488,7 @@ def train_final(BCE_loss_fun, X_train_valE, X_train_valM, X_train_valC, Y_train_
     C_optimizer = optim.Adagrad(final_C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
     TripSel = OnlineTestTriplet(margin, triplet_selector2)
     OCP_dim = OE_dim + OM_dim + OC_dim
-    final_Classifier = Classifier(OCP_dim, 1, C_dr)
+    final_Classifier = Classifier(OCP_dim, C_dr)
     final_Classifier.to(device)
     Cl_optimizer = optim.Adagrad(final_Classifier.parameters(), lr=lrCL, weight_decay=Cwd)
     # train each Supervised_Encoder with triplet loss
@@ -520,7 +540,7 @@ def train_final(BCE_loss_fun, X_train_valE, X_train_valM, X_train_valC, Y_train_
                 C_optimizer.step()
     final_C_Supervised_Encoder.eval()
     # train classifier
-    for cl_epoch in range(Classifier_epoch):
+    for cl_epoch in range(classifier_epoch):
         final_Classifier.train()
         for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
             if torch.mean(target) != 0. and torch.mean(target) != 1.:
@@ -533,21 +553,35 @@ def train_final(BCE_loss_fun, X_train_valE, X_train_valM, X_train_valC, Y_train_
                 encoded_C = final_C_Supervised_Encoder(dataC)
 
                 Pred = final_Classifier(encoded_E, encoded_M, encoded_C)
-                cl_loss = BCE_loss_fun(Pred, target.view(-1, 1))
+                cl_loss = bce_loss_function(Pred, target.view(-1, 1))
                 Cl_optimizer.zero_grad()
                 cl_loss.backward()
                 Cl_optimizer.step()
 
         final_Classifier.eval()
     return final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
-           final_scalerGDSC
+           final_scaler_gdsc
 
 
 def get_search_space():
-    return [{'name': 'E_dr', 'values': [0.1, 0.3, 0.4, 0.5], 'type': 'choice'},
-            {'name': 'C_dr', 'values': [0.1, 0.3,  0.4, 0.5, 0.7], 'type': 'choice'},
-            {'name': 'Cwd', 'values': [0.0, 0.01, 0.1, 0.15], 'type': 'choice'},
-            {'name': 'Ewd', 'values': [0.0, 0.01, 0.05, 0.1], 'type': 'choice'}]
+    return [{'name': 'encoder_dropout', 'values': dropout_values, 'type': 'choice', 'value_type': 'float'},
+            {'name': 'classifier_dropout', 'values': dropout_values, 'type': 'choice', 'value_type': 'float'},
+            {'name': 'classifier_weight_decay', 'values': weight_decay, 'type': 'choice', 'value_type': 'float'},
+            {'name': 'encoder_weight_decay', 'values': weight_decay, 'type': 'choice', 'value_type': 'float'},
+            {'name': 'learning_rate', 'values': learning_rates, 'type': 'choice', 'value_type': 'float'},
+            {'name': 'e_dimension', 'values': dimensions, 'type': 'choice', 'value_type': 'int'},
+            {'name': 'm_dimension', 'values': dimensions, 'type': 'choice', 'value_type': 'int'},
+            {'name': 'c_dimension', 'values': dimensions, 'type': 'choice', 'value_type': 'int'},
+            {'name': 'e_epochs', 'bounds': [epochs_low,  epochs_high], 'type': 'range',
+             'value_type': 'int'},
+            {'name': 'm_epochs', 'bounds': [epochs_low,  epochs_high], 'type': 'range',
+             'value_type': 'int'},
+            {'name': 'c_epochs', 'bounds': [epochs_low,  epochs_high], 'type': 'range',
+             'value_type': 'int'},
+            {'name': 'classifier_epochs', 'bounds': [epochs_low, epochs_high], 'type': 'range', 'value_type': 'int'},
+            {'name': 'mini_batch_size', 'values': mini_batch_sizes, 'type': 'choice', 'value_type': 'int'},
+            {'name': 'margin', 'values': margins, 'type': 'choice', 'value_type': 'float'},
+            ]
 
 
 if __name__ == '__main__':
