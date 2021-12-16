@@ -180,7 +180,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                 M_optimizer = optim.Adagrad(M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=Ewd)
                 C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
 
-                final_Clas = Classifier(OE_dim + OM_dim + OC_dim, 1, C_dr)
+                final_Clas = Classifier(OE_dim + OM_dim + OC_dim, C_dr)
                 final_Clas.to(device)
                 Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
@@ -427,7 +427,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
         semi_hard_triplet_selector = SemihardNegativeTripletSelector(marg)
         trip_loss_fun = torch.nn.TripletMarginLoss(margin=marg, p=2)
 
-        final_Clas = Classifier(OE_dim + OM_dim + OC_dim, 1, C_dr)
+        final_Clas = Classifier(OE_dim + OM_dim + OC_dim, C_dr)
         final_Clas.to(device)
         Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
