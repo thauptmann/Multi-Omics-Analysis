@@ -346,7 +346,7 @@ if __name__ == '__main__':
             bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                     args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
                     args.small_search_space, args.deactivate_skip_bad_iterations, args.triplet_selector_type,
-                    args.use_elbow_method)
+                    args.deactivate_elbow_method)
     else:
         drug, extern_dataset = drugs[args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
