@@ -236,7 +236,7 @@ def create_search_space(combination, small_search_space, hard_triplet_selector):
     batch_size_choices = batch_size_hard_triplets_choices if hard_triplet_selector else all_triplet_batch_size_choices
     if combination is None:
         combination_parameter = {'name': 'combination', "values": combination_choices,
-                                 "value_type": "int", 'type': 'range'}
+                                 "value_type": "int", 'type': 'choice'}
     else:
         combination_parameter = {'name': 'combination', 'value': combination, 'type': 'fixed', "value_type": "int"}
 
@@ -311,7 +311,7 @@ def create_search_space(combination, small_search_space, hard_triplet_selector):
             {'name': "depth_1", 'value': 1, "value_type": "int", 'type': 'fixed'},
             {'name': "lr_e", 'values': learning_rate_choices, "value_type": "float", 'type': 'choice'},
             {'name': "dropout_rate_e", 'values': drop_rate_choices, "value_type": "float", 'type': 'choice'},
-            {'name': 'weight_decay', 'values': weight_decay_choices,"value_type": "float", 'type': 'range'},
+            {'name': 'weight_decay', 'bounds': weight_decay_choices,"value_type": "float", 'type': 'range'},
             gamma,
             {'name': 'epochs', 'bounds': [epoch_lower, epoch_upper], "value_type": "int", 'type': 'range'},
             combination_parameter,
