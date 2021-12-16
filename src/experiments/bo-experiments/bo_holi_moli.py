@@ -245,8 +245,7 @@ def create_search_space(combination, small_search_space, hard_triplet_selector):
 
     if combination is None and not small_search_space:
         search_space = [
-            {'name': 'mini_batch', 'values': batch_size_choices, 'value_type': 'int',
-             'type': 'choice'},
+            {'name': 'mini_batch', 'values': batch_size_choices, 'value_type': 'int', 'type': 'choice'},
             {'name': 'h_dim1', "values": dim_choice, "value_type": "int", 'type': 'choice'},
             {'name': "h_dim2", "values": dim_choice, "value_type": "int", 'type': 'choice'},
             {'name': "h_dim3", "values": dim_choice, "value_type": "int", 'type': 'choice'},
