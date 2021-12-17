@@ -233,7 +233,7 @@ def extract_best_parameter(experiment):
 
 
 def create_search_space(combination, small_search_space, hard_triplet_selector):
-    batch_size_choices = batch_size_hard_triplets_choices if hard_triplet_selector else all_triplet_batch_size_choices
+    batch_size_choices = batch_size_hard_triplets_choices if hard_triplet_selector != 'all' else all_triplet_batch_size_choices
     if combination is None:
         combination_parameter = {'name': 'combination', "values": combination_choices,
                                  "value_type": "int", 'type': 'choice'}
