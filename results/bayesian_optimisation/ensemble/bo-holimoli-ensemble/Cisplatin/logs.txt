@@ -1,4 +1,0 @@
-Start for Cisplatin
-Cisplatin Hard voting = 0.5
-Cisplatin Soft voting = 0.5722222222222223
-Cisplatin Weighted Voting = 0.5722222222222223

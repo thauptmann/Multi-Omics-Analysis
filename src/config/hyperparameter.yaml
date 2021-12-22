@@ -1,0 +1,71 @@
+---
+
+drop_rate_choices:
+    - 0.1
+    - 0.3
+    - 0.5
+    - 0.7
+    - 0.8
+
+weight_decay_choices:
+    - 0.0001
+    - 0.001
+    - 0.01
+    - 0.05
+    - 0.1
+
+gamma_choices:
+    - 0.0
+    - 0.1
+    - 0.3
+    - 0.5
+
+dim_choice:
+    - 32
+    - 64
+    - 128
+    - 256
+    - 512
+    - 1024
+
+margin_choices:
+    - 0.2
+    - 0.5
+    - 1
+
+learning_rate_choices:
+    - 0.001
+    - 0.01
+
+combination_choices:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+
+all_triplet_batch_size_choices:
+    - 8
+    - 16
+    - 32
+    - 64
+
+batch_size_hard_triplets_choices:
+    - 64
+    - 128
+    - 256
+    - 512
+    - 1024
+
+epoch_lower: 2
+epoch_upper: 20
+cv_splits: 5
+random_seed: 42
+drugs:
+    Gemcitabine_tcga: TCGA
+    Gemcitabine_pdx: PDX
+    Cisplatin: TCGA
+    Docetaxel: TCGA
+    Erlotinib: PDX
+    Cetuximab: PDX
+    Paclitaxel: PDX

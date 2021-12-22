@@ -1,4 +1,0 @@
-Start for Gemcitabine_pdx
-Gemcitabine_pdx Hard voting = 0.5
-Gemcitabine_pdx Soft voting = 0.7063492063492063
-Gemcitabine_pdx Weighted Voting = 0.7063492063492063
