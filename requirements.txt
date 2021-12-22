@@ -10,4 +10,4 @@ ax~=0.52.0
 scipy==1.7.3
 torchmetrics==0.6.2
 jupyter
-PyYAML==6.0
+PyYAML==5.1.2
