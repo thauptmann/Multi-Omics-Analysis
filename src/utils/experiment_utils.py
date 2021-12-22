@@ -3,7 +3,7 @@ from ax import Models
 from ax.modelbridge.generation_strategy import GenerationStrategy, GenerationStep
 
 
-def create_generation_strategy(sampling_method, sobol_iterations):
+def create_generation_strategy(sampling_method, sobol_iterations, random_seed):
     if sampling_method == 'gp':
         generation_strategy = GenerationStrategy(
             steps=[

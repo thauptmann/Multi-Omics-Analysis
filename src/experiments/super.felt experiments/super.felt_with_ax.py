@@ -3,8 +3,8 @@ import sys
 from pathlib import Path
 
 import sklearn.preprocessing as sk
-from ax import Models, optimize
-from ax.modelbridge.generation_strategy import GenerationStrategy, GenerationStep
+import yaml
+from ax import optimize
 from scipy.stats import sem
 from sklearn.metrics import roc_auc_score, average_precision_score
 from torch import optim
@@ -14,38 +14,23 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
 
+from utils.experiment_utils import create_generation_strategy
+from utils.searchspaces import get_super_felt_search_space
+
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier
-from siamese_triplet.utils import AllTripletSelector
-from utils.network_training_util import calculate_mean_and_std_auc, feature_selection
+from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector
 from utils import multi_omics_data
 
 from utils.choose_gpu import get_free_gpu
 
-drugs = {
-    'Gemcitabine_tcga': 'TCGA',
-    'Gemcitabine_pdx': 'PDX',
-    'Cisplatin': 'TCGA',
-    'Docetaxel': 'TCGA',
-    'Erlotinib': 'PDX',
-    'Cetuximab': 'PDX',
-    'Paclitaxel': 'PDX'
-}
-
-dimensions = [32, 64, 128, 256]
-mini_batch_sizes = [64]
-margins = [0.2, 1]
-learning_rates = [0.001, 0.01]
-epochs_low = 3
-epochs_high = 10
-weight_decay = [0.0, 0.01, 0.05, 0.1, 0.15]
-dropout_values = [0.1, 0.3, 0.4, 0.5, 0.7]
-
-random_seed = 42
-cv_splits = 5
+with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
+    parameter = yaml.safe_load(stream)
+best_auroc = 0
 
 
-def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, iterations):
+def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, search_iterations, sobol_iterations,
+               sampling_method, deactivate_elbow_method, deactivate_skip_bad_iterations, semi_hard_triplet):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -54,63 +39,55 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, iter
         device = torch.device(f"cuda:{free_gpu_id}")
     else:
         device = torch.device("cpu")
+    random_seed = parameter['random_seed']
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     torch.cuda.manual_seed_all(random_seed)
 
-    triplet_selector2 = AllTripletSelector()
-    BCE_loss_fun = torch.nn.BCELoss()
+    bce_loss_function = torch.nn.BCELoss()
+    sobol_iterations = search_iterations if sampling_method == 'sobol' else sobol_iterations
 
     data_path = Path('..', '..', '..', 'data')
     result_path = Path('..', '..', '..', 'results', 'super.felt', drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
     result_file = open(result_path / 'results.txt', 'w')
-    gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
-        = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name, return_data_frames=True)
-    GDSCE, GDSCM, GDSCC = feature_selection(gdsc_e, gdsc_m, gdsc_c)
-    expression_intersection_genes_index = GDSCE.columns.intersection(extern_e.columns)
-    mutation_intersection_genes_index = GDSCM.columns.intersection(extern_m.columns)
-    cna_intersection_genes_index = GDSCC.columns.intersection(extern_c.columns)
-    GDSCR = gdsc_r
-    GDSCE = GDSCE.to_numpy()
-    GDSCM = GDSCM.to_numpy()
-    GDSCC = GDSCC.to_numpy()
-
-    ExternalE = extern_e.loc[:, expression_intersection_genes_index].to_numpy()
-    ExternalM = extern_m.loc[:, mutation_intersection_genes_index].to_numpy()
-    ExternalC = extern_c.loc[:, cna_intersection_genes_index].to_numpy()
-    ExternalY = extern_r
+    if deactivate_elbow_method:
+        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
+            = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name)
+    else:
+        gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
+            = multi_omics_data.load_drug_data_with_elbow(data_path, drug_name, extern_dataset_name)
 
     test_auc_list = []
     extern_auc_list = []
     test_auprc_list = []
     extern_auprc_list = []
 
-    skf_outer = StratifiedKFold(n_splits=cv_splits, random_state=random_seed, shuffle=True)
-    for train_index_outer, test_index in tqdm(skf_outer.split(GDSCE, GDSCR), total=skf_outer.get_n_splits(),
+    skf_outer = StratifiedKFold(n_splits=parameter['cv_splits'], random_state=random_seed, shuffle=True)
+    for train_index_outer, test_index in tqdm(skf_outer.split(gdsc_e, gdsc_r), total=skf_outer.get_n_splits(),
                                               desc=" Outer k-fold"):
-        X_train_valE = GDSCE[train_index_outer]
-        X_testE = GDSCE[test_index]
-        X_train_valM = GDSCM[train_index_outer]
-        X_testM = GDSCM[test_index]
-        X_train_valC = GDSCC[train_index_outer]
-        X_testC = GDSCC[test_index]
-        Y_train_val = GDSCR[train_index_outer]
-        Y_test = GDSCR[test_index]
-        evaluation_function = lambda parameterization: train_validate_hyperparameter_set(BCE_loss_fun, X_train_valE,
+        global best_auroc
+        best_auroc = 0
+        X_train_valE = gdsc_e[train_index_outer]
+        X_testE = gdsc_e[test_index]
+        X_train_valM = gdsc_m[train_index_outer]
+        X_testM = gdsc_m[test_index]
+        X_train_valC = gdsc_c[train_index_outer]
+        X_testC = gdsc_c[test_index]
+        Y_train_val = gdsc_r[train_index_outer]
+        Y_test = gdsc_r[test_index]
+        evaluation_function = lambda parameterization: train_validate_hyperparameter_set(bce_loss_function,
+                                                                                         X_train_valE,
                                                                                          X_train_valM, X_train_valC,
                                                                                          Y_train_val, device,
                                                                                          parameterization,
-                                                                                         triplet_selector2)
-        generation_strategy = GenerationStrategy(
-            steps=[
-                GenerationStep(model=Models.SOBOL, num_trials=iterations),
-            ],
-            name="Sobol"
-        )
-        search_space = get_search_space()
+                                                                                         semi_hard_triplet,
+                                                                                         deactivate_skip_bad_iterations)
+
+        generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
+        search_space = get_super_felt_search_space(semi_hard_triplet)
         best_parameters, values, experiment, model = optimize(
-            total_trials=iterations,
+            total_trials=search_iterations,
             experiment_name='Super.FELT',
             objective_name='auroc',
             parameters=search_space,
@@ -121,20 +98,20 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, iter
 
         # retrain best
         final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
-        final_scalerGDSC = train_final(
-            BCE_loss_fun, X_train_valE, X_train_valM, X_train_valC, Y_train_val, best_parameters, device,
-            triplet_selector2)
+        final_scaler_gdsc = train_final(
+            bce_loss_function, X_train_valE, X_train_valM, X_train_valC, Y_train_val, best_parameters, device,
+            semi_hard_triplet)
 
         # Test
         test_AUC, test_AUCPR = test(X_testE, X_testM, X_testC, Y_test, device, final_C_Supervised_Encoder,
                                     final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
-                                    final_scalerGDSC)
+                                    final_scaler_gdsc)
 
         # Extern
-        external_AUC, external_AUCPR = test(ExternalE, ExternalM, ExternalC, ExternalY, device,
+        external_AUC, external_AUCPR = test(extern_e, extern_m, extern_c, extern_r, device,
                                             final_C_Supervised_Encoder,
                                             final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
-                                            final_scalerGDSC)
+                                            final_scaler_gdsc)
 
         test_auc_list.append(test_AUC)
         extern_auc_list.append(external_AUC)
@@ -147,8 +124,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, iter
 
 
 def train_validate_hyperparameter_set(bce_loss_function, x_train_val_e, x_train_val_m, x_train_val_c, y_train_val,
-                                      device, hyperparameters, triplet_selector2):
-    skf = StratifiedKFold(n_splits=cv_splits)
+                                      device, hyperparameters, semi_hard_triplet, deactivate_skip_bad_iterations):
+    skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     all_validation_aurocs = []
     encoder_dropout = hyperparameters['encoder_dropout']
     classifier_dropout = hyperparameters['classifier_dropout']
@@ -167,7 +144,9 @@ def train_validate_hyperparameter_set(bce_loss_function, x_train_val_e, x_train_
     Classifier_epoch = hyperparameters['classifier_epochs']
     mini_batch_size = hyperparameters['mini_batch_size']
     margin = hyperparameters['margin']
+    triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
+    iteration = 1
 
     for train_index, validate_index in tqdm(skf.split(x_train_val_e, y_train_val), total=skf.get_n_splits(),
                                             desc="k-fold"):
@@ -195,198 +174,50 @@ def train_validate_hyperparameter_set(bce_loss_function, x_train_val_e, x_train_
                                                       torch.FloatTensor(Y_train.astype(int)))
 
         trainLoader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mini_batch_size, shuffle=False,
-                                                  num_workers=1, sampler=sampler)
+                                                  num_workers=1, sampler=sampler, drop_last=True)
 
-        n_sample_E, IE_dim = X_trainE.shape
-        n_sample_M, IM_dim = X_trainM.shape
-        n_sample_C, IC_dim = X_trainC.shape
+        IE_dim = X_trainE.shape[-1]
+        IM_dim = X_trainM.shape[-1]
+        IC_dim = X_trainC.shape[-1]
 
-        cost_tr = []
-        auc_tr = []
-
-        E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, encoder_dropout)
-        M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, encoder_dropout)
-        C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, encoder_dropout)
-
-        E_Supervised_Encoder.to(device)
-        M_Supervised_Encoder.to(device)
-        C_Supervised_Encoder.to(device)
+        E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, encoder_dropout).to(device)
+        M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, encoder_dropout).to(device)
+        C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, encoder_dropout).to(device)
 
         E_optimizer = optim.Adagrad(E_Supervised_Encoder.parameters(), lr=lrE, weight_decay=encoder_weight_decay)
         M_optimizer = optim.Adagrad(M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=encoder_weight_decay)
         C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=encoder_weight_decay)
-        TripSel = OnlineTestTriplet(margin, triplet_selector2)
+        TripSel = OnlineTestTriplet(margin, triplet_selector)
 
         OCP_dim = OE_dim + OM_dim + OC_dim
-        classifier = Classifier(OCP_dim, classifier_dropout)
-        classifier.to(device)
-        Cl_optimizer = optim.Adagrad(classifier.parameters(), lr=lrCL, weight_decay=classifier_weight_decay)
+        classifier = Classifier(OCP_dim, classifier_dropout).to(device)
+        classifier_optimizer = optim.Adagrad(classifier.parameters(), lr=lrCL, weight_decay=classifier_weight_decay)
 
         # train each Supervised_Encoder with triplet loss
-        pre_loss = 100
-        break_num = 0
-        for e_epoch in range(E_Supervised_Encoder_epoch):
-            E_Supervised_Encoder.train()
-            flag = 0
-            for i, (dataE, _, _, target) in enumerate(trainLoader):
-                if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                    dataE = dataE.to(device)
-                    encoded_E = E_Supervised_Encoder(dataE)
-                    E_Triplets_list = TripSel(encoded_E, target)
-                    E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
-                                           encoded_E[E_Triplets_list[:, 1], :],
-                                           encoded_E[E_Triplets_list[:, 2], :])
-
-                    E_optimizer.zero_grad()
-                    E_loss.backward()
-                    E_optimizer.step()
-                    flag = 1
-
-            if flag == 1:
-                del E_loss
-            with torch.no_grad():
-                E_Supervised_Encoder.eval()
-                """
-                    inner validation
-                """
-                encoded_val_E = E_Supervised_Encoder(X_valE)
-                E_Triplets_list = TripSel(encoded_val_E, torch.FloatTensor(Y_val))
-                val_E_loss = trip_loss_fun(encoded_val_E[E_Triplets_list[:, 0], :],
-                                           encoded_val_E[E_Triplets_list[:, 1], :],
-                                           encoded_val_E[E_Triplets_list[:, 2], :])
-
-                if pre_loss <= val_E_loss:
-                    break_num += 1
-
-                if break_num > 1:
-                    pass  # break
-                else:
-                    pre_loss = val_E_loss
-
-        E_Supervised_Encoder.eval()
-
-        pre_loss = 100
-        break_num = 0
-        for m_epoch in range(M_Supervised_Encoder_epoch):
-            M_Supervised_Encoder.train().to(device)
-            flag = 0
-            for i, (_, dataM, _, target) in enumerate(trainLoader):
-                if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                    dataM = dataM.to(device)
-                    encoded_M = M_Supervised_Encoder(dataM)
-                    M_Triplets_list = TripSel(encoded_M, target)
-                    M_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
-                                           encoded_M[M_Triplets_list[:, 1], :],
-                                           encoded_M[M_Triplets_list[:, 2], :])
-
-                    M_optimizer.zero_grad()
-                    M_loss.backward()
-                    M_optimizer.step()
-                    flag = 1
-
-            if flag == 1:
-                del M_loss
-            with torch.no_grad():
-                M_Supervised_Encoder.eval()
-                """
-                    validation
-                """
-                encoded_val_M = M_Supervised_Encoder(torch.FloatTensor(X_valM).to(device))
-                M_Triplets_list = TripSel(encoded_val_M, torch.FloatTensor(Y_val))
-                val_M_loss = trip_loss_fun(encoded_val_M[M_Triplets_list[:, 0], :],
-                                           encoded_val_M[M_Triplets_list[:, 1], :],
-                                           encoded_val_M[M_Triplets_list[:, 2], :])
-
-                if pre_loss <= val_M_loss:
-                    break_num += 1
-
-                if break_num > 1:
-                    pass  # break
-                else:
-                    pre_loss = val_M_loss
-
-        M_Supervised_Encoder.eval()
-
-        pre_loss = 100
-        break_num = 0
-        for c_epoch in range(C_Supervised_Encoder_epoch):
-            C_Supervised_Encoder.train()
-            flag = 0
-            for i, (_, _, dataC, target) in enumerate(trainLoader):
-                if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                    dataC = dataC.to(device)
-                    encoded_C = C_Supervised_Encoder(dataC)
-
-                    C_Triplets_list = TripSel(encoded_C, target)
-                    C_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
-                                           encoded_C[C_Triplets_list[:, 1], :],
-                                           encoded_C[C_Triplets_list[:, 2], :])
-                    C_optimizer.zero_grad()
-                    C_loss.backward()
-                    C_optimizer.step()
-
-                    flag = 1
-
-            if flag == 1:
-                del C_loss
-            with torch.no_grad():
-                C_Supervised_Encoder.eval()
-                """
-                    inner validation
-                """
-                encoded_val_C = C_Supervised_Encoder(torch.FloatTensor(X_valC).to(device))
-                C_Triplets_list = TripSel(encoded_val_C, torch.FloatTensor(Y_val))
-                val_C_loss = trip_loss_fun(encoded_val_C[C_Triplets_list[:, 0], :],
-                                           encoded_val_C[C_Triplets_list[:, 1], :],
-                                           encoded_val_C[C_Triplets_list[:, 2], :])
-                if pre_loss <= val_C_loss:
-                    break_num += 1
-
-                if break_num > 1:
-                    pass  # break
-                else:
-                    pre_loss = val_C_loss
-
-        C_Supervised_Encoder.eval()
+        train_encoder(E_Supervised_Encoder_epoch, E_optimizer, TripSel, device, E_Supervised_Encoder, trainLoader,
+                      trip_loss_fun, 0, semi_hard_triplet)
+        train_encoder(M_Supervised_Encoder_epoch, M_optimizer, TripSel, device, M_Supervised_Encoder, trainLoader,
+                      trip_loss_fun, 1, semi_hard_triplet)
+        train_encoder(C_Supervised_Encoder_epoch, C_optimizer, TripSel, device, C_Supervised_Encoder, trainLoader,
+                      trip_loss_fun, 2, semi_hard_triplet)
 
         # train classifier
-        val_AUC = 0
+        val_auroc = 0
         for cl_epoch in range(Classifier_epoch):
-            epoch_cost = 0
-            epoch_auc_list = []
-            num_minibatches = int(n_sample_E / mini_batch_size)
-            flag = 0
             classifier.train()
             for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
-                if torch.mean(target) != 0. and torch.mean(target) != 1.:
-                    dataE = dataE.to(device)
-                    dataM = dataM.to(device)
-                    dataC = dataC.to(device)
-                    target = target.to(device)
-                    encoded_E = E_Supervised_Encoder(dataE)
-                    encoded_M = M_Supervised_Encoder(dataM)
-                    encoded_C = C_Supervised_Encoder(dataC)
-
-                    Pred = classifier(encoded_E, encoded_M, encoded_C)
-
-                    y_true = target.view(-1, 1).cpu()
-
-                    cl_loss = bce_loss_function(Pred, target.view(-1, 1))
-                    y_pred = Pred.cpu()
-                    AUC = roc_auc_score(y_true.detach().numpy(), y_pred.detach().numpy())
-
-                    Cl_optimizer.zero_grad()
-                    cl_loss.backward()
-                    Cl_optimizer.step()
-
-                    epoch_cost = epoch_cost + (cl_loss / num_minibatches)
-                    epoch_auc_list.append(AUC)
-                    flag = 1
-
-            if flag == 1:
-                cost_tr.append(torch.mean(epoch_cost))
-                auc_tr.append(np.mean(epoch_auc_list))
-                del cl_loss
+                classifier_optimizer.zero_grad()
+                dataE = dataE.to(device)
+                dataM = dataM.to(device)
+                dataC = dataC.to(device)
+                target = target.to(device)
+                encoded_E = E_Supervised_Encoder(dataE)
+                encoded_M = M_Supervised_Encoder(dataM)
+                encoded_C = C_Supervised_Encoder(dataC)
+                Pred = classifier(encoded_E, encoded_M, encoded_C)
+                cl_loss = bce_loss_function(Pred, target.view(-1, 1))
+                cl_loss.backward()
+                classifier_optimizer.step()
 
             with torch.no_grad():
                 classifier.eval()
@@ -396,19 +227,25 @@ def train_validate_hyperparameter_set(bce_loss_function, x_train_val_e, x_train_
                 encoded_val_E = E_Supervised_Encoder(X_valE)
                 encoded_val_M = M_Supervised_Encoder(torch.FloatTensor(X_valM).to(device))
                 encoded_val_C = C_Supervised_Encoder(torch.FloatTensor(X_valC).to(device))
-
                 test_Pred = classifier(encoded_val_E, encoded_val_M, encoded_val_C)
-
                 test_y_true = Y_val
                 test_y_pred = test_Pred.cpu()
+                val_auroc = roc_auc_score(test_y_true, test_y_pred.detach().numpy())
 
-                val_AUC = roc_auc_score(test_y_true, test_y_pred.detach().numpy())
+                if not deactivate_skip_bad_iterations:
+                    open_folds = parameter['cv_splits'] - iteration
+                    remaining_best_results = np.ones(open_folds)
+                    best_possible_mean = np.mean(np.concatenate([val_auroc, remaining_best_results]))
+                    if check_best_auroc(best_possible_mean):
+                        print('Skip remaining folds.')
+                        break
+                iteration += 1
 
-        all_validation_aurocs.append(val_AUC)
-    val_AUC = np.mean(all_validation_aurocs)
+        all_validation_aurocs.append(val_auroc)
+    val_auroc = np.mean(all_validation_aurocs)
     standard_error_of_mean = sem(all_validation_aurocs)
 
-    return {'auroc': (val_AUC, standard_error_of_mean)}
+    return {'auroc': (val_auroc, standard_error_of_mean)}
 
 
 def write_results_to_file(drug_name, extern_auc_list, extern_auprc_list, result_file, test_auc_list, test_auprc_list):
@@ -425,12 +262,12 @@ def write_results_to_file(drug_name, extern_auc_list, extern_auprc_list, result_
     calculate_mean_and_std_auc(result_dict, result_file, drug_name)
 
 
-def test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encoder, final_classifier,
-         final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_scaler_gdsc):
+def test(x_test_e, x_test_m, x_test_c, y_test, device, final_c_supervised_encoder, final_classifier,
+         final_e_supervised_encoder, final_m_supervised_encoder, final_scaler_gdsc):
     x_test_e = torch.FloatTensor(final_scaler_gdsc.transform(x_test_e))
-    encoded_test_E = final_E_Supervised_Encoder(torch.FloatTensor(x_test_e).to(device))
-    encoded_test_M = final_M_Supervised_Encoder(torch.FloatTensor(x_test_m).to(device))
-    encoded_test_C = final_C_Supervised_Encoder(torch.FloatTensor(x_test_c).to(device))
+    encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))
+    encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))
+    encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))
     test_Pred = final_classifier(encoded_test_E, encoded_test_M, encoded_test_C)
     test_y_true = y_test
     test_y_pred = test_Pred.cpu().detach().numpy()
@@ -440,7 +277,7 @@ def test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encode
 
 
 def train_final(bce_loss_function, x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
-                device, triplet_selector2):
+                device, semi_hard_triplet):
     E_dr = best_hyperparameter['encoder_dropout']
     C_dr = best_hyperparameter['classifier_dropout']
     Cwd = best_hyperparameter['classifier_weight_decay']
@@ -472,116 +309,89 @@ def train_final(bce_loss_function, x_train_val_e, x_train_val_m, x_train_val_c, 
     trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_train_val_e), torch.FloatTensor(x_train_val_m),
                                                   torch.FloatTensor(x_train_val_c),
                                                   torch.FloatTensor(y_train_val.astype(int)))
-    trainLoader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mb_size, shuffle=False,
-                                              num_workers=1, sampler=sampler)
+    train_Loader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mb_size, shuffle=False,
+                                              num_workers=1, sampler=sampler, drop_last=True)
     n_sample_E, IE_dim = x_train_val_e.shape
     n_sample_M, IM_dim = x_train_val_m.shape
     n_sample_C, IC_dim = x_train_val_c.shape
-    final_E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr)
-    final_M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr)
-    final_C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, E_dr)
-    final_E_Supervised_Encoder.to(device)
-    final_M_Supervised_Encoder.to(device)
-    final_C_Supervised_Encoder.to(device)
+    final_E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr).to(device)
+    final_M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr).to(device)
+    final_C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, E_dr).to(device)
     E_optimizer = optim.Adagrad(final_E_Supervised_Encoder.parameters(), lr=lrE, weight_decay=Ewd)
     M_optimizer = optim.Adagrad(final_M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=Ewd)
     C_optimizer = optim.Adagrad(final_C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
-    TripSel = OnlineTestTriplet(margin, triplet_selector2)
+    triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
     OCP_dim = OE_dim + OM_dim + OC_dim
-    final_Classifier = Classifier(OCP_dim, C_dr)
-    final_Classifier.to(device)
-    Cl_optimizer = optim.Adagrad(final_Classifier.parameters(), lr=lrCL, weight_decay=Cwd)
+    final_classifier = Classifier(OCP_dim, C_dr).to(device)
+    classifier_optimizer = optim.Adagrad(final_classifier.parameters(), lr=lrCL, weight_decay=Cwd)
+
     # train each Supervised_Encoder with triplet loss
-    for e_epoch in range(E_Supervised_Encoder_epoch):
-        final_E_Supervised_Encoder.train()
-        for i, (dataE, _, _, target) in enumerate(trainLoader):
-            if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                dataE = dataE.to(device)
-                encoded_E = final_E_Supervised_Encoder(dataE)
+    train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, final_E_Supervised_Encoder,
+                  train_Loader,
+                  trip_loss_fun, 0, semi_hard_triplet)
+    train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, final_M_Supervised_Encoder,
+                  train_Loader,
+                  trip_loss_fun, 1, semi_hard_triplet)
+    train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, final_C_Supervised_Encoder,
+                  train_Loader,
+                  trip_loss_fun, 2, semi_hard_triplet)
 
-                E_Triplets_list = TripSel(encoded_E, target)
-                E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
-                                       encoded_E[E_Triplets_list[:, 1], :],
-                                       encoded_E[E_Triplets_list[:, 2], :])
-
-                E_optimizer.zero_grad()
-                E_loss.backward()
-                E_optimizer.step()
-    final_E_Supervised_Encoder.eval()
-    for m_epoch in range(M_Supervised_Encoder_epoch):
-        final_M_Supervised_Encoder.train().to(device)
-        for i, (_, dataM, _, target) in enumerate(trainLoader):
-            if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                dataM = dataM.to(device)
-                encoded_M = final_M_Supervised_Encoder(dataM)
-                M_Triplets_list = TripSel(encoded_M, target)
-                M_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
-                                       encoded_M[M_Triplets_list[:, 1], :],
-                                       encoded_M[M_Triplets_list[:, 2], :])
-
-                M_optimizer.zero_grad()
-                M_loss.backward()
-                M_optimizer.step()
-    final_M_Supervised_Encoder.eval()
-    for c_epoch in range(C_Supervised_Encoder_epoch):
-        final_C_Supervised_Encoder.train()
-        for i, (_, _, dataC, target) in enumerate(trainLoader):
-            if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                dataC = dataC.to(device)
-                encoded_C = final_C_Supervised_Encoder(dataC)
-
-                C_Triplets_list = TripSel(encoded_C, target)
-                C_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
-                                       encoded_C[C_Triplets_list[:, 1], :],
-                                       encoded_C[C_Triplets_list[:, 2], :])
-
-                C_optimizer.zero_grad()
-                C_loss.backward()
-                C_optimizer.step()
-    final_C_Supervised_Encoder.eval()
     # train classifier
-    for cl_epoch in range(classifier_epoch):
-        final_Classifier.train()
-        for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
-            if torch.mean(target) != 0. and torch.mean(target) != 1.:
-                dataE = dataE.to(device)
-                dataM = dataM.to(device)
-                dataC = dataC.to(device)
-                target = target.to(device)
-                encoded_E = final_E_Supervised_Encoder(dataE)
-                encoded_M = final_M_Supervised_Encoder(dataM)
-                encoded_C = final_C_Supervised_Encoder(dataC)
-
-                Pred = final_Classifier(encoded_E, encoded_M, encoded_C)
-                cl_loss = bce_loss_function(Pred, target.view(-1, 1))
-                Cl_optimizer.zero_grad()
-                cl_loss.backward()
-                Cl_optimizer.step()
-
-        final_Classifier.eval()
-    return final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
+    train_classifier(bce_loss_function, classifier_epoch, classifier_optimizer, device, final_C_Supervised_Encoder,
+                     final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_classifier, train_Loader)
+    return final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_classifier, \
            final_scaler_gdsc
 
 
-def get_search_space():
-    return [{'name': 'encoder_dropout', 'values': dropout_values, 'type': 'choice', 'value_type': 'float'},
-            {'name': 'classifier_dropout', 'values': dropout_values, 'type': 'choice', 'value_type': 'float'},
-            {'name': 'classifier_weight_decay', 'values': weight_decay, 'type': 'choice', 'value_type': 'float'},
-            {'name': 'encoder_weight_decay', 'values': weight_decay, 'type': 'choice', 'value_type': 'float'},
-            {'name': 'learning_rate', 'values': learning_rates, 'type': 'choice', 'value_type': 'float'},
-            {'name': 'e_dimension', 'values': dimensions, 'type': 'choice', 'value_type': 'int'},
-            {'name': 'm_dimension', 'values': dimensions, 'type': 'choice', 'value_type': 'int'},
-            {'name': 'c_dimension', 'values': dimensions, 'type': 'choice', 'value_type': 'int'},
-            {'name': 'e_epochs', 'bounds': [epochs_low,  epochs_high], 'type': 'range',
-             'value_type': 'int'},
-            {'name': 'm_epochs', 'bounds': [epochs_low,  epochs_high], 'type': 'range',
-             'value_type': 'int'},
-            {'name': 'c_epochs', 'bounds': [epochs_low,  epochs_high], 'type': 'range',
-             'value_type': 'int'},
-            {'name': 'classifier_epochs', 'bounds': [epochs_low, epochs_high], 'type': 'range', 'value_type': 'int'},
-            {'name': 'mini_batch_size', 'values': mini_batch_sizes, 'type': 'choice', 'value_type': 'int'},
-            {'name': 'margin', 'values': margins, 'type': 'choice', 'value_type': 'float'},
-            ]
+def train_classifier(bce_loss_function, classifier_epoch, classifier_optimizer, device, final_c_supervised_encoder,
+                     final_e_supervised_encoder, final_m_supervised_encoder, classifier, train_loader):
+    classifier.train()
+    for epoch in range(classifier_epoch):
+        for dataE, dataM, dataC, target in train_loader:
+            classifier_optimizer.zero_grad()
+            dataE = dataE.to(device)
+            dataM = dataM.to(device)
+            dataC = dataC.to(device)
+            target = target.to(device)
+            encoded_E = final_e_supervised_encoder(dataE)
+            encoded_M = final_m_supervised_encoder(dataM)
+            encoded_C = final_c_supervised_encoder(dataC)
+
+            predictions = classifier(encoded_E, encoded_M, encoded_C)
+            cl_loss = bce_loss_function(predictions, target.view(-1, 1))
+            cl_loss.backward()
+            classifier_optimizer.step()
+    classifier.eval()
+
+
+def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device, supervised_encoder, train_loader,
+                  trip_loss_fun, omic_number, semi_hard_triplet):
+    supervised_encoder.train()
+    for epoch in range(supervised_encoder_epoch):
+        last_epochs = False if epoch < supervised_encoder_epoch - 2 else True
+        for all_data in train_loader:
+            target = all_data[-1]
+            data = all_data[omic_number]
+            optimizer.zero_grad()
+            data = data.to(device)
+            encoded_data = supervised_encoder(data)
+            if not last_epochs and semi_hard_triplet:
+                triplets = triplet_selector[0].get_triplets(encoded_data, target)
+            elif last_epochs and semi_hard_triplet:
+                triplets = triplet_selector[1].get_triplets(encoded_data, target)
+            else:
+                triplets = triplet_selector.get_triplets(encoded_data, target)
+            loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
+                                 encoded_data[triplets[:, 1], :],
+                                 encoded_data[triplets[:, 2], :])
+            loss.backward()
+            optimizer.step()
+    supervised_encoder.eval()
+
+
+def check_best_auroc(best_reachable_auroc):
+    global best_auroc
+    return best_reachable_auroc < best_auroc
 
 
 if __name__ == '__main__':
@@ -590,10 +400,14 @@ if __name__ == '__main__':
     parser.add_argument('--gpu_number', type=int)
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
-    parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'hardest', 'random', 'semi_hard',
-                                                                           'none'])
-    parser.add_argument('--iterations', default=8, type=int)
+    parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'semi_hard'])
+    parser.add_argument('--deactivate_elbow_method', default=True, action='store_false')
+    parser.add_argument('--search_iterations', default=200, type=int)
+    parser.add_argument('--sobol_iterations', default=50, type=int)
+    parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     args = parser.parse_args()
 
-    for drug, extern_dataset in drugs.items():
-        super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.iterations)
+    for drug, extern_dataset in parameter['drugs'].items():
+        super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.search_iterations,
+                   args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
+                   args.deactivate_skip_bad_iterations, args.triplet_selector_type)

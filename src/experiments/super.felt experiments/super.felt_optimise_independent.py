@@ -13,35 +13,14 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
 
+from utils.searchspaces import get_encoder_search_space, get_classifier_search_space
+
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, feature_selection
 from utils import multi_omics_data
 from super_felt_model import SupervisedEncoder, Classifier
 
 from utils.choose_gpu import get_free_gpu
-
-drugs = {
-    'Gemcitabine_tcga': 'TCGA',
-    'Gemcitabine_pdx': 'PDX',
-    'Cisplatin': 'TCGA',
-    'Docetaxel': 'TCGA',
-    'Erlotinib': 'PDX',
-    'Cetuximab': 'PDX',
-    'Paclitaxel': 'PDX'
-}
-
-learning_rate = 0.01
-weight_decays = [0.0, 0.01, 0.05, 0.15, 0.1]
-dropouts = [0.1, 0.3, 0.4, 0.5, 0.6, 0.7]
-epoch_lower = 2
-epoch_upper = 10
-dimension_choice = [32, 64, 128, 256, 512, 1024]
-margin_choice = [0.2, 0.5, 1.0]
-mini_batch_choice_encoder = [16, 32, 64]
-mini_batch_choice_classifier = [16, 32, 64]
-BCE_loss_fun = torch.nn.BCELoss()
-
-random_seed = 42
 
 
 def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset_name, gpu_number,
@@ -110,7 +89,7 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
         best_parameters_e, values, experiment, model = optimize(
             total_trials=iterations,
             experiment_name='encoder_e',
-            objective_name='triplet',
+            objective_name='triplet_loss',
             parameters=encoder_search_space,
             evaluation_function=evaluation_function_e,
             minimize=False,
@@ -120,7 +99,7 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
         best_parameters_m, values, experiment, model = optimize(
             total_trials=iterations,
             experiment_name='encoder_m',
-            objective_name='triplet',
+            objective_name='triplet_loss',
             parameters=encoder_search_space,
             evaluation_function=evaluation_function_m,
             minimize=False,
@@ -130,7 +109,7 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
         best_parameters_c, values, experiment, model = optimize(
             total_trials=iterations,
             experiment_name='encoder_c',
-            objective_name='triplet',
+            objective_name='triplet_loss',
             parameters=encoder_search_space,
             evaluation_function=evaluation_function_c,
             minimize=False,
@@ -475,26 +454,6 @@ def create_result_file(drug_name, experiment_name):
     result_path.mkdir(parents=True, exist_ok=True)
     result_file = open(result_path / 'results.txt', 'w')
     return result_file
-
-
-def get_encoder_search_space():
-    return [
-        {'name': 'dropout', 'values': [0.1, 0.3, 0.4, 0.5], 'type': 'choice'},
-        {'name': 'weight_decay', 'values': [0.0, 0.01, 0.1, 0.15], 'type': 'choice'},
-        {'name': 'margin', 'values': margin_choice, 'type': 'choice'},
-        {'name': 'dimension', 'values': dimension_choice, 'type': 'choice'},
-        {'name': 'mini_batch_size', 'values': mini_batch_choice_encoder, 'type': 'choice'},
-        {'name': 'epochs', 'bounds': [epoch_lower, epoch_upper], 'type': 'range'}
-    ]
-
-
-def get_classifier_search_space():
-    return [
-        {'name': 'dropout', 'values': [0.1, 0.3, 0.4, 0.5], 'type': 'choice'},
-        {'name': 'weight_decay', 'values': [0.0, 0.01, 0.1, 0.15], 'type': 'choice'},
-        {'name': 'epochs', 'bounds': [epoch_lower, epoch_upper], 'type': 'range'},
-        {'name': 'mini_batch_size', 'values': mini_batch_choice_classifier, 'type': 'choice'},
-    ]
 
 
 if __name__ == '__main__':

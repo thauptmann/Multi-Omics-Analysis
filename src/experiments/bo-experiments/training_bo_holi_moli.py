@@ -19,7 +19,7 @@ def reset_best_auroc():
 
 
 def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, deactivate_skip_bad_iterations,
-                       triplet_selector_type):
+                       semi_hard_triplet):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -85,8 +85,8 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
         _, im_dim = x_train_m.shape
         _, ic_dim = x_train_c.shape
 
-        triplet_selector = get_triplet_selector(margin, triplet_selector_type)
-        loss_fn = get_loss_fn(margin, gamma, triplet_selector)
+        triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
+        loss_fn = get_loss_fn(margin, gamma, triplet_selector, semi_hard_triplet)
 
         depths = [depth_1, depth_2, depth_3, depth_4]
         input_sizes = [ie_dim, im_dim, ic_dim]
@@ -102,8 +102,9 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
             {'params': moli_model.classifier.parameters(), 'lr': lr_cl}],
             weight_decay=weight_decay)
 
-        for _ in trange(epochs, desc='Epoch'):
-            network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma)
+        for epoch in trange(epochs, desc='Epoch'):
+            last_epochs = False if epoch < epochs - 2 else True
+            network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs)
 
         # validate
         auc_validate, _ = network_training_util.test(moli_model, scaler_gdsc, x_validate_e, x_validate_m, x_validate_c,
@@ -138,7 +139,7 @@ def set_best_auroc(new_auroc):
 
 
 def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory,
-                triplet_selector_type='all'):
+                semi_hard_triplet):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -172,12 +173,12 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     train_scaler_gdsc.fit(x_train_e)
     x_train_e = train_scaler_gdsc.transform(x_train_e)
 
-    _, ie_dim = x_train_e.shape
-    _, im_dim = x_train_m.shape
-    _, ic_dim = x_train_c.shape
+    ie_dim = x_train_e.shape[-1]
+    im_dim = x_train_m.shape[-1]
+    ic_dim = x_train_c.shape[-1]
 
-    triplet_selector = get_triplet_selector(margin, triplet_selector_type)
-    loss_fn = get_loss_fn(margin, gamma, triplet_selector)
+    triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
+    loss_fn = get_loss_fn(margin, gamma, triplet_selector, semi_hard_triplet)
 
     depths = [depth_1, depth_2, depth_3, depth_4]
     input_sizes = [ie_dim, im_dim, ic_dim]
@@ -202,6 +203,8 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     train_loader = create_data_loader(torch.FloatTensor(x_train_e), torch.FloatTensor(x_train_m),
                                       torch.FloatTensor(x_train_c),
                                       torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
-    for _ in range(epochs):
-        network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma)
+
+    for epoch in range(epochs):
+        last_epochs = False if epoch < epochs - 2 else True
+        network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs)
     return moli_model, train_scaler_gdsc

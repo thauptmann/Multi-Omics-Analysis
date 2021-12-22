@@ -51,11 +51,10 @@ all_triplet_batch_size_choices:
     - 64
 
 batch_size_hard_triplets_choices:
+    - 32
     - 64
     - 128
     - 256
-    - 512
-    - 1024
 
 epoch_lower: 2
 epoch_upper: 20

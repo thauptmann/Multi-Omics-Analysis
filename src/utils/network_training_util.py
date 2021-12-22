@@ -20,9 +20,8 @@ def create_dataloader(x_expression, x_mutation, x_cna, y_response, mini_batch, p
                                        num_workers=8, sampler=sampler, pin_memory=pin_memory, drop_last=drop_last)
 
 
-def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma):
+def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs):
     y_true = []
-
     predictions = []
     moli_model.train()
     for (data_e, data_m, data_c, target) in train_loader:
@@ -35,7 +34,7 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma):
             target = target.to(device)
             prediction = moli_model.forward(data_e, data_m, data_c)
             if gamma > 0:
-                loss = loss_fn(prediction, target)
+                loss = loss_fn(prediction, target, last_epochs)
                 prediction = sigmoid(prediction[0])
             else:
                 target = target.view(-1, 1)
@@ -51,16 +50,22 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma):
 
 
 class BceWithTripletsToss:
-    def __init__(self, gamma, triplet_selector, trip_criterion):
+    def __init__(self, gamma, triplet_selector, trip_criterion, semi_hard_triplet):
         self.gamma = gamma
         self.trip_criterion = trip_criterion
         self.triplet_selector = triplet_selector
         self.bce_with_logits = torch.nn.BCEWithLogitsLoss()
+        self.semi_hard_triplet = semi_hard_triplet
         super(BceWithTripletsToss, self).__init__()
 
-    def __call__(self, predictions, target):
+    def __call__(self, predictions, target, last_epoch):
         prediction, zt = predictions
-        triplets = self.triplet_selector.get_triplets(zt, target)
+        if not last_epoch and self.semi_hard_triplet:
+            triplets = self.triplet_selector[0].get_triplets(zt, target)
+        elif last_epoch and self.semi_hard_triplet:
+            triplets = self.triplet_selector[1].get_triplets(zt, target)
+        else:
+            triplets = self.triplet_selector.get_triplets(zt, target)
         target = target.view(-1, 1)
         loss = self.gamma * self.trip_criterion(zt[triplets[:, 0], :], zt[triplets[:, 1], :],
                                                 zt[triplets[:, 2], :]) + self.bce_with_logits(prediction, target)
@@ -121,24 +126,15 @@ def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, te
     return y_true_list, prediction_lists
 
 
-def get_triplet_selector(margin, triplet_selector_type):
-    if triplet_selector_type == 'all':
-        triplet_selector = AllTripletSelector()
-    elif triplet_selector_type == 'hardest':
-        triplet_selector = HardestNegativeTripletSelector(margin)
-    elif triplet_selector_type == 'random':
-        triplet_selector = RandomNegativeTripletSelector(margin)
-    elif triplet_selector_type == 'semi_hard':
-        triplet_selector = SemihardNegativeTripletSelector(margin)
-    else:
-        triplet_selector = None
-    return triplet_selector
+def get_triplet_selector(margin, semi_hard_triplet):
+    return [SemihardNegativeTripletSelector(margin), HardestNegativeTripletSelector(margin)] if semi_hard_triplet \
+        else AllTripletSelector()
 
 
-def get_loss_fn(margin, gamma, triplet_selector):
+def get_loss_fn(margin, gamma, triplet_selector, semi_hard_triplet):
     if triplet_selector is not None and gamma > 0:
         trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
-        return BceWithTripletsToss(gamma, triplet_selector, trip_criterion)
+        return BceWithTripletsToss(gamma, triplet_selector, trip_criterion, semi_hard_triplet)
     else:
         return torch.nn.BCEWithLogitsLoss()
 
