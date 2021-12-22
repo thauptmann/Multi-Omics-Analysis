@@ -101,11 +101,11 @@ def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device):
 
 def create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, pin_memory, sampler=None):
     dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_test_e),
-                                                  torch.FloatTensor(x_test_m),
-                                                  torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
+                                             torch.FloatTensor(x_test_m),
+                                             torch.FloatTensor(x_test_c), torch.FloatTensor(test_y))
     loader = torch.utils.data.DataLoader(dataset=dataset, batch_size=train_batch_size, shuffle=False,
-                                              num_workers=8, pin_memory=pin_memory, drop_last=True,
-                                              sampler=sampler)
+                                         num_workers=8, pin_memory=pin_memory, drop_last=True,
+                                         sampler=sampler)
     return loader
 
 
