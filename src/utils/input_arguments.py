@@ -15,6 +15,6 @@ def get_cmd_arguments():
     parser.add_argument('--deactivate_skip_bad_iterations', default=False, action='store_true')
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
-    parser.add_argument('--semi_hard_triplet', default='all', choices=['all', 'semi_hard'])
+    parser.add_argument('--semi_hard_triplet', default=False, action='store_true')
     parser.add_argument('--deactivate_elbow_method', default=True, action='store_false')
     return parser.parse_args()

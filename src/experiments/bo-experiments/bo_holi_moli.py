@@ -10,13 +10,12 @@ from tqdm import tqdm
 from ax import optimize
 from ax.storage.json_store.save import save_experiment
 from sklearn.model_selection import StratifiedKFold
+
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.experiment_utils import create_generation_strategy
 from utils.input_arguments import get_cmd_arguments
 from utils.searchspaces import create_holi_moli_search_space
-
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.choose_gpu import get_free_gpu
-from pathlib import Path
 from training_bo_holi_moli import train_final, train_and_validate, reset_best_auroc
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
@@ -179,5 +178,5 @@ if __name__ == '__main__':
         drug, extern_dataset = parameter['drugs'][args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                 args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
-                args.small_search_space, args.deactivate_skip_bad_iterations, args.triplet_selector_type,
+                args.small_search_space, args.deactivate_skip_bad_iterations, args.semi_hard_triplet,
                 args.deactivate_elbow_method)

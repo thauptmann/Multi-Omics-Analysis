@@ -14,14 +14,13 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
 
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+
 from utils.experiment_utils import create_generation_strategy
 from utils.searchspaces import get_super_felt_search_space
-
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector
 from utils import multi_omics_data
-
 from utils.choose_gpu import get_free_gpu
 
 with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
@@ -30,7 +29,8 @@ best_auroc = 0
 
 
 def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, search_iterations, sobol_iterations,
-               sampling_method, deactivate_elbow_method, deactivate_skip_bad_iterations, semi_hard_triplet):
+               sampling_method, deactivate_elbow_method, deactivate_skip_bad_iterations, semi_hard_triplet,
+               combine_latent_features, optimise_independent):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -44,7 +44,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
     np.random.seed(random_seed)
     torch.cuda.manual_seed_all(random_seed)
 
-    bce_loss_function = torch.nn.BCELoss()
     sobol_iterations = search_iterations if sampling_method == 'sobol' else sobol_iterations
 
     data_path = Path('..', '..', '..', 'data')
@@ -76,8 +75,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         X_testC = gdsc_c[test_index]
         Y_train_val = gdsc_r[train_index_outer]
         Y_test = gdsc_r[test_index]
-        evaluation_function = lambda parameterization: train_validate_hyperparameter_set(bce_loss_function,
-                                                                                         X_train_valE,
+        evaluation_function = lambda parameterization: train_validate_hyperparameter_set(X_train_valE,
                                                                                          X_train_valM, X_train_valC,
                                                                                          Y_train_val, device,
                                                                                          parameterization,
@@ -98,8 +96,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
 
         # retrain best
         final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
-        final_scaler_gdsc = train_final(
-            bce_loss_function, X_train_valE, X_train_valM, X_train_valC, Y_train_val, best_parameters, device,
+        final_scaler_gdsc = train_final(X_train_valE, X_train_valM, X_train_valC, Y_train_val, best_parameters, device,
             semi_hard_triplet)
 
         # Test
@@ -123,8 +120,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
     print("Done!")
 
 
-def train_validate_hyperparameter_set(bce_loss_function, x_train_val_e, x_train_val_m, x_train_val_c, y_train_val,
+def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val,
                                       device, hyperparameters, semi_hard_triplet, deactivate_skip_bad_iterations):
+    bce_loss_function = torch.nn.BCELoss()
     skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     all_validation_aurocs = []
     encoder_dropout = hyperparameters['encoder_dropout']
@@ -276,8 +274,9 @@ def test(x_test_e, x_test_m, x_test_c, y_test, device, final_c_supervised_encode
     return test_AUC, test_AUCPR
 
 
-def train_final(bce_loss_function, x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
+def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
                 device, semi_hard_triplet):
+    bce_loss_function = torch.nn.BCELoss()
     E_dr = best_hyperparameter['encoder_dropout']
     C_dr = best_hyperparameter['classifier_dropout']
     Cwd = best_hyperparameter['classifier_weight_decay']
@@ -400,8 +399,9 @@ if __name__ == '__main__':
     parser.add_argument('--gpu_number', type=int)
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
-    parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'semi_hard'])
+    parser.add_argument('--semi_hard_triplet', default=False, action='store_true')
     parser.add_argument('--deactivate_elbow_method', default=True, action='store_false')
+    parser.add_argument('--combine_latent_features', default=False, action='store_true')
     parser.add_argument('--search_iterations', default=200, type=int)
     parser.add_argument('--sobol_iterations', default=50, type=int)
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
@@ -410,4 +410,5 @@ if __name__ == '__main__':
     for drug, extern_dataset in parameter['drugs'].items():
         super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.search_iterations,
                    args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
-                   args.deactivate_skip_bad_iterations, args.triplet_selector_type)
+                   args.deactivate_skip_bad_iterations, args.semi_hard_triplet, args.combine_latent_features,
+                   args.optimise_independent)
