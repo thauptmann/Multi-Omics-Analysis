@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
-from tqdm import tqdm
+from tqdm import tqdm, trange
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
@@ -344,7 +344,7 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
 def train_classifier(bce_loss_function, classifier_epoch, classifier_optimizer, device, final_c_supervised_encoder,
                      final_e_supervised_encoder, final_m_supervised_encoder, classifier, train_loader):
     classifier.train()
-    for epoch in range(classifier_epoch):
+    for _ in trange(classifier_epoch):
         for dataE, dataM, dataC, target in train_loader:
             classifier_optimizer.zero_grad()
             dataE = dataE.to(device)
@@ -365,7 +365,7 @@ def train_classifier(bce_loss_function, classifier_epoch, classifier_optimizer, 
 def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device, supervised_encoder, train_loader,
                   trip_loss_fun, omic_number, semi_hard_triplet):
     supervised_encoder.train()
-    for epoch in range(supervised_encoder_epoch):
+    for epoch in trange(supervised_encoder_epoch):
         last_epochs = False if epoch < supervised_encoder_epoch - 2 else True
         for all_data in train_loader:
             target = all_data[-1]
