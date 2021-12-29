@@ -18,7 +18,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 from utils.experiment_utils import create_generation_strategy
 from utils.searchspaces import get_super_felt_search_space
-from super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier
+from super_felt_model import SupervisedEncoder, Classifier
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector
 from utils import multi_omics_data
 from utils.choose_gpu import get_free_gpu
@@ -97,7 +97,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         # retrain best
         final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
         final_scaler_gdsc = train_final(X_train_valE, X_train_valM, X_train_valC, Y_train_val, best_parameters, device,
-            semi_hard_triplet)
+                                        semi_hard_triplet)
 
         # Test
         test_AUC, test_AUCPR = test(X_testE, X_testM, X_testC, Y_test, device, final_C_Supervised_Encoder,
@@ -185,19 +185,18 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
         E_optimizer = optim.Adagrad(E_Supervised_Encoder.parameters(), lr=lrE, weight_decay=encoder_weight_decay)
         M_optimizer = optim.Adagrad(M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=encoder_weight_decay)
         C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=encoder_weight_decay)
-        TripSel = OnlineTestTriplet(margin, triplet_selector)
 
         OCP_dim = OE_dim + OM_dim + OC_dim
         classifier = Classifier(OCP_dim, classifier_dropout).to(device)
         classifier_optimizer = optim.Adagrad(classifier.parameters(), lr=lrCL, weight_decay=classifier_weight_decay)
 
         # train each Supervised_Encoder with triplet loss
-        train_encoder(E_Supervised_Encoder_epoch, E_optimizer, TripSel, device, E_Supervised_Encoder, trainLoader,
-                      trip_loss_fun, 0, semi_hard_triplet)
-        train_encoder(M_Supervised_Encoder_epoch, M_optimizer, TripSel, device, M_Supervised_Encoder, trainLoader,
-                      trip_loss_fun, 1, semi_hard_triplet)
-        train_encoder(C_Supervised_Encoder_epoch, C_optimizer, TripSel, device, C_Supervised_Encoder, trainLoader,
-                      trip_loss_fun, 2, semi_hard_triplet)
+        train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, E_Supervised_Encoder,
+                      trainLoader, trip_loss_fun, 0, semi_hard_triplet)
+        train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, M_Supervised_Encoder,
+                      trainLoader, trip_loss_fun, 1, semi_hard_triplet)
+        train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, C_Supervised_Encoder,
+                      trainLoader, trip_loss_fun, 2, semi_hard_triplet)
 
         # train classifier
         val_auroc = 0
@@ -309,7 +308,7 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
                                                   torch.FloatTensor(x_train_val_c),
                                                   torch.FloatTensor(y_train_val.astype(int)))
     train_Loader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mb_size, shuffle=False,
-                                              num_workers=1, sampler=sampler, drop_last=True)
+                                               num_workers=1, sampler=sampler, drop_last=True)
     n_sample_E, IE_dim = x_train_val_e.shape
     n_sample_M, IM_dim = x_train_val_m.shape
     n_sample_C, IC_dim = x_train_val_c.shape
