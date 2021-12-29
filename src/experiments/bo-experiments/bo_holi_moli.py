@@ -61,7 +61,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     now = datetime.now()
     result_file.write(f'Start experiment at {now}\n')
     log_file.write(f'Using {sampling_method}')
-    skf = StratifiedKFold(n_splits=parameter['cv_splits_outer'], random_state=parameter['random_seed'], shuffle=True)
+    skf = StratifiedKFold(n_splits=parameter['cv_splits'], random_state=parameter['random_seed'], shuffle=True)
     iteration = 0
     sobol_iterations = search_iterations if sampling_method == 'sobol' else sobol_iterations
 
