@@ -140,7 +140,7 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
     C_Supervised_Encoder_epoch = hyperparameters['m_epochs']
     M_Supervised_Encoder_epoch = hyperparameters['c_epochs']
     Classifier_epoch = hyperparameters['classifier_epochs']
-    mini_batch_size = hyperparameters['mini_batch_size']
+    mini_batch_size = hyperparameters['mini_batch']
     margin = hyperparameters['margin']
     triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
@@ -293,7 +293,7 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     C_Supervised_Encoder_epoch = best_hyperparameter['m_epochs']
     M_Supervised_Encoder_epoch = best_hyperparameter['c_epochs']
     classifier_epoch = best_hyperparameter['classifier_epochs']
-    mb_size = best_hyperparameter['mini_batch_size']
+    mb_size = best_hyperparameter['mini_batch']
 
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
     class_sample_count = np.array([len(np.where(y_train_val == t)[0]) for t in np.unique(y_train_val)])
@@ -400,10 +400,13 @@ if __name__ == '__main__':
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     parser.add_argument('--semi_hard_triplet', default=False, action='store_true')
-    parser.add_argument('--deactivate_elbow_method', default=True, action='store_false')
+    parser.add_argument('--deactivate_elbow_method', default=False, action='store_true')
     parser.add_argument('--combine_latent_features', default=False, action='store_true')
     parser.add_argument('--search_iterations', default=200, type=int)
     parser.add_argument('--sobol_iterations', default=50, type=int)
+    parser.add_argument('--deactivate_skip_bad_iterations', default=False, action='store_true')
+
+    parser.add_argument('--optimise_independent', default=False, action='store_true')
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     args = parser.parse_args()
 

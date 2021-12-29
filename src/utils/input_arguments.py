@@ -2,7 +2,6 @@ import argparse
 
 
 def get_cmd_arguments():
-    global parser
     parser = argparse.ArgumentParser()
     parser.add_argument('--search_iterations', default=200, type=int)
     parser.add_argument('--sobol_iterations', default=50, type=int)
@@ -16,5 +15,5 @@ def get_cmd_arguments():
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     parser.add_argument('--semi_hard_triplet', default=False, action='store_true')
-    parser.add_argument('--deactivate_elbow_method', default=True, action='store_false')
+    parser.add_argument('--deactivate_elbow_method', default=False, action='store_true')
     return parser.parse_args()

@@ -6,14 +6,13 @@ with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
 
 
 def get_encoder_search_space(triplet_selector):
-
     batch_size_choices = parameter['batch_size_hard_triplets_choices'] if triplet_selector != 'all' \
         else parameter['all_triplet_batch_size_choices']
     return [
         {'name': 'dropout', 'values': parameter['dropout_values'], 'type': 'choice', 'value_type': 'float'},
-        {'name': 'weight_decay', 'values': parameter['weight_decay'], 'type': 'choice', 'value_type': 'float'},
-        {'name': 'margin', 'values': parameter['margins'], 'type': 'choice', 'value_type': 'float'},
-        {'name': 'dimension', 'values': parameter['dimensions'], 'type': 'choice', 'value_type': 'int'},
+        {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'type': 'choice', 'value_type': 'float'},
+        {'name': 'margin', 'values': parameter['margin_choices'], 'type': 'choice', 'value_type': 'float'},
+        {'name': 'dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
         {'name': 'mini_batch', 'values': batch_size_choices, 'value_type': 'int', 'type': 'choice'},
         {'name': 'epochs', "bounds": [parameter['epoch_lower'], parameter['epoch_upper']],
          "value_type": "int", 'type': 'range'},
@@ -25,7 +24,7 @@ def get_classifier_search_space(triplet_selector):
         else parameter['all_triplet_batch_size_choices']
     return [
         {'name': 'dropout', 'values': parameter['dropout_values'], 'type': 'choice', 'value_type': 'float'},
-        {'name': 'weight_decay', 'values': parameter['weight_decay'], 'type': 'choice', 'value_type': 'float'},
+        {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'type': 'choice', 'value_type': 'float'},
         {'name': 'epochs', "bounds": [parameter['epoch_lower'], parameter['epoch_upper']],
          "value_type": "int", 'type': 'range'},
         {'name': 'mini_batch', 'values': batch_size_choices, 'value_type': 'int', 'type': 'choice'},
@@ -133,25 +132,26 @@ def create_holi_moli_search_space(combination, small_search_space, semi_hard_tri
 def get_super_felt_search_space(triplet_selector):
     batch_size_choices = parameter['batch_size_hard_triplets_choices'] if triplet_selector != 'all' \
         else parameter['all_triplet_batch_size_choices']
-    return [{'name': 'encoder_dropout', 'values': parameter['dropout_values'], 'type': 'choice', 'value_type': 'float'},
-            {'name': 'classifier_dropout', 'values': parameter['dropout_values'], 'type': 'choice',
+    return [{'name': 'encoder_dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice', 'value_type': 'float'},
+            {'name': 'classifier_dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice',
              'value_type': 'float'},
-            {'name': 'classifier_weight_decay', 'values': parameter['weight_decay'], 'type': 'choice',
+            {'name': 'classifier_weight_decay', 'values': parameter['weight_decay_choices'], 'type': 'choice',
              'value_type': 'float'},
-            {'name': 'encoder_weight_decay', 'values': parameter['weight_decay'], 'type': 'choice',
+            {'name': 'encoder_weight_decay', 'values': parameter['weight_decay_choices'], 'type': 'choice',
              'value_type': 'float'},
-            {'name': 'learning_rate', 'values': parameter['learning_rates'], 'type': 'choice', 'value_type': 'float'},
-            {'name': 'e_dimension', 'values': parameter['dimensions'], 'type': 'choice', 'value_type': 'int'},
-            {'name': 'm_dimension', 'values': parameter['dimensions'], 'type': 'choice', 'value_type': 'int'},
-            {'name': 'c_dimension', 'values': parameter['dimensions'], 'type': 'choice', 'value_type': 'int'},
-            {'name': 'e_epochs', 'bounds': [parameter['epochs_low'], parameter['epochs_high']], 'type': 'range',
+            {'name': 'learning_rate', 'values': parameter['learning_rate_choices'], 'type': 'choice',
+             'value_type': 'float'},
+            {'name': 'e_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
+            {'name': 'm_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
+            {'name': 'c_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
+            {'name': 'e_epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']], 'type': 'range',
              'value_type': 'int'},
-            {'name': 'm_epochs', 'bounds': [parameter['epochs_low'], parameter['epochs_high']], 'type': 'range',
+            {'name': 'm_epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']], 'type': 'range',
              'value_type': 'int'},
-            {'name': 'c_epochs', 'bounds': [parameter['epochs_low'], parameter['epochs_high']], 'type': 'range',
+            {'name': 'c_epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']], 'type': 'range',
              'value_type': 'int'},
-            {'name': 'classifier_epochs', 'bounds': parameter[['epochs_low'], parameter['epochs_high']],
+            {'name': 'classifier_epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
              'type': 'range', 'value_type': 'int'},
             {'name': 'mini_batch', 'values': batch_size_choices, 'value_type': 'int', 'type': 'choice'},
-            {'name': 'margin', 'values': parameter['margins'], 'type': 'choice', 'value_type': 'float'},
+            {'name': 'margin', 'values': parameter['margin_choices'], 'type': 'choice', 'value_type': 'float'},
             ]
