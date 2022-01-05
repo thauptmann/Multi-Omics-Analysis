@@ -16,6 +16,8 @@ def get_encoder_search_space(triplet_selector):
         {'name': 'mini_batch', 'values': batch_size_choices, 'value_type': 'int', 'type': 'choice'},
         {'name': 'epochs', "bounds": [parameter['epoch_lower'], parameter['epoch_upper']],
          "value_type": "int", 'type': 'range'},
+        {'name': 'learning_rate', 'values': parameter['learning_rate_choices'], 'type': 'choice',
+         'value_type': 'float'}
     ]
 
 
@@ -28,6 +30,8 @@ def get_classifier_search_space(triplet_selector):
         {'name': 'epochs', "bounds": [parameter['epoch_lower'], parameter['epoch_upper']],
          "value_type": "int", 'type': 'range'},
         {'name': 'mini_batch', 'values': batch_size_choices, 'value_type': 'int', 'type': 'choice'},
+        {'name': 'learning_rate', 'values': parameter['learning_rate_choices'], 'type': 'choice',
+         'value_type': 'float'}
     ]
 
 
@@ -129,18 +133,35 @@ def create_holi_moli_search_space(combination, small_search_space, semi_hard_tri
     return search_space
 
 
-def get_super_felt_search_space(triplet_selector):
+def get_super_felt_search_space(triplet_selector, same_dimension_latent_features):
     batch_size_choices = parameter['batch_size_hard_triplets_choices'] if triplet_selector != 'all' \
         else parameter['all_triplet_batch_size_choices']
-    return [{'name': 'encoder_dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice', 'value_type': 'float'},
+    if same_dimension_latent_features:
+        dimensions = [{'name': 'encoder_dimension', 'values': parameter['dim_choice'],
+                       'type': 'choice', 'value_type': 'int'}]
+    else:
+        dimensions = [{'name': 'e_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
+                      {'name': 'm_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
+                      {'name': 'c_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'}
+                      ]
+
+    return [{'name': 'encoder_dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice',
+             'value_type': 'float'},
             {'name': 'classifier_dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice',
              'value_type': 'float'},
             {'name': 'classifier_weight_decay', 'values': parameter['weight_decay_choices'], 'type': 'choice',
              'value_type': 'float'},
             {'name': 'encoder_weight_decay', 'values': parameter['weight_decay_choices'], 'type': 'choice',
              'value_type': 'float'},
-            {'name': 'learning_rate', 'values': parameter['learning_rate_choices'], 'type': 'choice',
+            {'name': 'learning_rate_e', 'values': parameter['learning_rate_choices'], 'type': 'choice',
              'value_type': 'float'},
+            {'name': 'learning_rate_m', 'values': parameter['learning_rate_choices'], 'type': 'choice',
+             'value_type': 'float'},
+            {'name': 'learning_rate_c', 'values': parameter['learning_rate_choices'], 'type': 'choice',
+             'value_type': 'float'},
+            {'name': 'learning_rate_classifier', 'values': parameter['learning_rate_choices'], 'type': 'choice',
+             'value_type': 'float'},
+            dimensions,
             {'name': 'e_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
             {'name': 'm_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
             {'name': 'c_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},

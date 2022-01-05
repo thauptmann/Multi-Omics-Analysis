@@ -30,7 +30,7 @@ best_auroc = 0
 
 def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, search_iterations, sobol_iterations,
                sampling_method, deactivate_elbow_method, deactivate_skip_bad_iterations, semi_hard_triplet,
-               combine_latent_features, optimise_independent):
+               combine_latent_features, optimise_independent, same_dimension_latent_features):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -80,10 +80,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                                          Y_train_val, device,
                                                                                          parameterization,
                                                                                          semi_hard_triplet,
-                                                                                         deactivate_skip_bad_iterations)
+                                                                                         deactivate_skip_bad_iterations,
+                                                                                         same_dimension_latent_features)
 
         generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
-        search_space = get_super_felt_search_space(semi_hard_triplet)
+        search_space = get_super_felt_search_space(semi_hard_triplet, same_dimension_latent_features)
         best_parameters, values, experiment, model = optimize(
             total_trials=search_iterations,
             experiment_name='Super.FELT',
@@ -97,7 +98,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         # retrain best
         final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
         final_scaler_gdsc = train_final(X_train_valE, X_train_valM, X_train_valC, Y_train_val, best_parameters, device,
-                                        semi_hard_triplet)
+                                        semi_hard_triplet, same_dimension_latent_features)
 
         # Test
         test_AUC, test_AUCPR = test(X_testE, X_testM, X_testC, Y_test, device, final_C_Supervised_Encoder,
@@ -121,7 +122,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
 
 
 def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val,
-                                      device, hyperparameters, semi_hard_triplet, deactivate_skip_bad_iterations):
+                                      device, hyperparameters, semi_hard_triplet, deactivate_skip_bad_iterations,
+                                      same_dimension_latent_features):
     bce_loss_function = torch.nn.BCELoss()
     skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     all_validation_aurocs = []
@@ -129,13 +131,19 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
     classifier_dropout = hyperparameters['classifier_dropout']
     classifier_weight_decay = hyperparameters['classifier_weight_decay']
     encoder_weight_decay = hyperparameters['encoder_weight_decay']
-    lrE = hyperparameters['learning_rate']
-    lrM = hyperparameters['learning_rate']
-    lrC = hyperparameters['learning_rate']
-    lrCL = hyperparameters['learning_rate']
-    OE_dim = hyperparameters['e_dimension']
-    OM_dim = hyperparameters['m_dimension']
-    OC_dim = hyperparameters['c_dimension']
+    lrE = hyperparameters['learning_rate_e']
+    lrM = hyperparameters['learning_rate_m']
+    lrC = hyperparameters['learning_rate_c']
+    lrCL = hyperparameters['learning_rate_classifier']
+
+    if same_dimension_latent_features:
+        OE_dim = hyperparameters['encoder_dimension']
+        OM_dim = hyperparameters['encoder_dimension']
+        OC_dim = hyperparameters['encoder_dimension']
+    else:
+        OE_dim = hyperparameters['e_dimension']
+        OM_dim = hyperparameters['m_dimension']
+        OC_dim = hyperparameters['c_dimension']
     E_Supervised_Encoder_epoch = hyperparameters['e_epochs']
     C_Supervised_Encoder_epoch = hyperparameters['m_epochs']
     M_Supervised_Encoder_epoch = hyperparameters['c_epochs']
@@ -274,19 +282,24 @@ def test(x_test_e, x_test_m, x_test_c, y_test, device, final_c_supervised_encode
 
 
 def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
-                device, semi_hard_triplet):
+                device, semi_hard_triplet, same_dimension_latent_features):
     bce_loss_function = torch.nn.BCELoss()
     E_dr = best_hyperparameter['encoder_dropout']
     C_dr = best_hyperparameter['classifier_dropout']
     Cwd = best_hyperparameter['classifier_weight_decay']
     Ewd = best_hyperparameter['encoder_weight_decay']
-    lrE = best_hyperparameter['learning_rate']
-    lrM = best_hyperparameter['learning_rate']
-    lrC = best_hyperparameter['learning_rate']
-    lrCL = best_hyperparameter['learning_rate']
-    OE_dim = best_hyperparameter['e_dimension']
-    OM_dim = best_hyperparameter['m_dimension']
-    OC_dim = best_hyperparameter['c_dimension']
+    lrE = best_hyperparameter['learning_rate_e']
+    lrM = best_hyperparameter['learning_rate_m']
+    lrC = best_hyperparameter['learning_rate_c']
+    lrCL = best_hyperparameter['learning_rate_classifier']
+    if same_dimension_latent_features:
+        OE_dim = best_hyperparameter['encoder_dimension']
+        OM_dim = best_hyperparameter['encoder_dimension']
+        OC_dim = best_hyperparameter['encoder_dimension']
+    else:
+        OE_dim = best_hyperparameter['e_dimension']
+        OM_dim = best_hyperparameter['m_dimension']
+        OC_dim = best_hyperparameter['c_dimension']
     margin = best_hyperparameter['margin']
     E_Supervised_Encoder_epoch = best_hyperparameter['e_epochs']
     C_Supervised_Encoder_epoch = best_hyperparameter['m_epochs']
@@ -404,7 +417,7 @@ if __name__ == '__main__':
     parser.add_argument('--search_iterations', default=200, type=int)
     parser.add_argument('--sobol_iterations', default=50, type=int)
     parser.add_argument('--deactivate_skip_bad_iterations', default=False, action='store_true')
-
+    parser.add_argument('--same_dimension_latent_features', default=False, action='store_true')
     parser.add_argument('--optimise_independent', default=False, action='store_true')
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     args = parser.parse_args()
@@ -413,4 +426,4 @@ if __name__ == '__main__':
         super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.search_iterations,
                    args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
                    args.deactivate_skip_bad_iterations, args.semi_hard_triplet, args.combine_latent_features,
-                   args.optimise_independent)
+                   args.optimise_independent, args.same_dimension_latent_features)
