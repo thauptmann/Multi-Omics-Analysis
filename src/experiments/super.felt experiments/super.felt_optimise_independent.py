@@ -56,33 +56,15 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
                                                                                 Y_train_val, splits, device)
         evaluation_function_c = lambda parameterization: train_validate_encoder(parameterization, X_train_valC,
                                                                                 Y_train_val, splits, device)
-        generation_strategy_e = GenerationStrategy(
+
+
+        generation_strategy = GenerationStrategy(
             steps=[
                 GenerationStep(model=Models.SOBOL, num_trials=iterations),
             ],
             name="Sobol"
         )
 
-        generation_strategy_m = GenerationStrategy(
-            steps=[
-                GenerationStep(model=Models.SOBOL, num_trials=iterations),
-            ],
-            name="Sobol"
-        )
-
-        generation_strategy_c = GenerationStrategy(
-            steps=[
-                GenerationStep(model=Models.SOBOL, num_trials=iterations),
-            ],
-            name="Sobol"
-        )
-
-        generation_strategy_classifier = GenerationStrategy(
-            steps=[
-                GenerationStep(model=Models.SOBOL, num_trials=iterations),
-            ],
-            name="Sobol"
-        )
 
         encoder_search_space = get_encoder_search_space()
 
@@ -199,15 +181,15 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
     result_file.close()
 
 
-def train_validate_encoder(hyperparameters, x_train_validation, y_train_validation, splits, device):
+def train_validate_encoder(hyperparameters, x_train_validation, y_train_validation, splits, device, semi_hard_triplet):
     margin = hyperparameters['margin']
     output_dimension = hyperparameters['dimension']
     dropout = hyperparameters['dropout']
     epochs = hyperparameters['epochs']
     weight_decay = hyperparameters['weight_decay']
-    mini_batch_size = hyperparameters['mini_batch_size']
-    # triplet_selector = get_triplet_selector(margin, 'semi_hard')
-    triplet_selector = get_triplet_selector(margin, 'all')
+    mini_batch_size = hyperparameters['mini_batch']
+    learning_rate = hyperparameters['learning_rate']
+    triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
     loss_list = list()
     input_dimension = x_train_validation.shape[-1]

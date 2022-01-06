@@ -1,15 +1,14 @@
 import argparse
 import sys
-from pathlib import Path
-
-import sklearn.preprocessing as sk
 import yaml
+import torch
+from pathlib import Path
+import sklearn.preprocessing as sk
 from ax import optimize
 from scipy.stats import sem
 from sklearn.metrics import roc_auc_score, average_precision_score
 from torch import optim
 import numpy as np
-import torch
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm, trange
@@ -17,7 +16,7 @@ from tqdm import tqdm, trange
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 from utils.experiment_utils import create_generation_strategy
-from utils.searchspaces import get_super_felt_search_space
+from utils.searchspaces import get_super_felt_search_space, get_encoder_search_space, get_classifier_search_space
 from super_felt_model import SupervisedEncoder, Classifier
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector
 from utils import multi_omics_data
@@ -67,49 +66,85 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                               desc=" Outer k-fold"):
         global best_auroc
         best_auroc = 0
-        X_train_valE = gdsc_e[train_index_outer]
-        X_testE = gdsc_e[test_index]
-        X_train_valM = gdsc_m[train_index_outer]
-        X_testM = gdsc_m[test_index]
-        X_train_valC = gdsc_c[train_index_outer]
-        X_testC = gdsc_c[test_index]
-        Y_train_val = gdsc_r[train_index_outer]
-        Y_test = gdsc_r[test_index]
-        evaluation_function = lambda parameterization: train_validate_hyperparameter_set(X_train_valE,
-                                                                                         X_train_valM, X_train_valC,
-                                                                                         Y_train_val, device,
-                                                                                         parameterization,
-                                                                                         semi_hard_triplet,
-                                                                                         deactivate_skip_bad_iterations,
-                                                                                         same_dimension_latent_features)
+        x_train_val_e = gdsc_e[train_index_outer]
+        x_test_e = gdsc_e[test_index]
+        x_train_val_m = gdsc_m[train_index_outer]
+        x_test_m = gdsc_m[test_index]
+        x_train_val_c = gdsc_c[train_index_outer]
+        x_test_c = gdsc_c[test_index]
+        y_train_val = gdsc_r[train_index_outer]
+        y_test = gdsc_r[test_index]
+        if combine_latent_features:
+            best_parameters = optimise_encoded_super_felt_parameter(combine_latent_features, random_seed,
+                                                                    same_dimension_latent_features,
+                                                                    sampling_method, search_iterations,
+                                                                    semi_hard_triplet,
+                                                                    sobol_iterations, x_train_val_e,
+                                                                    x_train_val_m, x_train_val_c, y_train_val, device,
+                                                                    deactivate_skip_bad_iterations)
+        elif optimise_independent:
+            best_parameters = optimise_independent_super_felt_parameter(combine_latent_features, random_seed,
+                                                                        same_dimension_latent_features,
+                                                                        sampling_method, search_iterations,
+                                                                        semi_hard_triplet,
+                                                                        sobol_iterations, x_train_val_e,
+                                                                        x_train_val_m, x_train_val_c, y_train_val,
+                                                                        device,
+                                                                        deactivate_skip_bad_iterations)
+        else:
+            best_parameters = optimise_super_felt_parameter(combine_latent_features, random_seed,
+                                                            same_dimension_latent_features,
+                                                            sampling_method, search_iterations, semi_hard_triplet,
+                                                            sobol_iterations, x_train_val_e,
+                                                            x_train_val_m, x_train_val_c, y_train_val, device,
+                                                            deactivate_skip_bad_iterations)
 
-        generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
-        search_space = get_super_felt_search_space(semi_hard_triplet, same_dimension_latent_features)
-        best_parameters, values, experiment, model = optimize(
-            total_trials=search_iterations,
-            experiment_name='Super.FELT',
-            objective_name='auroc',
-            parameters=search_space,
-            evaluation_function=evaluation_function,
-            minimize=False,
-            generation_strategy=generation_strategy,
-        )
-
-        # retrain best
-        final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
-        final_scaler_gdsc = train_final(X_train_valE, X_train_valM, X_train_valC, Y_train_val, best_parameters, device,
-                                        semi_hard_triplet, same_dimension_latent_features)
-
-        # Test
-        test_AUC, test_AUCPR = test(X_testE, X_testM, X_testC, Y_test, device, final_C_Supervised_Encoder,
-                                    final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
-                                    final_scaler_gdsc)
-
-        # Extern
-        external_AUC, external_AUCPR = test(extern_e, extern_m, extern_c, extern_r, device,
-                                            final_C_Supervised_Encoder,
-                                            final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
-                                            final_scaler_gdsc)
+        if combine_latent_features:
+            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_encoded_super_felt_metrics(x_test_c, x_test_e,
+                                                                                                    x_test_m,
+                                                                                                    x_train_val_c,
+                                                                                                    x_train_val_e,
+                                                                                                    x_train_val_m,
+                                                                                                    best_parameters,
+                                                                                                    combine_latent_features,
+                                                                                                    device,
+                                                                                                    extern_c, extern_e,
+                                                                                                    extern_m,
+                                                                                                    extern_r,
+                                                                                                    same_dimension_latent_features,
+                                                                                                    semi_hard_triplet,
+                                                                                                    y_test,
+                                                                                                    y_train_val)
+        elif optimise_independent:
+            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_independent_super_felt_metrics(x_test_c,
+                                                                                                        x_test_e,
+                                                                                                        x_test_m,
+                                                                                                        x_train_val_c,
+                                                                                                        x_train_val_e,
+                                                                                                        x_train_val_m,
+                                                                                                        best_parameters,
+                                                                                                        device,
+                                                                                                        extern_c,
+                                                                                                        extern_e,
+                                                                                                        extern_m,
+                                                                                                        extern_r,
+                                                                                                        semi_hard_triplet,
+                                                                                                        y_test,
+                                                                                                        y_train_val)
+        else:
+            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_super_felt_metrics(x_test_c, x_test_e,
+                                                                                            x_test_m,
+                                                                                            x_train_val_c,
+                                                                                            x_train_val_e,
+                                                                                            x_train_val_m,
+                                                                                            best_parameters,
+                                                                                            device,
+                                                                                            extern_c, extern_e,
+                                                                                            extern_m,
+                                                                                            extern_r,
+                                                                                            same_dimension_latent_features,
+                                                                                            semi_hard_triplet, y_test,
+                                                                                            y_train_val)
 
         test_auc_list.append(test_AUC)
         extern_auc_list.append(external_AUC)
@@ -121,16 +156,153 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
     print("Done!")
 
 
+def optimise_super_felt_parameter(combine_latent_features, random_seed, same_dimension_latent_features, sampling_method,
+                                  search_iterations, semi_hard_triplet, sobol_iterations, x_train_val_e,
+                                  x_train_val_m, x_train_val_c, y_train_val, device, deactivate_skip_bad_iterations):
+    evaluation_function = lambda parameterization: train_validate_hyperparameter_set(x_train_val_e,
+                                                                                     x_train_val_m, x_train_val_c,
+                                                                                     y_train_val, device,
+                                                                                     parameterization,
+                                                                                     semi_hard_triplet,
+                                                                                     deactivate_skip_bad_iterations,
+                                                                                     same_dimension_latent_features,
+                                                                                     combine_latent_features)
+    generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
+    search_space = get_super_felt_search_space(semi_hard_triplet, same_dimension_latent_features,
+                                               combine_latent_features)
+    best_parameters, values, experiment, model = optimize(
+        total_trials=search_iterations,
+        experiment_name='Super.FELT',
+        objective_name='auroc',
+        parameters=search_space,
+        evaluation_function=evaluation_function,
+        minimize=False,
+        generation_strategy=generation_strategy,
+    )
+    return best_parameters
+
+
+def optimise_encoded_super_felt_parameter(combine_latent_features, random_seed, same_dimension_latent_features,
+                                          sampling_method, search_iterations, semi_hard_triplet, sobol_iterations,
+                                          x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, device,
+                                          deactivate_skip_bad_iterations):
+    pass
+
+
+def train_validate_encoder(hyperparameters, x_train_val, y_train_val, semi_hard_triplet, device):
+    margin = hyperparameters['margin']
+    output_dimension = hyperparameters['dimension']
+    dropout = hyperparameters['dropout']
+    epochs = hyperparameters['epochs']
+    weight_decay = hyperparameters['weight_decay']
+    mini_batch_size = hyperparameters['mini_batch']
+    learning_rate = hyperparameters['learning_rate']
+    triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
+    trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
+    skf = StratifiedKFold(n_splits=parameter['cv_splits'])
+    loss_list = list()
+    for train_index, validate_index in tqdm(skf.split(x_train_val, y_train_val), total=skf.get_n_splits(),
+                                            desc="k-fold"):
+        X_train = x_train_val[train_index]
+        X_val = x_train_val[validate_index]
+        y_train = y_train_val[train_index]
+        y_val = y_train_val[validate_index]
+        sampler = create_sampler(y_train)
+        trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(X_train),
+                                                      torch.FloatTensor(y_train.astype(int)))
+        trainLoader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mini_batch_size, shuffle=False,
+                                                  num_workers=1, sampler=sampler)
+        input_dimension = X_train.shape[-1]
+        supervised_encoder = SupervisedEncoder(input_dimension, output_dimension, dropout)
+        supervised_encoder.to(device)
+        optimizer = optim.Adagrad(supervised_encoder.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        train_encoder(epochs, optimizer, triplet_selector, device, supervised_encoder,
+                      trainLoader, trip_loss_fun, semi_hard_triplet)
+        with torch.no_grad():
+            supervised_encoder.eval()
+            encoded_val = supervised_encoder(X_val.to(device))
+            triplets_list = triplet_selector.get_triplets(encoded_val, torch.FloatTensor(y_val))
+            val_loss = trip_loss_fun(encoded_val[triplets_list[:, 0], :],
+                                     encoded_val[triplets_list[:, 1], :],
+                                     encoded_val[triplets_list[:, 2], :])
+        loss_list.append(val_loss.cpu().detach().numpy())
+
+    return np.mean(loss_list)
+
+
+def optimise_independent_super_felt_parameter(combine_latent_features, random_seed, same_dimension_latent_features,
+                                              sampling_method, search_iterations, semi_hard_triplet, sobol_iterations,
+                                              x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, device,
+                                              deactivate_skip_bad_iterations):
+    best_parameters_list = list()
+    encoder_search_space = get_encoder_search_space(semi_hard_triplet)
+    generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
+    evaluation_function_e = lambda parameterization: train_validate_encoder(parameterization, x_train_val_e,
+                                                                            y_train_val, semi_hard_triplet, device)
+    evaluation_function_m = lambda parameterization: train_validate_encoder(parameterization, x_train_val_m,
+                                                                            y_train_val, semi_hard_triplet, device)
+    evaluation_function_c = lambda parameterization: train_validate_encoder(parameterization, x_train_val_c,
+                                                                            y_train_val, semi_hard_triplet, device)
+
+    for evaluation_function in (evaluation_function_e, evaluation_function_m, evaluation_function_c):
+        best_parameters, values, experiment, model = optimize(
+            total_trials=search_iterations,
+            experiment_name='Encoder',
+            objective_name='triplet_loss',
+            parameters=encoder_search_space,
+            evaluation_function=evaluation_function,
+            minimize=False,
+            generation_strategy=generation_strategy,
+        )
+        best_parameters_list.append(best_parameters)
+    return best_parameters
+
+
+
+def compute_encoded_super_felt_metrics(x_test_c, x_test_e, x_test_m, x_train_val_c, x_train_val_e, x_train_val_m,
+                                       best_parameters, combine_latent_features, device, extern_c, extern_e, extern_m,
+                                       extern_r, same_dimension_latent_features, semi_hard_triplet, y_test,
+                                       y_train_val):
+    pass
+
+
+def compute_independent_super_felt_metrics(x_test_c, x_test_e, x_test_m, x_train_val_c, x_train_val_e, x_train_val_m,
+                                           best_parameters, combine_latent_features, device, extern_c, extern_e,
+                                           extern_m, extern_r, same_dimension_latent_features, semi_hard_triplet,
+                                           y_test, y_train_val):
+    pass
+
+
+def compute_super_felt_metrics(x_test_c, x_test_e, x_test_m, x_train_val_c, x_train_val_e, x_train_val_m,
+                               best_parameters, device, extern_c, extern_e, extern_m, extern_r,
+                               same_dimension_latent_features, semi_hard_triplet, y_test, y_train_val):
+    # retrain best
+    final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
+    final_scaler_gdsc = train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_parameters,
+                                    device, semi_hard_triplet, same_dimension_latent_features)
+    # Test
+    test_AUC, test_AUCPR = test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encoder,
+                                final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
+                                final_scaler_gdsc)
+    # Extern
+    external_AUC, external_AUCPR = test(extern_e, extern_m, extern_c, extern_r, device,
+                                        final_C_Supervised_Encoder,
+                                        final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
+                                        final_scaler_gdsc)
+    return external_AUC, external_AUCPR, test_AUC, test_AUCPR
+
+
 def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val,
                                       device, hyperparameters, semi_hard_triplet, deactivate_skip_bad_iterations,
-                                      same_dimension_latent_features):
+                                      same_dimension_latent_features, combine_latent_features):
     bce_loss_function = torch.nn.BCELoss()
     skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     all_validation_aurocs = []
     encoder_dropout = hyperparameters['encoder_dropout']
+    encoder_weight_decay = hyperparameters['encoder_weight_decay']
     classifier_dropout = hyperparameters['classifier_dropout']
     classifier_weight_decay = hyperparameters['classifier_weight_decay']
-    encoder_weight_decay = hyperparameters['encoder_weight_decay']
+
     lrE = hyperparameters['learning_rate_e']
     lrM = hyperparameters['learning_rate_m']
     lrC = hyperparameters['learning_rate_c']
@@ -144,6 +316,7 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
         OE_dim = hyperparameters['e_dimension']
         OM_dim = hyperparameters['m_dimension']
         OC_dim = hyperparameters['c_dimension']
+
     E_Supervised_Encoder_epoch = hyperparameters['e_epochs']
     C_Supervised_Encoder_epoch = hyperparameters['m_epochs']
     M_Supervised_Encoder_epoch = hyperparameters['c_epochs']
@@ -164,13 +337,7 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
         X_valC = x_train_val_c[validate_index]
         Y_train = y_train_val[train_index]
         Y_val = y_train_val[validate_index]
-        class_sample_count = np.array([len(np.where(Y_train == t)[0]) for t in np.unique(Y_train)])
-        weight = 1. / class_sample_count
-        samples_weight = np.array([weight[t] for t in Y_train])
-
-        samples_weight = torch.from_numpy(samples_weight)
-        sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
-                                        replacement=True)
+        sampler = create_sampler(Y_train)
         scalerGDSC = sk.StandardScaler()
         scalerGDSC.fit(X_trainE)
         X_trainE = scalerGDSC.transform(X_trainE)
@@ -300,6 +467,7 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
         OE_dim = best_hyperparameter['e_dimension']
         OM_dim = best_hyperparameter['m_dimension']
         OC_dim = best_hyperparameter['c_dimension']
+
     margin = best_hyperparameter['margin']
     E_Supervised_Encoder_epoch = best_hyperparameter['e_epochs']
     C_Supervised_Encoder_epoch = best_hyperparameter['m_epochs']
@@ -308,12 +476,7 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     mb_size = best_hyperparameter['mini_batch']
 
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
-    class_sample_count = np.array([len(np.where(y_train_val == t)[0]) for t in np.unique(y_train_val)])
-    weight = 1. / class_sample_count
-    samples_weight = np.array([weight[t] for t in y_train_val])
-    samples_weight = torch.from_numpy(samples_weight)
-    sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
-                                    replacement=True)
+    sampler = create_sampler(y_train_val)
     final_scaler_gdsc = sk.StandardScaler()
     final_scaler_gdsc.fit(x_train_val_e)
     x_train_val_e = final_scaler_gdsc.transform(x_train_val_e)
@@ -376,13 +539,11 @@ def train_classifier(bce_loss_function, classifier_epoch, classifier_optimizer, 
 
 
 def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device, supervised_encoder, train_loader,
-                  trip_loss_fun, omic_number, semi_hard_triplet):
+                  trip_loss_fun, semi_hard_triplet):
     supervised_encoder.train()
     for epoch in trange(supervised_encoder_epoch):
         last_epochs = False if epoch < supervised_encoder_epoch - 2 else True
-        for all_data in train_loader:
-            target = all_data[-1]
-            data = all_data[omic_number]
+        for data, target in train_loader:
             optimizer.zero_grad()
             data = data.to(device)
             encoded_data = supervised_encoder(data)
@@ -403,6 +564,15 @@ def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device,
 def check_best_auroc(best_reachable_auroc):
     global best_auroc
     return best_reachable_auroc < best_auroc
+
+
+def create_sampler(y_train):
+    class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
+    weight = 1. / class_sample_count
+    samples_weight = np.array([weight[t] for t in y_train])
+    sampler = WeightedRandomSampler(samples_weight, len(samples_weight),
+                                    replacement=True)
+    return sampler
 
 
 if __name__ == '__main__':
