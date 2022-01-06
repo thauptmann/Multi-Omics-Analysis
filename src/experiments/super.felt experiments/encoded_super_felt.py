@@ -331,7 +331,7 @@ def encoded_train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val
     combiner_optimizer = optim.Adagrad(final_combiner.parameters(), lr=learning_rate_combiner,
                                        weight_decay=combiner_weight_decay)
     triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
-    final_classifier = Classifier(OCP_dim, C_dr).to(device)
+    final_classifier = Classifier(combiner_dimension, C_dr).to(device)
     classifier_optimizer = optim.Adagrad(final_classifier.parameters(), lr=lrCL, weight_decay=Cwd)
 
     # train each Supervised_Encoder with triplet loss

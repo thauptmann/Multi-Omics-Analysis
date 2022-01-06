@@ -111,7 +111,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
                                                      y_validate,  device)
         aucs_validate.append(auc_validate)
 
-        if not deactivate_skip_bad_iterations:
+        if not deactivate_skip_bad_iterations and iteration < cv_splits_inner:
             open_folds = cv_splits_inner - iteration
             remaining_best_results = np.ones(open_folds)
             best_possible_mean = np.mean(np.concatenate([aucs_validate, remaining_best_results]))
