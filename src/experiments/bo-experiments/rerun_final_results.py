@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 import numpy as np
 import torch
+import yaml
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
@@ -13,27 +14,17 @@ from utils.network_training_util import test, calculate_mean_and_std_auc, featur
 from utils.choose_gpu import get_free_gpu
 from training_bo_holi_moli import train_final
 
-drugs = {
-    'Gemcitabine_tcga': 'TCGA',
-    'Gemcitabine_pdx': 'PDX',
-    'Cisplatin': 'TCGA',
-    'Docetaxel': 'TCGA',
-    'Erlotinib': 'PDX',
-    'Cetuximab': 'PDX',
-    'Paclitaxel': 'PDX',
-}
+with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
+    parameter = yaml.safe_load(stream)
 
-random_seed = 42
-
-number_of_bootstraps = 5
+random_seed = parameter['random_seed']
 
 
 def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name, extern_dataset_name,
-                             best_parameters_list, deactivate_triplet_loss, triplet_selector_type='all',
-                             use_elbow_method=False):
+                             best_parameters_list, semi_hard_triplet, deactivate_elbow_method):
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
-    cv_splits = 5
+    cv_splits = parameter['cv_splits']
     skf = StratifiedKFold(n_splits=cv_splits, random_state=random_seed, shuffle=True)
     if torch.cuda.is_available():
         if gpu_number is None:
@@ -57,7 +48,7 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
     print(f"Start for {drug_name}")
 
     data_path = Path('..', '..', '..', 'data')
-    if not use_elbow_method:
+    if deactivate_elbow_method:
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name)
     else:
@@ -81,11 +72,8 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
 
         best_parameters = best_parameters_list[iteration]
 
-        if deactivate_triplet_loss:
-            best_parameters['gamma'] = 0
-
         model_final, scaler_final = train_final(best_parameters, x_train_e, x_train_m, x_train_c,
-                                                y_train, device, pin_memory, triplet_selector_type)
+                                                y_train, device, pin_memory, semi_hard_triplet)
         auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
         auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c,
                                         extern_r, device)
@@ -120,21 +108,18 @@ if __name__ == '__main__':
     parser.add_argument('--gpu_number', type=int)
     parser.add_argument('--method_name', required=True)
     parser.add_argument('--experiment_name', required=False, default=None)
-    parser.add_argument('--deactivate_triplet_loss', default=False, action='store_true')
-    parser.add_argument('--use_elbow_method', default=False, action='store_true')
-    parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'hardest', 'random', 'semi_hard'])
+    parser.add_argument('--deactivate_elbow_method', default=False, action='store_true')
+    parser.add_argument('--semi_hard_triplet', default=False, action='store_true')
     args = parser.parse_args()
 
     p = Path('../results')
-    logfile_name = 'logs.txt'
+    logfile_name = 'results.txt'
     cv_result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation')
 
     drug_paths = [x for x in cv_result_path.iterdir()]
     for drug_path in drug_paths:
         best_parameters_list = []
         drug_name = drug_path.stem
-        if drug_name in ('EGFR', 'ensemble'):
-            continue
         log_path = drug_path / args.method_name / logfile_name
         if log_path.is_file():
             with open(log_path, 'r') as log_file:
@@ -146,6 +131,7 @@ if __name__ == '__main__':
                         # strip the string literals
                         best_parameters_list.append(eval(best_parameter_string[1:-1]))
 
-        rerun_final_architecture(args.method_name, args.experiment_name, args.gpu_number, drug_name, drugs[drug_name],
-                                 best_parameters_list, args.deactivate_triplet_loss,
-                                 args.triplet_selector_type, args.use_elbow_method)
+        rerun_final_architecture(args.method_name, args.experiment_name, args.gpu_number, drug_name,
+                                 parameter['drugs'][drug_name],
+                                 best_parameters_list,
+                                 args.semi_hard_triplet, args.deactivate_elbow_method)
