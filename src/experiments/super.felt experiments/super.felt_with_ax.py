@@ -11,16 +11,19 @@ from torch import optim
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
-from tqdm import tqdm, trange
+from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 from utils.experiment_utils import create_generation_strategy
-from utils.searchspaces import get_super_felt_search_space, get_encoder_search_space, get_classifier_search_space
+from utils.searchspaces import get_super_felt_search_space
 from super_felt_model import SupervisedEncoder, Classifier
-from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector
+from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, create_sampler, train_encoder, \
+    train_classifier
 from utils import multi_omics_data
 from utils.choose_gpu import get_free_gpu
+from independent_super_felt import optimise_independent_super_felt_parameter, compute_independent_super_felt_metrics
+from encoded_super_felt import optimise_encoded_super_felt_parameter, compute_encoded_super_felt_metrics
 
 with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
     parameter = yaml.safe_load(stream)
@@ -100,47 +103,48 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                             deactivate_skip_bad_iterations)
 
         if combine_latent_features:
-            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_encoded_super_felt_metrics(x_test_c, x_test_e,
-                                                                                                    x_test_m,
-                                                                                                    x_train_val_c,
+            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_encoded_super_felt_metrics(x_test_e, x_test_m,
+                                                                                                    x_test_c,
                                                                                                     x_train_val_e,
                                                                                                     x_train_val_m,
+                                                                                                    x_train_val_c,
                                                                                                     best_parameters,
                                                                                                     combine_latent_features,
                                                                                                     device,
-                                                                                                    extern_c, extern_e,
-                                                                                                    extern_m,
+                                                                                                    extern_e, extern_m,
+                                                                                                    extern_c,
                                                                                                     extern_r,
                                                                                                     same_dimension_latent_features,
                                                                                                     semi_hard_triplet,
                                                                                                     y_test,
                                                                                                     y_train_val)
         elif optimise_independent:
-            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_independent_super_felt_metrics(x_test_c,
-                                                                                                        x_test_e,
+            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_independent_super_felt_metrics(x_test_e,
                                                                                                         x_test_m,
-                                                                                                        x_train_val_c,
+                                                                                                        x_test_c,
                                                                                                         x_train_val_e,
                                                                                                         x_train_val_m,
+                                                                                                        x_train_val_c,
                                                                                                         best_parameters,
                                                                                                         device,
-                                                                                                        extern_c,
                                                                                                         extern_e,
                                                                                                         extern_m,
+                                                                                                        extern_c,
                                                                                                         extern_r,
+                                                                                                        same_dimension_latent_features,
                                                                                                         semi_hard_triplet,
                                                                                                         y_test,
                                                                                                         y_train_val)
         else:
-            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_super_felt_metrics(x_test_c, x_test_e,
-                                                                                            x_test_m,
-                                                                                            x_train_val_c,
+            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_super_felt_metrics(x_test_e, x_test_m,
+                                                                                            x_test_c,
                                                                                             x_train_val_e,
                                                                                             x_train_val_m,
+                                                                                            x_train_val_c,
                                                                                             best_parameters,
                                                                                             device,
-                                                                                            extern_c, extern_e,
-                                                                                            extern_m,
+                                                                                            extern_e, extern_m,
+                                                                                            extern_c,
                                                                                             extern_r,
                                                                                             same_dimension_latent_features,
                                                                                             semi_hard_triplet, y_test,
@@ -165,8 +169,7 @@ def optimise_super_felt_parameter(combine_latent_features, random_seed, same_dim
                                                                                      parameterization,
                                                                                      semi_hard_triplet,
                                                                                      deactivate_skip_bad_iterations,
-                                                                                     same_dimension_latent_features,
-                                                                                     combine_latent_features)
+                                                                                     same_dimension_latent_features)
     generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
     search_space = get_super_felt_search_space(semi_hard_triplet, same_dimension_latent_features,
                                                combine_latent_features)
@@ -182,99 +185,8 @@ def optimise_super_felt_parameter(combine_latent_features, random_seed, same_dim
     return best_parameters
 
 
-def optimise_encoded_super_felt_parameter(combine_latent_features, random_seed, same_dimension_latent_features,
-                                          sampling_method, search_iterations, semi_hard_triplet, sobol_iterations,
-                                          x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, device,
-                                          deactivate_skip_bad_iterations):
-    pass
-
-
-def train_validate_encoder(hyperparameters, x_train_val, y_train_val, semi_hard_triplet, device):
-    margin = hyperparameters['margin']
-    output_dimension = hyperparameters['dimension']
-    dropout = hyperparameters['dropout']
-    epochs = hyperparameters['epochs']
-    weight_decay = hyperparameters['weight_decay']
-    mini_batch_size = hyperparameters['mini_batch']
-    learning_rate = hyperparameters['learning_rate']
-    triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
-    trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
-    skf = StratifiedKFold(n_splits=parameter['cv_splits'])
-    loss_list = list()
-    for train_index, validate_index in tqdm(skf.split(x_train_val, y_train_val), total=skf.get_n_splits(),
-                                            desc="k-fold"):
-        X_train = x_train_val[train_index]
-        X_val = x_train_val[validate_index]
-        y_train = y_train_val[train_index]
-        y_val = y_train_val[validate_index]
-        sampler = create_sampler(y_train)
-        trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(X_train),
-                                                      torch.FloatTensor(y_train.astype(int)))
-        trainLoader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mini_batch_size, shuffle=False,
-                                                  num_workers=1, sampler=sampler)
-        input_dimension = X_train.shape[-1]
-        supervised_encoder = SupervisedEncoder(input_dimension, output_dimension, dropout)
-        supervised_encoder.to(device)
-        optimizer = optim.Adagrad(supervised_encoder.parameters(), lr=learning_rate, weight_decay=weight_decay)
-        train_encoder(epochs, optimizer, triplet_selector, device, supervised_encoder,
-                      trainLoader, trip_loss_fun, semi_hard_triplet)
-        with torch.no_grad():
-            supervised_encoder.eval()
-            encoded_val = supervised_encoder(X_val.to(device))
-            triplets_list = triplet_selector.get_triplets(encoded_val, torch.FloatTensor(y_val))
-            val_loss = trip_loss_fun(encoded_val[triplets_list[:, 0], :],
-                                     encoded_val[triplets_list[:, 1], :],
-                                     encoded_val[triplets_list[:, 2], :])
-        loss_list.append(val_loss.cpu().detach().numpy())
-
-    return np.mean(loss_list)
-
-
-def optimise_independent_super_felt_parameter(combine_latent_features, random_seed, same_dimension_latent_features,
-                                              sampling_method, search_iterations, semi_hard_triplet, sobol_iterations,
-                                              x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, device,
-                                              deactivate_skip_bad_iterations):
-    best_parameters_list = list()
-    encoder_search_space = get_encoder_search_space(semi_hard_triplet)
-    generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
-    evaluation_function_e = lambda parameterization: train_validate_encoder(parameterization, x_train_val_e,
-                                                                            y_train_val, semi_hard_triplet, device)
-    evaluation_function_m = lambda parameterization: train_validate_encoder(parameterization, x_train_val_m,
-                                                                            y_train_val, semi_hard_triplet, device)
-    evaluation_function_c = lambda parameterization: train_validate_encoder(parameterization, x_train_val_c,
-                                                                            y_train_val, semi_hard_triplet, device)
-
-    for evaluation_function in (evaluation_function_e, evaluation_function_m, evaluation_function_c):
-        best_parameters, values, experiment, model = optimize(
-            total_trials=search_iterations,
-            experiment_name='Encoder',
-            objective_name='triplet_loss',
-            parameters=encoder_search_space,
-            evaluation_function=evaluation_function,
-            minimize=False,
-            generation_strategy=generation_strategy,
-        )
-        best_parameters_list.append(best_parameters)
-    return best_parameters
-
-
-
-def compute_encoded_super_felt_metrics(x_test_c, x_test_e, x_test_m, x_train_val_c, x_train_val_e, x_train_val_m,
-                                       best_parameters, combine_latent_features, device, extern_c, extern_e, extern_m,
-                                       extern_r, same_dimension_latent_features, semi_hard_triplet, y_test,
-                                       y_train_val):
-    pass
-
-
-def compute_independent_super_felt_metrics(x_test_c, x_test_e, x_test_m, x_train_val_c, x_train_val_e, x_train_val_m,
-                                           best_parameters, combine_latent_features, device, extern_c, extern_e,
-                                           extern_m, extern_r, same_dimension_latent_features, semi_hard_triplet,
-                                           y_test, y_train_val):
-    pass
-
-
-def compute_super_felt_metrics(x_test_c, x_test_e, x_test_m, x_train_val_c, x_train_val_e, x_train_val_m,
-                               best_parameters, device, extern_c, extern_e, extern_m, extern_r,
+def compute_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_train_val_m, x_train_val_c,
+                               best_parameters, device, extern_e, extern_m, extern_c, extern_r,
                                same_dimension_latent_features, semi_hard_triplet, y_test, y_train_val):
     # retrain best
     final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
@@ -294,7 +206,7 @@ def compute_super_felt_metrics(x_test_c, x_test_e, x_test_m, x_train_val_c, x_tr
 
 def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val,
                                       device, hyperparameters, semi_hard_triplet, deactivate_skip_bad_iterations,
-                                      same_dimension_latent_features, combine_latent_features):
+                                      same_dimension_latent_features):
     bce_loss_function = torch.nn.BCELoss()
     skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     all_validation_aurocs = []
@@ -361,20 +273,18 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
         M_optimizer = optim.Adagrad(M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=encoder_weight_decay)
         C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=encoder_weight_decay)
 
+        # train each Supervised_Encoder with triplet loss
+        train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, E_Supervised_Encoder,
+                      trainLoader, trip_loss_fun,  semi_hard_triplet, 0)
+        train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, M_Supervised_Encoder,
+                      trainLoader, trip_loss_fun,  semi_hard_triplet, 1)
+        train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, C_Supervised_Encoder,
+                      trainLoader, trip_loss_fun, semi_hard_triplet, 2)
+
+        # train classifier
         OCP_dim = OE_dim + OM_dim + OC_dim
         classifier = Classifier(OCP_dim, classifier_dropout).to(device)
         classifier_optimizer = optim.Adagrad(classifier.parameters(), lr=lrCL, weight_decay=classifier_weight_decay)
-
-        # train each Supervised_Encoder with triplet loss
-        train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, E_Supervised_Encoder,
-                      trainLoader, trip_loss_fun, 0, semi_hard_triplet)
-        train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, M_Supervised_Encoder,
-                      trainLoader, trip_loss_fun, 1, semi_hard_triplet)
-        train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, C_Supervised_Encoder,
-                      trainLoader, trip_loss_fun, 2, semi_hard_triplet)
-
-        # train classifier
-        val_auroc = 0
         for cl_epoch in range(Classifier_epoch):
             classifier.train()
             for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
@@ -391,29 +301,29 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
                 cl_loss.backward()
                 classifier_optimizer.step()
 
-            with torch.no_grad():
-                classifier.eval()
-                """
-                    inner validation
-                """
-                encoded_val_E = E_Supervised_Encoder(X_valE)
-                encoded_val_M = M_Supervised_Encoder(torch.FloatTensor(X_valM).to(device))
-                encoded_val_C = C_Supervised_Encoder(torch.FloatTensor(X_valC).to(device))
-                test_Pred = classifier(encoded_val_E, encoded_val_M, encoded_val_C)
-                test_y_true = Y_val
-                test_y_pred = test_Pred.cpu()
-                val_auroc = roc_auc_score(test_y_true, test_y_pred.detach().numpy())
+        with torch.no_grad():
+            classifier.eval()
+            """
+                inner validation
+            """
+            encoded_val_E = E_Supervised_Encoder(X_valE)
+            encoded_val_M = M_Supervised_Encoder(torch.FloatTensor(X_valM).to(device))
+            encoded_val_C = C_Supervised_Encoder(torch.FloatTensor(X_valC).to(device))
+            test_Pred = classifier(encoded_val_E, encoded_val_M, encoded_val_C)
+            test_y_true = Y_val
+            test_y_pred = test_Pred.cpu()
+            val_auroc = roc_auc_score(test_y_true, test_y_pred.detach().numpy())
+            all_validation_aurocs.append(val_auroc)
 
-                if not deactivate_skip_bad_iterations:
-                    open_folds = parameter['cv_splits'] - iteration
-                    remaining_best_results = np.ones(open_folds)
-                    best_possible_mean = np.mean(np.concatenate([val_auroc, remaining_best_results]))
-                    if check_best_auroc(best_possible_mean):
-                        print('Skip remaining folds.')
-                        break
-                iteration += 1
+        if not deactivate_skip_bad_iterations:
+            open_folds = parameter['cv_splits'] - iteration
+            remaining_best_results = np.ones(open_folds)
+            best_possible_mean = np.mean(np.concatenate([all_validation_aurocs, remaining_best_results]))
+            if check_best_auroc(best_possible_mean):
+                print('Skip remaining folds.')
+                break
+        iteration += 1
 
-        all_validation_aurocs.append(val_auroc)
     val_auroc = np.mean(all_validation_aurocs)
     standard_error_of_mean = sem(all_validation_aurocs)
 
@@ -485,9 +395,9 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
                                                   torch.FloatTensor(y_train_val.astype(int)))
     train_Loader = torch.utils.data.DataLoader(dataset=trainDataset, batch_size=mb_size, shuffle=False,
                                                num_workers=1, sampler=sampler, drop_last=True)
-    n_sample_E, IE_dim = x_train_val_e.shape
-    n_sample_M, IM_dim = x_train_val_m.shape
-    n_sample_C, IC_dim = x_train_val_c.shape
+    IE_dim = x_train_val_e.shape[-1]
+    IM_dim = x_train_val_m.shape[-1]
+    IC_dim = x_train_val_c.shape[-1]
     final_E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr).to(device)
     final_M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr).to(device)
     final_C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, E_dr).to(device)
@@ -502,13 +412,13 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     # train each Supervised_Encoder with triplet loss
     train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, final_E_Supervised_Encoder,
                   train_Loader,
-                  trip_loss_fun, 0, semi_hard_triplet)
+                  trip_loss_fun,  semi_hard_triplet, 0)
     train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, final_M_Supervised_Encoder,
                   train_Loader,
-                  trip_loss_fun, 1, semi_hard_triplet)
+                  trip_loss_fun, semi_hard_triplet, 1)
     train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, final_C_Supervised_Encoder,
                   train_Loader,
-                  trip_loss_fun, 2, semi_hard_triplet)
+                  trip_loss_fun, semi_hard_triplet, 2)
 
     # train classifier
     train_classifier(bce_loss_function, classifier_epoch, classifier_optimizer, device, final_C_Supervised_Encoder,
@@ -517,62 +427,9 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
            final_scaler_gdsc
 
 
-def train_classifier(bce_loss_function, classifier_epoch, classifier_optimizer, device, final_c_supervised_encoder,
-                     final_e_supervised_encoder, final_m_supervised_encoder, classifier, train_loader):
-    classifier.train()
-    for _ in trange(classifier_epoch):
-        for dataE, dataM, dataC, target in train_loader:
-            classifier_optimizer.zero_grad()
-            dataE = dataE.to(device)
-            dataM = dataM.to(device)
-            dataC = dataC.to(device)
-            target = target.to(device)
-            encoded_E = final_e_supervised_encoder(dataE)
-            encoded_M = final_m_supervised_encoder(dataM)
-            encoded_C = final_c_supervised_encoder(dataC)
-
-            predictions = classifier(encoded_E, encoded_M, encoded_C)
-            cl_loss = bce_loss_function(predictions, target.view(-1, 1))
-            cl_loss.backward()
-            classifier_optimizer.step()
-    classifier.eval()
-
-
-def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device, supervised_encoder, train_loader,
-                  trip_loss_fun, semi_hard_triplet):
-    supervised_encoder.train()
-    for epoch in trange(supervised_encoder_epoch):
-        last_epochs = False if epoch < supervised_encoder_epoch - 2 else True
-        for data, target in train_loader:
-            optimizer.zero_grad()
-            data = data.to(device)
-            encoded_data = supervised_encoder(data)
-            if not last_epochs and semi_hard_triplet:
-                triplets = triplet_selector[0].get_triplets(encoded_data, target)
-            elif last_epochs and semi_hard_triplet:
-                triplets = triplet_selector[1].get_triplets(encoded_data, target)
-            else:
-                triplets = triplet_selector.get_triplets(encoded_data, target)
-            loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
-                                 encoded_data[triplets[:, 1], :],
-                                 encoded_data[triplets[:, 2], :])
-            loss.backward()
-            optimizer.step()
-    supervised_encoder.eval()
-
-
 def check_best_auroc(best_reachable_auroc):
     global best_auroc
     return best_reachable_auroc < best_auroc
-
-
-def create_sampler(y_train):
-    class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
-    weight = 1. / class_sample_count
-    samples_weight = np.array([weight[t] for t in y_train])
-    sampler = WeightedRandomSampler(samples_weight, len(samples_weight),
-                                    replacement=True)
-    return sampler
 
 
 if __name__ == '__main__':

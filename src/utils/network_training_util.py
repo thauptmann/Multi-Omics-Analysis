@@ -5,6 +5,8 @@ import torch.nn
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.metrics import roc_auc_score, average_precision_score
 import pandas as pd
+from torch.utils.data import WeightedRandomSampler
+from tqdm import trange
 
 from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, RandomNegativeTripletSelector, \
     SemihardNegativeTripletSelector
@@ -153,3 +155,58 @@ def feature_selection(gdsce, gdscm, gdscc):
     gdscc = gdscc[gdscc.columns[selector.get_support(indices=True)]]
 
     return gdsce, gdscm, gdscc
+
+
+def create_sampler(y_train):
+    class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
+    weight = 1. / class_sample_count
+    samples_weight = np.array([weight[t] for t in y_train])
+    sampler = WeightedRandomSampler(samples_weight, len(samples_weight),
+                                    replacement=True)
+    return sampler
+
+
+def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device, supervised_encoder, train_loader,
+                  trip_loss_fun, semi_hard_triplet, omic_number):
+    supervised_encoder.train()
+    for epoch in trange(supervised_encoder_epoch):
+        last_epochs = False if epoch < supervised_encoder_epoch - 2 else True
+        for data in train_loader:
+            target = data[-1]
+            x = data[omic_number]
+            optimizer.zero_grad()
+            x = x.to(device)
+            encoded_data = supervised_encoder(x)
+            if not last_epochs and semi_hard_triplet:
+                triplets = triplet_selector[0].get_triplets(encoded_data, target)
+            elif last_epochs and semi_hard_triplet:
+                triplets = triplet_selector[1].get_triplets(encoded_data, target)
+            else:
+                triplets = triplet_selector.get_triplets(encoded_data, target)
+            loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
+                                 encoded_data[triplets[:, 1], :],
+                                 encoded_data[triplets[:, 2], :])
+            loss.backward()
+            optimizer.step()
+    supervised_encoder.eval()
+
+
+def train_classifier(bce_loss_function, classifier_epoch, classifier_optimizer, device, final_c_supervised_encoder,
+                     final_e_supervised_encoder, final_m_supervised_encoder, classifier, train_loader):
+    classifier.train()
+    for _ in trange(classifier_epoch):
+        for dataE, dataM, dataC, target in train_loader:
+            classifier_optimizer.zero_grad()
+            dataE = dataE.to(device)
+            dataM = dataM.to(device)
+            dataC = dataC.to(device)
+            target = target.to(device)
+            encoded_E = final_e_supervised_encoder(dataE)
+            encoded_M = final_m_supervised_encoder(dataM)
+            encoded_C = final_c_supervised_encoder(dataC)
+
+            predictions = classifier(encoded_E, encoded_M, encoded_C)
+            cl_loss = bce_loss_function(predictions, target.view(-1, 1))
+            cl_loss.backward()
+            classifier_optimizer.step()
+    classifier.eval()

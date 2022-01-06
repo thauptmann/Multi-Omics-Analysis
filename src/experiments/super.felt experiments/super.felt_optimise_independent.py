@@ -103,10 +103,6 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
         best_encoder_m, scaler_m = final_training_encoder(best_parameters_m, X_train_valM, Y_train_val, device)
         best_encoder_c, scaler_c = final_training_encoder(best_parameters_c, X_train_valC, Y_train_val, device)
 
-        best_encoder_e.eval()
-        best_encoder_m.eval()
-        best_encoder_c.eval()
-
         input_dimension = best_parameters_e['dimension'] + best_parameters_m['dimension'] \
                           + best_parameters_c['dimension']
 
@@ -115,7 +111,7 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
             best_encoder_c, scaler_e, scaler_m, scaler_c, splits, input_dimension, device
         )
 
-        classifier_search_space = get_classifier_search_space()
+        classifier_search_space = get_classifier_search_space(semi_hard_triplet)
         best_parameters_classifier, values, experiment, model = optimize(
             total_trials=iterations,
             experiment_name='classifier',
@@ -348,6 +344,7 @@ def final_training_encoder(best_parameter, data, y, device):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+    supervised_encoder.eval()
     return supervised_encoder, scaler
 
 
