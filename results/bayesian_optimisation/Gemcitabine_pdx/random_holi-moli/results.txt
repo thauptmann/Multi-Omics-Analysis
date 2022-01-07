@@ -1,0 +1,64 @@
+Start experiment at 2022-01-06 23:48:50.956997
+	iteration = 0. 
+		str(best_parameters) = "{'epochs': 12, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 256, 'h_dim3': 32, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.7, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 1.0, 'combination': 1}"
+		Best Gemcitabine_pdx validation Auroc = 0.5865551528281187
+		Gemcitabine_pdx test Auroc = 0.6093210586881473
+		Gemcitabine_pdx test AUPRC = 0.2536891147142773
+		Gemcitabine_pdx extern AUROC = 0.7063492063492063
+		Gemcitabine_pdx extern AUPRC = 0.5745180258338153
+	iteration = 1. 
+		str(best_parameters) = "{'epochs': 11, 'mini_batch': 16, 'h_dim1': 1024, 'h_dim2': 1024, 'h_dim3': 256, 'h_dim4': 32, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.01, 'lr_middle': 0.01, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.3, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.8, 'weight_decay': 0.1, 'gamma': 0.3, 'margin': 1.0, 'combination': 4}"
+		Best Gemcitabine_pdx validation Auroc = 0.6860986126734158
+		Gemcitabine_pdx test Auroc = 0.6478711162255466
+		Gemcitabine_pdx test AUPRC = 0.1330924131311706
+		Gemcitabine_pdx extern AUROC = 0.5555555555555556
+		Gemcitabine_pdx extern AUPRC = 0.3151238485824952
+	iteration = 2. 
+		str(best_parameters) = "{'epochs': 8, 'mini_batch': 64, 'h_dim1': 1024, 'h_dim2': 64, 'h_dim3': 128, 'h_dim4': 512, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.3, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.7, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 0.2, 'combination': 1}"
+		Best Gemcitabine_pdx validation Auroc = 0.6481918926800817
+		Gemcitabine_pdx test Auroc = 0.6098964326812428
+		Gemcitabine_pdx test AUPRC = 0.19449510043947427
+		Gemcitabine_pdx extern AUROC = 0.42063492063492064
+		Gemcitabine_pdx extern AUPRC = 0.2619146308995933
+	iteration = 3. 
+		str(best_parameters) = "{'epochs': 2, 'mini_batch': 64, 'h_dim1': 256, 'h_dim2': 32, 'h_dim3': 256, 'h_dim4': 512, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.001, 'lr_middle': 0.001, 'dropout_rate_e': 0.1, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.8, 'dropout_rate_middle': 0.3, 'weight_decay': 0.001, 'gamma': 0.5, 'margin': 0.2, 'combination': 4}"
+		Best Gemcitabine_pdx validation Auroc = 0.5728263133774945
+		Gemcitabine_pdx test Auroc = 0.7151898734177216
+		Gemcitabine_pdx test AUPRC = 0.13454352914181744
+		Gemcitabine_pdx extern AUROC = 0.3412698412698412
+		Gemcitabine_pdx extern AUPRC = 0.24424574735133742
+	iteration = 4. 
+		str(best_parameters) = "{'epochs': 3, 'mini_batch': 8, 'h_dim1': 1024, 'h_dim2': 512, 'h_dim3': 1024, 'h_dim4': 128, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.01, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.5, 'weight_decay': 0.01, 'gamma': 0.5, 'margin': 1.0, 'combination': 3}"
+		Best Gemcitabine_pdx validation Auroc = 0.637748059270369
+		Gemcitabine_pdx test Auroc = 0.6582278481012658
+		Gemcitabine_pdx test AUPRC = 0.09214496210111511
+		Gemcitabine_pdx extern AUROC = 0.5793650793650793
+		Gemcitabine_pdx extern AUPRC = 0.3773809523809524
+	Mean Result for Gemcitabine_pdx:
+
+		validation auroc max: 0.6860986126734158
+		validation auroc min: 0.5728263133774945
+		validation auroc mean: 0.626284006165896
+		validation auroc std: 0.04153377869287547
+
+		test auroc max: 0.7151898734177216
+		test auroc min: 0.6093210586881473
+		test auroc mean: 0.6481012658227849
+		test auroc std: 0.03890243089393209
+
+		test auprc max: 0.2536891147142773
+		test auprc min: 0.09214496210111511
+		test auprc mean: 0.16159302390557095
+		test auprc std: 0.05644684198849752
+
+		extern auroc max: 0.7063492063492063
+		extern auroc min: 0.3412698412698412
+		extern auroc mean: 0.5206349206349206
+		extern auroc std: 0.1275384725498455
+
+		extern auprc max: 0.5745180258338153
+		extern auprc min: 0.24424574735133742
+		extern auprc mean: 0.3546366410096387
+		extern auprc std: 0.11933977410643039
+
+	Minutes needed: 37

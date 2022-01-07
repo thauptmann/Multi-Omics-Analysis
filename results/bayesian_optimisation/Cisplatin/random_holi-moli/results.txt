@@ -1,0 +1,64 @@
+Start experiment at 2022-01-07 00:26:00.260303
+	iteration = 0. 
+		str(best_parameters) = "{'epochs': 12, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 256, 'h_dim3': 32, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.7, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 1.0, 'combination': 1}"
+		Best Cisplatin validation Auroc = 0.7322886204704386
+		Cisplatin test Auroc = 0.7050772626931568
+		Cisplatin test AUPRC = 0.2756001455241495
+		Cisplatin extern AUROC = 0.8166666666666667
+		Cisplatin extern AUPRC = 0.9791402972993697
+	iteration = 1. 
+		str(best_parameters) = "{'epochs': 12, 'mini_batch': 32, 'h_dim1': 32, 'h_dim2': 32, 'h_dim3': 64, 'h_dim4': 1024, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.3, 'dropout_rate_clf': 0.1, 'dropout_rate_middle': 0.1, 'weight_decay': 0.01, 'gamma': 0.5, 'margin': 0.5, 'combination': 1}"
+		Best Cisplatin validation Auroc = 0.6729522497704316
+		Cisplatin test Auroc = 0.7562913907284768
+		Cisplatin test AUPRC = 0.2349864311210122
+		Cisplatin extern AUROC = 0.5750000000000001
+		Cisplatin extern AUPRC = 0.9198692963221576
+	iteration = 2. 
+		str(best_parameters) = "{'epochs': 13, 'mini_batch': 8, 'h_dim1': 128, 'h_dim2': 32, 'h_dim3': 256, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.3, 'weight_decay': 0.05, 'gamma': 0.3, 'margin': 0.2, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.7380423995196722
+		Cisplatin test Auroc = 0.6825
+		Cisplatin test AUPRC = 0.25434349088296815
+		Cisplatin extern AUROC = 0.7194444444444444
+		Cisplatin extern AUPRC = 0.964717337421424
+	iteration = 3. 
+		str(best_parameters) = "{'epochs': 14, 'mini_batch': 32, 'h_dim1': 1024, 'h_dim2': 32, 'h_dim3': 32, 'h_dim4': 512, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.5, 'weight_decay': 0.1, 'gamma': 0.5, 'margin': 1.0, 'combination': 0}"
+		Best Cisplatin validation Auroc = 0.6905030197075652
+		Cisplatin test Auroc = 0.8275
+		Cisplatin test AUPRC = 0.3132622714018478
+		Cisplatin extern AUROC = 0.861111111111111
+		Cisplatin extern AUPRC = 0.9853885193824865
+	iteration = 4. 
+		str(best_parameters) = "{'epochs': 5, 'mini_batch': 8, 'h_dim1': 512, 'h_dim2': 512, 'h_dim3': 128, 'h_dim4': 256, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.1, 'dropout_rate_middle': 0.8, 'weight_decay': 0.001, 'gamma': 0.3, 'margin': 0.5, 'combination': 1}"
+		Best Cisplatin validation Auroc = 0.6954863318499682
+		Cisplatin test Auroc = 0.8191111111111111
+		Cisplatin test AUPRC = 0.3424726473143122
+		Cisplatin extern AUROC = 0.7166666666666667
+		Cisplatin extern AUPRC = 0.9460257587200934
+	Mean Result for Cisplatin:
+
+		validation auroc max: 0.7380423995196722
+		validation auroc min: 0.6729522497704316
+		validation auroc mean: 0.7058545242636151
+		validation auroc std: 0.025141792015115856
+
+		test auroc max: 0.8275
+		test auroc min: 0.6825
+		test auroc mean: 0.758095952906549
+		test auroc std: 0.05842731781645476
+
+		test auprc max: 0.3424726473143122
+		test auprc min: 0.2349864311210122
+		test auprc mean: 0.284132997248858
+		test auprc std: 0.039058004538577405
+
+		extern auroc max: 0.861111111111111
+		extern auroc min: 0.5750000000000001
+		extern auroc mean: 0.7377777777777779
+		extern auroc std: 0.09870457229831142
+
+		extern auprc max: 0.9853885193824865
+		extern auprc min: 0.9198692963221576
+		extern auprc mean: 0.9590282418291063
+		extern auprc std: 0.02380845394730645
+
+	Minutes needed: 48

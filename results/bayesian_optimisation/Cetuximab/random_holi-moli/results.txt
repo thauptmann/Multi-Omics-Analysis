@@ -1,0 +1,64 @@
+Start experiment at 2022-01-07 02:45:26.811962
+	iteration = 0. 
+		str(best_parameters) = "{'epochs': 2, 'mini_batch': 8, 'h_dim1': 512, 'h_dim2': 128, 'h_dim3': 512, 'h_dim4': 64, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.1, 'weight_decay': 0.01, 'gamma': 0.1, 'margin': 0.2, 'combination': 2}"
+		Best Cetuximab validation Auroc = 0.6984963059539331
+		Cetuximab test Auroc = 0.7561904761904762
+		Cetuximab test AUPRC = 0.4264020557205198
+		Cetuximab extern AUROC = 0.5781818181818181
+		Cetuximab extern AUPRC = 0.11042920494140007
+	iteration = 1. 
+		str(best_parameters) = "{'epochs': 9, 'mini_batch': 32, 'h_dim1': 128, 'h_dim2': 512, 'h_dim3': 1024, 'h_dim4': 32, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.01, 'dropout_rate_e': 0.1, 'dropout_rate_m': 0.3, 'dropout_rate_c': 0.3, 'dropout_rate_clf': 0.7, 'dropout_rate_middle': 0.7, 'weight_decay': 0.0001, 'gamma': 0.0, 'margin': 0.5, 'combination': 1}"
+		Best Cetuximab validation Auroc = 0.7298045853442819
+		Cetuximab test Auroc = 0.7457482993197279
+		Cetuximab test AUPRC = 0.3480082297849128
+		Cetuximab extern AUROC = 0.6509090909090909
+		Cetuximab extern AUPRC = 0.1434600389863548
+	iteration = 2. 
+		str(best_parameters) = "{'epochs': 15, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 512, 'h_dim3': 512, 'h_dim4': 32, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.1, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.5, 'weight_decay': 0.05, 'gamma': 0.5, 'margin': 0.5, 'combination': 3}"
+		Best Cetuximab validation Auroc = 0.7143531797769084
+		Cetuximab test Auroc = 0.764172335600907
+		Cetuximab test AUPRC = 0.41480307126172467
+		Cetuximab extern AUROC = 0.5236363636363637
+		Cetuximab extern AUPRC = 0.10141493307531044
+	iteration = 3. 
+		str(best_parameters) = "{'epochs': 4, 'mini_batch': 8, 'h_dim1': 64, 'h_dim2': 32, 'h_dim3': 128, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.001, 'lr_middle': 0.001, 'dropout_rate_e': 0.1, 'dropout_rate_m': 0.1, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.1, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 0.2, 'combination': 1}"
+		Best Cetuximab validation Auroc = 0.7194113924533192
+		Cetuximab test Auroc = 0.7636054421768708
+		Cetuximab test AUPRC = 0.39170062705538417
+		Cetuximab extern AUROC = 0.4509090909090909
+		Cetuximab extern AUPRC = 0.08649779529036494
+	iteration = 4. 
+		str(best_parameters) = "{'epochs': 8, 'mini_batch': 64, 'h_dim1': 1024, 'h_dim2': 1024, 'h_dim3': 128, 'h_dim4': 64, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.01, 'dropout_rate_e': 0.8, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.3, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.1, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 0.5, 'combination': 0}"
+		Best Cetuximab validation Auroc = 0.7199910031488977
+		Cetuximab test Auroc = 0.7188208616780044
+		Cetuximab test AUPRC = 0.26772993661695227
+		Cetuximab extern AUROC = 0.4363636363636364
+		Cetuximab extern AUPRC = 0.09626096359485763
+	Mean Result for Cetuximab:
+
+		validation auroc max: 0.7298045853442819
+		validation auroc min: 0.6984963059539331
+		validation auroc mean: 0.716411293335468
+		validation auroc std: 0.010260387830868174
+
+		test auroc max: 0.764172335600907
+		test auroc min: 0.7188208616780044
+		test auroc mean: 0.7497074829931972
+		test auroc std: 0.01681709215565033
+
+		test auprc max: 0.4264020557205198
+		test auprc min: 0.26772993661695227
+		test auprc mean: 0.3697287840878988
+		test auprc std: 0.05762266972258676
+
+		extern auroc max: 0.6509090909090909
+		extern auroc min: 0.4363636363636364
+		extern auroc mean: 0.528
+		extern auroc std: 0.0799801628297979
+
+		extern auprc max: 0.1434600389863548
+		extern auprc min: 0.08649779529036494
+		extern auprc mean: 0.10761258717765756
+		extern auprc std: 0.019524742495538823
+
+	Minutes needed: 36

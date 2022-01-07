@@ -1,0 +1,64 @@
+Start experiment at 2022-01-06 23:14:11.215965
+	iteration = 0. 
+		str(best_parameters) = "{'epochs': 3, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 256, 'h_dim3': 32, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.001, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.3, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.8, 'weight_decay': 0.1, 'gamma': 0.5, 'margin': 0.5, 'combination': 3}"
+		Best Gemcitabine_tcga validation Auroc = 0.6587492535655265
+		Gemcitabine_tcga test Auroc = 0.501150747986191
+		Gemcitabine_tcga test AUPRC = 0.08924264038944296
+		Gemcitabine_tcga extern AUROC = 0.7235449735449736
+		Gemcitabine_tcga extern AUPRC = 0.5853327520023672
+	iteration = 1. 
+		str(best_parameters) = "{'epochs': 19, 'mini_batch': 32, 'h_dim1': 512, 'h_dim2': 64, 'h_dim3': 128, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.7, 'weight_decay': 0.05, 'gamma': 0.5, 'margin': 1.0, 'combination': 3}"
+		Best Gemcitabine_tcga validation Auroc = 0.6766268799733367
+		Gemcitabine_tcga test Auroc = 0.4487917146144994
+		Gemcitabine_tcga test AUPRC = 0.06216206568608205
+		Gemcitabine_tcga extern AUROC = 0.5886243386243386
+		Gemcitabine_tcga extern AUPRC = 0.4030914205460817
+	iteration = 2. 
+		str(best_parameters) = "{'epochs': 14, 'mini_batch': 64, 'h_dim1': 128, 'h_dim2': 128, 'h_dim3': 512, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.01, 'dropout_rate_e': 0.8, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.1, 'weight_decay': 0.001, 'gamma': 0.0, 'margin': 1.0, 'combination': 3}"
+		Best Gemcitabine_tcga validation Auroc = 0.631283589551306
+		Gemcitabine_tcga test Auroc = 0.6973532796317606
+		Gemcitabine_tcga test AUPRC = 0.3022454022712355
+		Gemcitabine_tcga extern AUROC = 0.6243386243386243
+		Gemcitabine_tcga extern AUPRC = 0.5477315426344442
+	iteration = 3. 
+		str(best_parameters) = "{'epochs': 19, 'mini_batch': 32, 'h_dim1': 512, 'h_dim2': 64, 'h_dim3': 128, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.7, 'weight_decay': 0.05, 'gamma': 0.5, 'margin': 1.0, 'combination': 3}"
+		Best Gemcitabine_tcga validation Auroc = 0.587954977849991
+		Gemcitabine_tcga test Auroc = 0.7192174913693901
+		Gemcitabine_tcga test AUPRC = 0.1514373178986823
+		Gemcitabine_tcga extern AUROC = 0.626984126984127
+		Gemcitabine_tcga extern AUPRC = 0.4806668081237178
+	iteration = 4. 
+		str(best_parameters) = "{'epochs': 14, 'mini_batch': 64, 'h_dim1': 128, 'h_dim2': 128, 'h_dim3': 512, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.01, 'dropout_rate_e': 0.8, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.1, 'weight_decay': 0.001, 'gamma': 0.0, 'margin': 1.0, 'combination': 3}"
+		Best Gemcitabine_tcga validation Auroc = 0.6319900984599147
+		Gemcitabine_tcga test Auroc = 0.5905063291139241
+		Gemcitabine_tcga test AUPRC = 0.09530371371317167
+		Gemcitabine_tcga extern AUROC = 0.6362433862433862
+		Gemcitabine_tcga extern AUPRC = 0.5454824782864491
+	Mean Result for Gemcitabine_tcga:
+
+		validation auroc max: 0.6766268799733367
+		validation auroc min: 0.587954977849991
+		validation auroc mean: 0.637320959880015
+		validation auroc std: 0.030019977449725267
+
+		test auroc max: 0.7192174913693901
+		test auroc min: 0.4487917146144994
+		test auroc mean: 0.591403912543153
+		test auroc std: 0.10587375282424555
+
+		test auprc max: 0.3022454022712355
+		test auprc min: 0.06216206568608205
+		test auprc mean: 0.1400782279917229
+		test auprc std: 0.0861245189031607
+
+		extern auroc max: 0.7235449735449736
+		extern auroc min: 0.5886243386243386
+		extern auroc mean: 0.6399470899470898
+		extern auroc std: 0.04482858680337116
+
+		extern auprc max: 0.5853327520023672
+		extern auprc min: 0.4030914205460817
+		extern auprc mean: 0.5124610003186121
+		extern auprc std: 0.06421416820739469
+
+	Minutes needed: 41

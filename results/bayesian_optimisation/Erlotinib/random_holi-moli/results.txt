@@ -1,0 +1,64 @@
+Start experiment at 2022-01-07 01:59:50.716024
+	iteration = 0. 
+		str(best_parameters) = "{'epochs': 6, 'mini_batch': 8, 'h_dim1': 128, 'h_dim2': 1024, 'h_dim3': 512, 'h_dim4': 512, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.3, 'weight_decay': 0.001, 'gamma': 0.5, 'margin': 0.2, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.688235815602837
+		Erlotinib test Auroc = 0.7717948717948718
+		Erlotinib test AUPRC = 0.3978831451845103
+		Erlotinib extern AUROC = 0.6666666666666667
+		Erlotinib extern AUPRC = 0.24206349206349206
+	iteration = 1. 
+		str(best_parameters) = "{'epochs': 14, 'mini_batch': 64, 'h_dim1': 512, 'h_dim2': 32, 'h_dim3': 64, 'h_dim4': 32, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.1, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.7, 'dropout_rate_middle': 0.8, 'weight_decay': 0.0001, 'gamma': 0.5, 'margin': 1.0, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.7254642166344295
+		Erlotinib test Auroc = 0.5935897435897436
+		Erlotinib test AUPRC = 0.2947816173359652
+		Erlotinib extern AUROC = 0.6666666666666667
+		Erlotinib extern AUPRC = 0.28888888888888886
+	iteration = 2. 
+		str(best_parameters) = "{'epochs': 15, 'mini_batch': 32, 'h_dim1': 128, 'h_dim2': 1024, 'h_dim3': 64, 'h_dim4': 128, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.1, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.3, 'weight_decay': 0.05, 'gamma': 0.5, 'margin': 0.2, 'combination': 0}"
+		Best Erlotinib validation Auroc = 0.7175813990973566
+		Erlotinib test Auroc = 0.6013888888888889
+		Erlotinib test AUPRC = 0.32212155128821796
+		Erlotinib extern AUROC = 0.7222222222222223
+		Erlotinib extern AUPRC = 0.29444444444444445
+	iteration = 3. 
+		str(best_parameters) = "{'epochs': 20, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 32, 'h_dim3': 64, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.1, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.3, 'weight_decay': 0.1, 'gamma': 0.0, 'margin': 1.0, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.7409606705351386
+		Erlotinib test Auroc = 0.6597131681877445
+		Erlotinib test AUPRC = 0.479789446290587
+		Erlotinib extern AUROC = 0.8333333333333334
+		Erlotinib extern AUPRC = 0.4206349206349206
+	iteration = 4. 
+		str(best_parameters) = "{'epochs': 18, 'mini_batch': 16, 'h_dim1': 512, 'h_dim2': 512, 'h_dim3': 512, 'h_dim4': 1024, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.001, 'lr_middle': 0.001, 'dropout_rate_e': 0.1, 'dropout_rate_m': 0.1, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.8, 'dropout_rate_middle': 0.8, 'weight_decay': 0.05, 'gamma': 0.5, 'margin': 0.5, 'combination': 1}"
+		Best Erlotinib validation Auroc = 0.6840860735009672
+		Erlotinib test Auroc = 0.8526727509778358
+		Erlotinib test AUPRC = 0.6858998004050478
+		Erlotinib extern AUROC = 0.7592592592592592
+		Erlotinib extern AUPRC = 0.5714285714285714
+	Mean Result for Erlotinib:
+
+		validation auroc max: 0.7409606705351386
+		validation auroc min: 0.6840860735009672
+		validation auroc mean: 0.7112656350741458
+		validation auroc std: 0.02187411656155199
+
+		test auroc max: 0.8526727509778358
+		test auroc min: 0.5935897435897436
+		test auroc mean: 0.695831884687817
+		test auroc std: 0.10104150563232661
+
+		test auprc max: 0.6858998004050478
+		test auprc min: 0.2947816173359652
+		test auprc mean: 0.43609511210086566
+		test auprc std: 0.14052132074644982
+
+		extern auroc max: 0.8333333333333334
+		extern auroc min: 0.6666666666666667
+		extern auroc mean: 0.7296296296296296
+		extern auroc std: 0.06263531305662132
+
+		extern auprc max: 0.5714285714285714
+		extern auprc min: 0.24206349206349206
+		extern auprc mean: 0.3634920634920635
+		extern auprc std: 0.11965032617713914
+
+	Minutes needed: 45

@@ -1,0 +1,64 @@
+Start experiment at 2022-01-06 23:14:12.133607
+	iteration = 0. 
+		str(best_parameters) = "{'epochs': 12, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 256, 'h_dim3': 32, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.7, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 1.0, 'combination': 1}"
+		Best Gemcitabine_tcga validation Auroc = 0.6475943979224817
+		Gemcitabine_tcga test Auroc = 0.6628308400460299
+		Gemcitabine_tcga test AUPRC = 0.2327092519610839
+		Gemcitabine_tcga extern AUROC = 0.675925925925926
+		Gemcitabine_tcga extern AUPRC = 0.5650138790963413
+	iteration = 1. 
+		str(best_parameters) = "{'epochs': 12, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 256, 'h_dim3': 32, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.7, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 1.0, 'combination': 1}"
+		Best Gemcitabine_tcga validation Auroc = 0.6517147162160285
+		Gemcitabine_tcga test Auroc = 0.5983889528193326
+		Gemcitabine_tcga test AUPRC = 0.09219137644132376
+		Gemcitabine_tcga extern AUROC = 0.6415343915343914
+		Gemcitabine_tcga extern AUPRC = 0.5543577616797628
+	iteration = 2. 
+		str(best_parameters) = "{'epochs': 7, 'mini_batch': 16, 'h_dim1': 32, 'h_dim2': 512, 'h_dim3': 512, 'h_dim4': 512, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.3, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.8, 'dropout_rate_middle': 0.5, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 0.5, 'combination': 4}"
+		Best Gemcitabine_tcga validation Auroc = 0.6892402338596563
+		Gemcitabine_tcga test Auroc = 0.6288837744533947
+		Gemcitabine_tcga test AUPRC = 0.14696450497814523
+		Gemcitabine_tcga extern AUROC = 0.5383597883597884
+		Gemcitabine_tcga extern AUPRC = 0.38261379141722063
+	iteration = 3. 
+		str(best_parameters) = "{'epochs': 12, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 256, 'h_dim3': 32, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.7, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 1.0, 'combination': 1}"
+		Best Gemcitabine_tcga validation Auroc = 0.6044733991584386
+		Gemcitabine_tcga test Auroc = 0.7577675489067894
+		Gemcitabine_tcga test AUPRC = 0.13133164037144376
+		Gemcitabine_tcga extern AUROC = 0.5277777777777778
+		Gemcitabine_tcga extern AUPRC = 0.4242638628226363
+	iteration = 4. 
+		str(best_parameters) = "{'epochs': 7, 'mini_batch': 16, 'h_dim1': 32, 'h_dim2': 512, 'h_dim3': 512, 'h_dim4': 512, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.3, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.8, 'dropout_rate_middle': 0.5, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 0.5, 'combination': 4}"
+		Best Gemcitabine_tcga validation Auroc = 0.6275087141885042
+		Gemcitabine_tcga test Auroc = 0.5246835443037975
+		Gemcitabine_tcga test AUPRC = 0.06969148313427775
+		Gemcitabine_tcga extern AUROC = 0.6560846560846562
+		Gemcitabine_tcga extern AUPRC = 0.5884419543945452
+	Mean Result for Gemcitabine_tcga:
+
+		validation auroc max: 0.6892402338596563
+		validation auroc min: 0.6044733991584386
+		validation auroc mean: 0.6441062922690219
+		validation auroc std: 0.02811893843646194
+
+		test auroc max: 0.7577675489067894
+		test auroc min: 0.5246835443037975
+		test auroc mean: 0.6345109321058688
+		test auroc std: 0.07667167426526893
+
+		test auprc max: 0.2327092519610839
+		test auprc min: 0.06969148313427775
+		test auprc mean: 0.1345776513772549
+		test auprc std: 0.0562149319930642
+
+		extern auroc max: 0.675925925925926
+		extern auroc min: 0.5277777777777778
+		extern auroc mean: 0.607936507936508
+		extern auroc std: 0.06218675878128776
+
+		extern auprc max: 0.5884419543945452
+		extern auprc min: 0.38261379141722063
+		extern auprc mean: 0.5029382498821012
+		extern auprc std: 0.08303718191901056
+
+	Minutes needed: 33

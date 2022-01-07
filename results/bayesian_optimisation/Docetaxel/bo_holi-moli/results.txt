@@ -1,0 +1,64 @@
+Start experiment at 2022-01-07 00:52:57.025402
+	iteration = 0. 
+		str(best_parameters) = "{'epochs': 20, 'mini_batch': 32, 'h_dim1': 512, 'h_dim2': 1024, 'h_dim3': 64, 'h_dim4': 1024, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.3, 'weight_decay': 0.0001, 'gamma': 0.0, 'margin': 0.2, 'combination': 0}"
+		Best Docetaxel validation Auroc = 0.8314912822749687
+		Docetaxel test Auroc = 0.832579185520362
+		Docetaxel test AUPRC = 0.41079190808777066
+		Docetaxel extern AUROC = 0.671875
+		Docetaxel extern AUPRC = 0.6205357142857143
+	iteration = 1. 
+		str(best_parameters) = "{'epochs': 20, 'mini_batch': 32, 'h_dim1': 512, 'h_dim2': 1024, 'h_dim3': 64, 'h_dim4': 1024, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.3, 'weight_decay': 0.0001, 'gamma': 0.0, 'margin': 0.2, 'combination': 0}"
+		Best Docetaxel validation Auroc = 0.8385396144572475
+		Docetaxel test Auroc = 0.832579185520362
+		Docetaxel test AUPRC = 0.2876615064717563
+		Docetaxel extern AUROC = 0.609375
+		Docetaxel extern AUPRC = 0.5634129759129759
+	iteration = 2. 
+		str(best_parameters) = "{'epochs': 20, 'mini_batch': 32, 'h_dim1': 512, 'h_dim2': 1024, 'h_dim3': 64, 'h_dim4': 1024, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.3, 'weight_decay': 0.0001, 'gamma': 0.0, 'margin': 0.2, 'combination': 0}"
+		Best Docetaxel validation Auroc = 0.8637303866332255
+		Docetaxel test Auroc = 0.7405731523378583
+		Docetaxel test AUPRC = 0.27579561164791855
+		Docetaxel extern AUROC = 0.671875
+		Docetaxel extern AUPRC = 0.6779647435897436
+	iteration = 3. 
+		str(best_parameters) = "{'epochs': 12, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 256, 'h_dim3': 32, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.7, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 1.0, 'combination': 1}"
+		Best Docetaxel validation Auroc = 0.79202149443253
+		Docetaxel test Auroc = 0.8295625942684766
+		Docetaxel test AUPRC = 0.2530348584660914
+		Docetaxel extern AUROC = 0.578125
+		Docetaxel extern AUPRC = 0.5499323593073592
+	iteration = 4. 
+		str(best_parameters) = "{'epochs': 12, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 256, 'h_dim3': 32, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.7, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 1.0, 'combination': 1}"
+		Best Docetaxel validation Auroc = 0.8194822676989812
+		Docetaxel test Auroc = 0.7130566801619433
+		Docetaxel test AUPRC = 0.36000549616255
+		Docetaxel extern AUROC = 0.640625
+		Docetaxel extern AUPRC = 0.5860930735930735
+	Mean Result for Docetaxel:
+
+		validation auroc max: 0.8637303866332255
+		validation auroc min: 0.79202149443253
+		validation auroc mean: 0.8290530090993906
+		validation auroc std: 0.023500610797994183
+
+		test auroc max: 0.832579185520362
+		test auroc min: 0.7130566801619433
+		test auroc mean: 0.7896701595618005
+		test auroc std: 0.05206518358433321
+
+		test auprc max: 0.41079190808777066
+		test auprc min: 0.2530348584660914
+		test auprc mean: 0.31745787616721743
+		test auprc std: 0.05881400279429771
+
+		extern auroc max: 0.671875
+		extern auroc min: 0.578125
+		extern auroc mean: 0.634375
+		extern auroc std: 0.036443449342783124
+
+		extern auprc max: 0.6779647435897436
+		extern auprc min: 0.5499323593073592
+		extern auprc mean: 0.5995877733377732
+		extern auprc std: 0.04590892882281884
+
+	Minutes needed: 34
