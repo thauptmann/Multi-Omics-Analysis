@@ -127,7 +127,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         extern_auprc_list.append(auprc_extern)
 
     print("Done!")
-
+    end_time = time.time()
+    result_file.write(f'\tMinutes needed: {round((end_time - start_time) / 60)}')
     result_dict = {
         'validation auroc': max_objective_list,
         'test auroc': test_auc_list,
@@ -137,9 +138,17 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     }
     calculate_mean_and_std_auc(result_dict, result_file, drug_name)
     save_auroc_with_variance_plots(objectives_list, result_path, 'final', sobol_iterations)
+    positive_extern = np.count_nonzero(extern_r == 1)
+    negative_extern = np.count_nonzero(extern_r == 0)
+    no_skill_prediction_auprc = positive_extern / (positive_extern + negative_extern)
+    result_file.write(f'\n No skill predictor extern AUPRC: {no_skill_prediction_auprc} \n')
 
-    end_time = time.time()
-    result_file.write(f'\tMinutes needed: {round((end_time - start_time) / 60)}')
+    result_file.write(f'\n test auroc list: {test_auc_list} \n')
+    result_file.write(f'\n test auprc list: {test_auprc_list} \n')
+    result_file.write(f'\n extern auroc list: {extern_auc_list} \n')
+    result_file.write(f'\n extern auprc list: {extern_auprc_list} \n')
+
+
     result_file.close()
 
 

@@ -13,8 +13,9 @@ from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
 
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.experiment_utils import create_generation_strategy
 from utils.searchspaces import get_super_felt_search_space
 from super_felt_model import SupervisedEncoder, Classifier
@@ -61,10 +62,12 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
 
     test_auc_list = []
     extern_auc_list = []
+    objectives_list = []
     test_auprc_list = []
     extern_auprc_list = []
 
     skf_outer = StratifiedKFold(n_splits=parameter['cv_splits'], random_state=random_seed, shuffle=True)
+    iteration = 0
     for train_index_outer, test_index in tqdm(skf_outer.split(gdsc_e, gdsc_r), total=skf_outer.get_n_splits(),
                                               desc=" Outer k-fold"):
         global best_auroc
@@ -78,7 +81,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         y_train_val = gdsc_r[train_index_outer]
         y_test = gdsc_r[test_index]
         if combine_latent_features:
-            best_parameters = optimise_encoded_super_felt_parameter(combine_latent_features, random_seed,
+            best_parameters, experiment = optimise_encoded_super_felt_parameter(combine_latent_features, random_seed,
                                                                     same_dimension_latent_features,
                                                                     sampling_method, search_iterations,
                                                                     semi_hard_triplet,
@@ -95,7 +98,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                         device,
                                                                         deactivate_skip_bad_iterations)
         else:
-            best_parameters = optimise_super_felt_parameter(combine_latent_features, random_seed,
+            best_parameters, experiment = optimise_super_felt_parameter(combine_latent_features, random_seed,
                                                             same_dimension_latent_features,
                                                             sampling_method, search_iterations, semi_hard_triplet,
                                                             sobol_iterations, x_train_val_e,
@@ -154,8 +157,29 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         extern_auc_list.append(external_AUC)
         test_auprc_list.append(test_AUCPR)
         extern_auprc_list.append(external_AUCPR)
+        objectives = np.array([trial.objective_mean for trial in experiment.trials.values()])
+        save_auroc_plots(objectives, result_path, iteration, sobol_iterations)
+
+        max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
+        objectives_list.append(objectives)
+
+        result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
+        result_file.write(f'\t\t{drug} test Auroc = {test_AUC}\n')
+        result_file.write(f'\t\t{drug} test AUPRC = {test_AUCPR}\n')
+        result_file.write(f'\t\t{drug} extern AUROC = {external_AUC}\n')
+        result_file.write(f'\t\t{drug} extern AUPRC = {external_AUCPR}\n')
+        iteration += 1
 
     write_results_to_file(drug_name, extern_auc_list, extern_auprc_list, result_file, test_auc_list, test_auprc_list)
+    save_auroc_with_variance_plots(objectives_list, result_path, 'final', sobol_iterations)
+    positive_extern = np.count_nonzero(extern_r == 1)
+    negative_extern = np.count_nonzero(extern_r == 0)
+    no_skill_prediction_auprc = positive_extern / (positive_extern + negative_extern)
+    result_file.write(f'\n No skill predictor extern AUPRC: {no_skill_prediction_auprc} \n')
+    result_file.write(f'\n test auroc list: {test_auc_list} \n')
+    result_file.write(f'\n test auprc list: {test_auprc_list} \n')
+    result_file.write(f'\n extern auroc list: {extern_auc_list} \n')
+    result_file.write(f'\n extern auprc list: {extern_auprc_list} \n')
     result_file.close()
     print("Done!")
 
@@ -182,7 +206,7 @@ def optimise_super_felt_parameter(combine_latent_features, random_seed, same_dim
         minimize=False,
         generation_strategy=generation_strategy,
     )
-    return best_parameters
+    return best_parameters, experiment
 
 
 def compute_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_train_val_m, x_train_val_c,
