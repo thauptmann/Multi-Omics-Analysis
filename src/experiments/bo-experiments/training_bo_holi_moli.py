@@ -6,7 +6,7 @@ from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
 from models.bo_holi_moli_model import AdaptiveMoli
 from utils import network_training_util
-from utils.network_training_util import get_triplet_selector, get_loss_fn, create_data_loader
+from utils.network_training_util import get_triplet_selector, get_loss_fn, create_data_loader, create_sampler
 from scipy.stats import sem
 
 best_auroc = -1
@@ -69,14 +69,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
         x_train_e = scaler_gdsc.transform(x_train_e)
 
         # Initialisation
-        class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
-        weight = 1. / class_sample_count
-        samples_weight = np.array([weight[t] for t in y_train])
-
-        samples_weight = torch.from_numpy(samples_weight)
-        sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
-                                        replacement=True)
-
+        sampler = create_sampler(y_train)
         train_loader = create_data_loader(torch.FloatTensor(x_train_e), torch.FloatTensor(x_train_m),
                                           torch.FloatTensor(x_train_c),
                                           torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)

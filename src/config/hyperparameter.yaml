@@ -5,7 +5,6 @@ drop_rate_choices:
     - 0.3
     - 0.5
     - 0.7
-    - 0.8
 
 weight_decay_choices:
     - 0.0001
@@ -58,6 +57,7 @@ batch_size_hard_triplets_choices:
 
 epoch_lower: 2
 epoch_upper: 20
+#epoch_upper: 3
 cv_splits: 5
 random_seed: 42
 drugs:

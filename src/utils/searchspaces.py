@@ -9,7 +9,7 @@ def get_encoder_search_space(semi_hard_triplet):
     batch_size_choices = parameter['batch_size_hard_triplets_choices'] if semi_hard_triplet \
         else parameter['all_triplet_batch_size_choices']
     return [
-        {'name': 'dropout', 'values': parameter['dropout_values'], 'type': 'choice', 'value_type': 'float'},
+        {'name': 'dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice', 'value_type': 'float'},
         {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'type': 'choice', 'value_type': 'float'},
         {'name': 'margin', 'values': parameter['margin_choices'], 'type': 'choice', 'value_type': 'float'},
         {'name': 'dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
@@ -22,14 +22,13 @@ def get_encoder_search_space(semi_hard_triplet):
 
 
 def get_classifier_search_space(semi_hard_triplet):
-    batch_size_choices = parameter['batch_size_hard_triplets_choices'] if semi_hard_triplet \
-        else parameter['all_triplet_batch_size_choices']
     return [
-        {'name': 'dropout', 'values': parameter['dropout_values'], 'type': 'choice', 'value_type': 'float'},
+        {'name': 'dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice', 'value_type': 'float'},
         {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'type': 'choice', 'value_type': 'float'},
         {'name': 'epochs', "bounds": [parameter['epoch_lower'], parameter['epoch_upper']],
          "value_type": "int", 'type': 'range'},
-        {'name': 'mini_batch', 'values': batch_size_choices, 'value_type': 'int', 'type': 'choice'},
+        {'name': 'mini_batch', 'values': parameter['all_triplet_batch_size_choices'],
+         'value_type': 'int', 'type': 'choice'},
         {'name': 'learning_rate', 'values': parameter['learning_rate_choices'], 'type': 'choice',
          'value_type': 'float'}
     ]

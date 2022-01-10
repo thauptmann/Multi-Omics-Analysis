@@ -5,10 +5,12 @@ import torch.nn
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.metrics import roc_auc_score, average_precision_score
 import pandas as pd
+from torch import optim
 from torch.utils.data import WeightedRandomSampler
 from tqdm import trange
 
-from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, RandomNegativeTripletSelector, \
+from models.bo_holi_moli_model import Classifier
+from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, \
     SemihardNegativeTripletSelector
 
 sigmoid = torch.nn.Sigmoid()
@@ -28,23 +30,22 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last
     moli_model.train()
     for (data_e, data_m, data_c, target) in train_loader:
         moli_optimiser.zero_grad()
-        if torch.mean(target) != 0. and torch.mean(target) != 1.:
-            y_true.extend(target)
-            data_e = data_e.to(device)
-            data_m = data_m.to(device)
-            data_c = data_c.to(device)
-            target = target.to(device)
-            prediction = moli_model.forward(data_e, data_m, data_c)
-            if gamma > 0:
-                loss = loss_fn(prediction, target, last_epochs)
-                prediction = sigmoid(prediction[0])
-            else:
-                target = target.view(-1, 1)
-                loss = loss_fn(prediction[0], target)
-                prediction = sigmoid(prediction[0])
-            predictions.extend(prediction.cpu().detach())
-            loss.backward()
-            moli_optimiser.step()
+        y_true.extend(target)
+        data_e = data_e.to(device)
+        data_m = data_m.to(device)
+        data_c = data_c.to(device)
+        target = target.to(device)
+        prediction = moli_model.forward(data_e, data_m, data_c)
+        if gamma > 0:
+            loss = loss_fn(prediction, target, last_epochs)
+            prediction = sigmoid(prediction[0])
+        else:
+            target = target.view(-1, 1)
+            loss = loss_fn(prediction[0], target)
+            prediction = sigmoid(prediction[0])
+        predictions.extend(prediction.cpu().detach())
+        loss.backward()
+        moli_optimiser.step()
     y_true = torch.FloatTensor(y_true)
     predictions = torch.FloatTensor(predictions)
     auroc = roc_auc_score(y_true, predictions)
@@ -167,13 +168,16 @@ def create_sampler(y_train):
 
 
 def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device, supervised_encoder, train_loader,
-                  trip_loss_fun, semi_hard_triplet, omic_number):
+                  trip_loss_fun, semi_hard_triplet, omic_number, independent=False):
     supervised_encoder.train()
     for epoch in trange(supervised_encoder_epoch):
         last_epochs = False if epoch < supervised_encoder_epoch - 2 else True
         for data in train_loader:
+            if independent:
+                x = data[0]
+            else:
+                x = data[omic_number]
             target = data[-1]
-            x = data[omic_number]
             optimizer.zero_grad()
             x = x.to(device)
             encoded_data = supervised_encoder(x)
@@ -191,22 +195,48 @@ def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device,
     supervised_encoder.eval()
 
 
-def train_classifier(bce_loss_function, classifier_epoch, classifier_optimizer, device, final_c_supervised_encoder,
-                     final_e_supervised_encoder, final_m_supervised_encoder, classifier, train_loader):
-    classifier.train()
-    for _ in trange(classifier_epoch):
-        for dataE, dataM, dataC, target in train_loader:
+def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
+                              m_supervised_encoder, c_supervised_encoder, train_loader, classifier_input_dimension,
+                              classifier_dropout, learning_rate_classifier, weight_decay_classifier,
+                              x_val_e, x_val_m, x_val_c, y_val):
+    classifier = Classifier(classifier_input_dimension, classifier_dropout).to(device)
+    classifier_optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate_classifier,
+                                         weight_decay=weight_decay_classifier)
+    train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
+                     m_supervised_encoder, c_supervised_encoder, device)
+
+    with torch.no_grad():
+        classifier.eval()
+        """
+            inner validation
+        """
+        encoded_val_E = e_supervised_encoder(x_val_e)
+        encoded_val_M = m_supervised_encoder(torch.FloatTensor(x_val_m).to(device))
+        encoded_val_C = c_supervised_encoder(torch.FloatTensor(x_val_c).to(device))
+        test_Pred = classifier(encoded_val_E, encoded_val_M, encoded_val_C)
+        test_y_pred = test_Pred.cpu()
+        val_auroc = roc_auc_score(y_val, test_y_pred.detach().numpy())
+
+    return val_auroc
+
+
+def train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
+                     m_supervised_encoder, c_supervised_encoder,
+                     device):
+    bce_loss_function = torch.nn.BCELoss()
+    for cl_epoch in range(classifier_epoch):
+        classifier.train()
+        for i, (dataE, dataM, dataC, target) in enumerate(train_loader):
             classifier_optimizer.zero_grad()
             dataE = dataE.to(device)
             dataM = dataM.to(device)
             dataC = dataC.to(device)
             target = target.to(device)
-            encoded_E = final_e_supervised_encoder(dataE)
-            encoded_M = final_m_supervised_encoder(dataM)
-            encoded_C = final_c_supervised_encoder(dataC)
-
-            predictions = classifier(encoded_E, encoded_M, encoded_C)
-            cl_loss = bce_loss_function(predictions, target.view(-1, 1))
+            encoded_E = e_supervised_encoder(dataE)
+            encoded_M = m_supervised_encoder(dataM)
+            encoded_C = c_supervised_encoder(dataC)
+            Pred = classifier(encoded_E, encoded_M, encoded_C)
+            cl_loss = bce_loss_function(Pred, target.view(-1, 1))
             cl_loss.backward()
             classifier_optimizer.step()
     classifier.eval()
