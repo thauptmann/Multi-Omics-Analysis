@@ -313,7 +313,7 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
                                               x_val_e, x_val_m, x_val_c, y_val)
         all_validation_aurocs.append(val_auroc)
 
-        if not deactivate_skip_bad_iterations:
+        if not deactivate_skip_bad_iterations and iteration < parameter['cv_splits']:
             open_folds = parameter['cv_splits'] - iteration
             remaining_best_results = np.ones(open_folds)
             best_possible_mean = np.mean(np.concatenate([all_validation_aurocs, remaining_best_results]))
