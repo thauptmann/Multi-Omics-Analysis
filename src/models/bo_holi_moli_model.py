@@ -26,9 +26,9 @@ class AdaptiveEncoder(nn.Module):
         return output
 
 
-class Classifier(nn.Module):
+class MOLIClassifier(nn.Module):
     def __init__(self, input_size,dropout_rate):
-        super(Classifier, self).__init__()
+        super(MOLIClassifier, self).__init__()
         self.module_list = nn.ModuleList(torch.nn.Sequential(
             nn.Linear(input_size, 1),
             nn.Dropout(dropout_rate)
@@ -54,25 +54,25 @@ class AdaptiveMoli(nn.Module):
         if combination == 0:
             self.left_encoder = AdaptiveEncoder(output_sizes[0] + output_sizes[1], output_sizes[3], dropout_rates[3],
                                                 depths[3])
-            self.classifier = Classifier(output_sizes[3] + output_sizes[2], dropout_rates[4])
+            self.classifier = MOLIClassifier(output_sizes[3] + output_sizes[2], dropout_rates[4])
 
         elif combination == 1:
             self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[1], output_sizes[3], dropout_rates[3],
                                                 depths[3])
-            self.classifier = Classifier(output_sizes[3] + output_sizes[0], dropout_rates[4])
+            self.classifier = MOLIClassifier(output_sizes[3] + output_sizes[0], dropout_rates[4])
         elif combination == 2:
             self.left_encoder = AdaptiveEncoder(output_sizes[2] + output_sizes[0], output_sizes[3], dropout_rates[3],
                                                 depths[3])
-            self.classifier = Classifier(output_sizes[3] + output_sizes[1], dropout_rates[4])
+            self.classifier = MOLIClassifier(output_sizes[3] + output_sizes[1], dropout_rates[4])
         elif combination == 3:
             self.left_encoder = nn.Identity()
-            self.classifier = Classifier(output_sizes[0] + output_sizes[1] + output_sizes[2], dropout_rates[4])
+            self.classifier = MOLIClassifier(output_sizes[0] + output_sizes[1] + output_sizes[2], dropout_rates[4])
         elif combination == 4:
             self.expression_encoder = nn.Identity()
             self.mutation_encoder = nn.Identity()
             self.cna_encoder = nn.Identity()
             self.left_encoder = nn.Identity()
-            self.classifier = Classifier(input_sizes[0] + input_sizes[1] + input_sizes[2], dropout_rates[4])
+            self.classifier = MOLIClassifier(input_sizes[0] + input_sizes[1] + input_sizes[2], dropout_rates[4])
 
     def forward(self, expression, mutation, cna):
         if self.combination == 0:

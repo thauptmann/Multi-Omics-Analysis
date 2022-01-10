@@ -9,7 +9,7 @@ from torch import optim
 from torch.utils.data import WeightedRandomSampler
 from tqdm import trange
 
-from models.bo_holi_moli_model import Classifier
+from models.super_felt_model import Classifier
 from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, \
     SemihardNegativeTripletSelector
 
@@ -232,10 +232,10 @@ def train_classifier(classifier, classifier_epoch, train_loader, classifier_opti
             dataM = dataM.to(device)
             dataC = dataC.to(device)
             target = target.to(device)
-            encoded_E = e_supervised_encoder(dataE)
-            encoded_M = m_supervised_encoder(dataM)
-            encoded_C = c_supervised_encoder(dataC)
-            Pred = classifier(encoded_E, encoded_M, encoded_C)
+            encoded_e = e_supervised_encoder(dataE)
+            encoded_m = m_supervised_encoder(dataM)
+            encoded_c = c_supervised_encoder(dataC)
+            Pred = classifier(encoded_e, encoded_m, encoded_c)
             cl_loss = bce_loss_function(Pred, target.view(-1, 1))
             cl_loss.backward()
             classifier_optimizer.step()

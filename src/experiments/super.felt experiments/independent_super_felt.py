@@ -13,7 +13,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.experiment_utils import create_generation_strategy
 from utils.network_training_util import get_triplet_selector, create_sampler, train_encoder, train_classifier
 from utils.searchspaces import get_encoder_search_space, get_classifier_search_space, parameter
-from super_felt_model import SupervisedEncoder, Classifier
+from models.super_felt_model import SupervisedEncoder, Classifier
 
 
 def train_validate_encoder(hyperparameters, x_train_val, y_train_val, semi_hard_triplet, device, omic_number):

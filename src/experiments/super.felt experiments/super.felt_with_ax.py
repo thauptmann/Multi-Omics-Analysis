@@ -17,7 +17,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.experiment_utils import create_generation_strategy
 from utils.searchspaces import get_super_felt_search_space
-from super_felt_model import SupervisedEncoder, Classifier
+from models.super_felt_model import SupervisedEncoder, Classifier
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, create_sampler, train_encoder, \
     train_classifier, train_validate_classifier
 from utils import multi_omics_data
@@ -63,6 +63,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
     extern_auc_list = []
     objectives_list = []
     test_auprc_list = []
+    test_validation_list = []
     extern_auprc_list = []
 
     skf_outer = StratifiedKFold(n_splits=parameter['cv_splits'], random_state=random_seed, shuffle=True)
@@ -165,11 +166,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         max_objective = max(np.array([trial.objective_mean for trial in experiment.trials.values()]))
         objectives_list.append(objectives)
 
+        test_validation_list.append(max_objective)
         result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
-        result_file.write(f'\t\t{drug} test Auroc = {test_AUC}\n')
-        result_file.write(f'\t\t{drug} test AUPRC = {test_AUCPR}\n')
-        result_file.write(f'\t\t{drug} extern AUROC = {external_AUC}\n')
-        result_file.write(f'\t\t{drug} extern AUPRC = {external_AUCPR}\n')
         iteration += 1
 
     write_results_to_file(drug_name, extern_auc_list, extern_auprc_list, result_file, test_auc_list, test_auprc_list)

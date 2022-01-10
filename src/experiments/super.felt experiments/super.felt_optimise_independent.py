@@ -18,7 +18,7 @@ from utils.searchspaces import get_encoder_search_space, get_classifier_search_s
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, feature_selection
 from utils import multi_omics_data
-from super_felt_model import SupervisedEncoder, Classifier
+from models.super_felt_model import SupervisedEncoder, Classifier
 
 from utils.choose_gpu import get_free_gpu
 

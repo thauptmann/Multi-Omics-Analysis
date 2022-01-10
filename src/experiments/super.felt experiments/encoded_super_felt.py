@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.experiment_utils import create_generation_strategy
-from super_felt_model import SupervisedEncoder, Classifier
+from models.super_felt_model import SupervisedEncoder, Classifier
 from utils.network_training_util import get_triplet_selector, train_encoder, create_sampler
 from utils.searchspaces import get_super_felt_search_space
 

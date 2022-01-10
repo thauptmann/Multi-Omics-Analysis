@@ -115,10 +115,6 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device)
 
         result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
-        result_file.write(f'\t\t{drug} test Auroc = {auc_test}\n')
-        result_file.write(f'\t\t{drug} test AUPRC = {auprc_test}\n')
-        result_file.write(f'\t\t{drug} extern AUROC = {auc_extern}\n')
-        result_file.write(f'\t\t{drug} extern AUPRC = {auprc_extern}\n')
         objectives_list.append(objectives)
         max_objective_list.append(max_objective)
         test_auc_list.append(auc_test)
@@ -147,6 +143,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     result_file.write(f'\n test auprc list: {test_auprc_list} \n')
     result_file.write(f'\n extern auroc list: {extern_auc_list} \n')
     result_file.write(f'\n extern auprc list: {extern_auprc_list} \n')
+    result_file.write(f'\n validation auroc list: {max_objective_list} \n')
 
 
     result_file.close()
