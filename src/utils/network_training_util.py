@@ -16,36 +16,29 @@ from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSele
 sigmoid = torch.nn.Sigmoid()
 
 
-def create_dataloader(x_expression, x_mutation, x_cna, y_response, mini_batch, pin_memory, sampler=None,
-                      drop_last=False):
-    dataset = torch.utils.data.TensorDataset(torch.Tensor(x_expression), torch.Tensor(x_mutation),
-                                             torch.Tensor(x_cna), torch.Tensor(y_response))
-    return torch.utils.data.DataLoader(dataset=dataset, batch_size=mini_batch, shuffle=False,
-                                       num_workers=8, sampler=sampler, pin_memory=pin_memory, drop_last=drop_last)
-
-
 def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs):
     y_true = []
     predictions = []
     moli_model.train()
     for (data_e, data_m, data_c, target) in train_loader:
-        moli_optimiser.zero_grad()
-        y_true.extend(target)
-        data_e = data_e.to(device)
-        data_m = data_m.to(device)
-        data_c = data_c.to(device)
-        target = target.to(device)
-        prediction = moli_model.forward(data_e, data_m, data_c)
-        if gamma > 0:
-            loss = loss_fn(prediction, target, last_epochs)
-            prediction = sigmoid(prediction[0])
-        else:
-            target = target.view(-1, 1)
-            loss = loss_fn(prediction[0], target)
-            prediction = sigmoid(prediction[0])
-        predictions.extend(prediction.cpu().detach())
-        loss.backward()
-        moli_optimiser.step()
+        if torch.mean(target) != 0. and torch.mean(target) != 1.:
+            moli_optimiser.zero_grad()
+            y_true.extend(target)
+            data_e = data_e.to(device)
+            data_m = data_m.to(device)
+            data_c = data_c.to(device)
+            target = target.to(device)
+            prediction = moli_model.forward(data_e, data_m, data_c)
+            if gamma > 0:
+                loss = loss_fn(prediction, target, last_epochs)
+                prediction = sigmoid(prediction[0])
+            else:
+                target = target.view(-1, 1)
+                loss = loss_fn(prediction[0], target)
+                prediction = sigmoid(prediction[0])
+            predictions.extend(prediction.cpu().detach())
+            loss.backward()
+            moli_optimiser.step()
     y_true = torch.FloatTensor(y_true)
     predictions = torch.FloatTensor(predictions)
     auroc = roc_auc_score(y_true, predictions)
@@ -117,18 +110,6 @@ def create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, p
     return loader
 
 
-def test_ensemble(moli_model_list, scaler_list, x_test_e, x_test_m, x_test_c, test_y, device):
-    x_test_m = torch.FloatTensor(x_test_m)
-    x_test_c = torch.FloatTensor(x_test_c)
-    test_y = torch.FloatTensor(test_y.astype(int))
-    prediction_lists = []
-    y_true_list = None
-    for model, scaler in zip(moli_model_list, scaler_list):
-        y_true_list, prediction_list = test(model, scaler, x_test_e, x_test_m, x_test_c, test_y, device)
-        prediction_lists.append(prediction_list)
-    return y_true_list, prediction_lists
-
-
 def get_triplet_selector(margin, semi_hard_triplet):
     return [SemihardNegativeTripletSelector(margin), HardestNegativeTripletSelector(margin)] if semi_hard_triplet \
         else AllTripletSelector()
@@ -173,25 +154,27 @@ def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device,
     for epoch in trange(supervised_encoder_epoch):
         last_epochs = False if epoch < supervised_encoder_epoch - 2 else True
         for data in train_loader:
+
             if independent:
                 x = data[0]
             else:
                 x = data[omic_number]
             target = data[-1]
-            optimizer.zero_grad()
-            x = x.to(device)
-            encoded_data = supervised_encoder(x)
-            if not last_epochs and semi_hard_triplet:
-                triplets = triplet_selector[0].get_triplets(encoded_data, target)
-            elif last_epochs and semi_hard_triplet:
-                triplets = triplet_selector[1].get_triplets(encoded_data, target)
-            else:
-                triplets = triplet_selector.get_triplets(encoded_data, target)
-            loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
-                                 encoded_data[triplets[:, 1], :],
-                                 encoded_data[triplets[:, 2], :])
-            loss.backward()
-            optimizer.step()
+            if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                optimizer.zero_grad()
+                x = x.to(device)
+                encoded_data = supervised_encoder(x)
+                if not last_epochs and semi_hard_triplet:
+                    triplets = triplet_selector[0].get_triplets(encoded_data, target)
+                elif last_epochs and semi_hard_triplet:
+                    triplets = triplet_selector[1].get_triplets(encoded_data, target)
+                else:
+                    triplets = triplet_selector.get_triplets(encoded_data, target)
+                loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
+                                     encoded_data[triplets[:, 1], :],
+                                     encoded_data[triplets[:, 2], :])
+                loss.backward()
+                optimizer.step()
     supervised_encoder.eval()
 
 
