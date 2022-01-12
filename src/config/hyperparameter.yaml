@@ -47,7 +47,6 @@ all_triplet_batch_size_choices:
     - 8
     - 16
     - 32
-    - 64
 
 batch_size_hard_triplets_choices:
     - 32
