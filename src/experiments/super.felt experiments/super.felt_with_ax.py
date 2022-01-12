@@ -90,7 +90,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                                 y_train_val, device,
                                                                                 deactivate_skip_bad_iterations)
         elif optimise_independent:
-            best_parameters = optimise_independent_super_felt_parameter(combine_latent_features, random_seed,
+            best_parameters, experiment = optimise_independent_super_felt_parameter(combine_latent_features, random_seed,
                                                                         same_dimension_latent_features,
                                                                         sampling_method, search_iterations,
                                                                         semi_hard_triplet,

@@ -72,8 +72,9 @@ def optimise_independent_super_felt_parameter(combine_latent_features, random_se
     evaluation_function_c = lambda parameterization: train_validate_encoder(parameterization, x_train_val_c,
                                                                             y_train_val, semi_hard_triplet, device, 2)
 
+    experiment_list = list()
     for evaluation_function in (evaluation_function_e, evaluation_function_m, evaluation_function_c):
-        best_parameters, _, _, _ = optimize(
+        best_parameters, values, experiment, _ = optimize(
             total_trials=search_iterations,
             experiment_name='Encoder',
             objective_name='triplet_loss',
@@ -82,6 +83,7 @@ def optimise_independent_super_felt_parameter(combine_latent_features, random_se
             minimize=False,
             generation_strategy=generation_strategy,
         )
+        experiment_list.append(experiment)
         best_parameters_list.append(best_parameters)
 
     # retrain best encoder
@@ -100,7 +102,7 @@ def optimise_independent_super_felt_parameter(combine_latent_features, random_se
                                                                                         best_encoder_e,
                                                                                         best_encoder_m, best_encoder_c,
                                                                                         device)
-    best_parameters_classifier, _, _, _ = optimize(
+    best_parameters_classifier, value, experiment, _ = optimize(
         total_trials=search_iterations,
         experiment_name='classifier',
         objective_name='auroc',
@@ -109,9 +111,10 @@ def optimise_independent_super_felt_parameter(combine_latent_features, random_se
         minimize=False,
         generation_strategy=generation_strategy,
     )
+    experiment_list.append(experiment)
 
     best_parameters_list.append(best_parameters_classifier)
-    return best_parameters_list
+    return best_parameters_list, experiment_list
 
 
 def compute_independent_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_train_val_m, x_train_val_c,

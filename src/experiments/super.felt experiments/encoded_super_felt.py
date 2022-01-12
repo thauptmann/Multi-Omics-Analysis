@@ -49,7 +49,7 @@ def optimise_encoded_super_felt_parameter(combine_latent_features, random_seed,
         minimize=False,
         generation_strategy=generation_strategy,
     )
-    return best_parameters
+    return best_parameters, experiment
 
 
 def compute_encoded_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_train_val_m, x_train_val_c,
