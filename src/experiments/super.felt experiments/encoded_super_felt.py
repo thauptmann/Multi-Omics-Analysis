@@ -78,10 +78,10 @@ def compute_encoded_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val
 def train_combiner(integration_epoch, combiner_optimiser, combiner, train_loader,
                    e_supervised_encoder, m_supervised_encoder, c_supervised_encoder, triplet_selector,
                    triplet_loss_function, semi_hard_triplet, device):
-    for _ in range(integration_epoch):
-        combiner.train().to(device)
-        for epoch, (dataE, dataM, dataC, target) in enumerate(train_loader):
-            last_epochs = False if epoch < integration_epoch - 2 else True
+    combiner.train().to(device)
+    for epoch in range(integration_epoch):
+        last_epochs = False if epoch < integration_epoch - 2 else True
+        for dataE, dataM, dataC, target in train_loader:
             dataE = dataE.to(device)
             dataM = dataM.to(device)
             dataC = dataC.to(device)
