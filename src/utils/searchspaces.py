@@ -132,8 +132,8 @@ def create_holi_moli_search_space(combination, small_search_space, semi_hard_tri
     return search_space
 
 
-def get_super_felt_search_space(triplet_selector, same_dimension_latent_features, combine_latent_features):
-    batch_size_choices = parameter['batch_size_hard_triplets_choices'] if triplet_selector != 'all' \
+def get_super_felt_search_space(semi_hard_triplet, same_dimension_latent_features, combine_latent_features):
+    batch_size_choices = parameter['batch_size_hard_triplets_choices'] if semi_hard_triplet \
         else parameter['all_triplet_batch_size_choices']
     search_space = [{'name': 'encoder_dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice',
                      'value_type': 'float'},
