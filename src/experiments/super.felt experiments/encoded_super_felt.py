@@ -82,27 +82,28 @@ def train_combiner(integration_epoch, combiner_optimiser, combiner, train_loader
     for epoch in range(integration_epoch):
         last_epochs = False if epoch < integration_epoch - 2 else True
         for dataE, dataM, dataC, target in train_loader:
-            dataE = dataE.to(device)
-            dataM = dataM.to(device)
-            dataC = dataC.to(device)
-            encoded_E = e_supervised_encoder(dataE)
-            encoded_M = m_supervised_encoder(dataM)
-            encoded_C = c_supervised_encoder(dataC)
-            concat_encoded = torch.cat((encoded_E, encoded_M, encoded_C), 1)
-            concat_encoded = combiner(concat_encoded)
-            if not last_epochs and semi_hard_triplet:
-                encoded_Triplets_list = triplet_selector[0].get_triplets(concat_encoded, target)
-            elif last_epochs and semi_hard_triplet:
-                encoded_Triplets_list = triplet_selector[1].get_triplets(concat_encoded, target)
-            else:
-                encoded_Triplets_list = triplet_selector.get_triplets(concat_encoded, target)
-            integrated_loss = triplet_loss_function(concat_encoded[encoded_Triplets_list[:, 0], :],
-                                                    concat_encoded[encoded_Triplets_list[:, 1], :],
-                                                    concat_encoded[encoded_Triplets_list[:, 2], :])
+            if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
+                dataE = dataE.to(device)
+                dataM = dataM.to(device)
+                dataC = dataC.to(device)
+                encoded_E = e_supervised_encoder(dataE)
+                encoded_M = m_supervised_encoder(dataM)
+                encoded_C = c_supervised_encoder(dataC)
+                concat_encoded = torch.cat((encoded_E, encoded_M, encoded_C), 1)
+                concat_encoded = combiner(concat_encoded)
+                if not last_epochs and semi_hard_triplet:
+                    encoded_Triplets_list = triplet_selector[0].get_triplets(concat_encoded, target)
+                elif last_epochs and semi_hard_triplet:
+                    encoded_Triplets_list = triplet_selector[1].get_triplets(concat_encoded, target)
+                else:
+                    encoded_Triplets_list = triplet_selector.get_triplets(concat_encoded, target)
+                integrated_loss = triplet_loss_function(concat_encoded[encoded_Triplets_list[:, 0], :],
+                                                        concat_encoded[encoded_Triplets_list[:, 1], :],
+                                                        concat_encoded[encoded_Triplets_list[:, 2], :])
 
-            combiner_optimiser.zero_grad()
-            integrated_loss.backward()
-            combiner_optimiser.step()
+                combiner_optimiser.zero_grad()
+                integrated_loss.backward()
+                combiner_optimiser.step()
     combiner.eval()
 
 
