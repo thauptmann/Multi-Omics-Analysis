@@ -176,10 +176,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
     negative_extern = np.count_nonzero(extern_r == 0)
     no_skill_prediction_auprc = positive_extern / (positive_extern + negative_extern)
     result_file.write(f'\n No skill predictor extern AUPRC: {no_skill_prediction_auprc} \n')
-    result_file.write(f'\n test auroc list: {test_auc_list} \n')
-    result_file.write(f'\n test auprc list: {test_auprc_list} \n')
-    result_file.write(f'\n extern auroc list: {extern_auc_list} \n')
-    result_file.write(f'\n extern auprc list: {extern_auprc_list} \n')
     result_file.close()
     print("Done!")
 
