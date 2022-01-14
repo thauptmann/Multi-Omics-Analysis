@@ -111,7 +111,7 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
             best_encoder_c, scaler_e, scaler_m, scaler_c, splits, input_dimension, device
         )
 
-        classifier_search_space = get_classifier_search_space(semi_hard_triplet)
+        classifier_search_space = get_classifier_search_space()
         best_parameters_classifier, values, experiment, model = optimize(
             total_trials=iterations,
             experiment_name='classifier',

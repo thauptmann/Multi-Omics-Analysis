@@ -94,7 +94,7 @@ def optimise_independent_super_felt_parameter(combine_latent_features, random_se
     input_dimension = best_parameters_list[0]['dimension'] + best_parameters_list[1]['dimension'] \
                       + best_parameters_list[2]['dimension']
 
-    classifier_search_space = get_classifier_search_space(semi_hard_triplet)
+    classifier_search_space = get_classifier_search_space()
     evaluation_function_classifier = lambda parameterization: train_validate_classifier(parameterization,
                                                                                         x_train_val_e, x_train_val_m,
                                                                                         x_train_val_c,

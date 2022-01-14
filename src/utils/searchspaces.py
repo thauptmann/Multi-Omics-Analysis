@@ -21,7 +21,7 @@ def get_encoder_search_space(semi_hard_triplet):
     ]
 
 
-def get_classifier_search_space(semi_hard_triplet):
+def get_classifier_search_space():
     return [
         {'name': 'dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice', 'value_type': 'float'},
         {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'type': 'choice', 'value_type': 'float'},
