@@ -1,5 +1,7 @@
 import argparse
 import sys
+import time
+
 import yaml
 import torch
 from pathlib import Path
@@ -65,6 +67,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
     test_auprc_list = []
     test_validation_list = []
     extern_auprc_list = []
+    start_time = time.time()
 
     skf_outer = StratifiedKFold(n_splits=parameter['cv_splits'], random_state=random_seed, shuffle=True)
     iteration = 0
@@ -90,14 +93,16 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                                 y_train_val, device,
                                                                                 deactivate_skip_bad_iterations)
         elif optimise_independent:
-            best_parameters, experiment = optimise_independent_super_felt_parameter(combine_latent_features, random_seed,
-                                                                        same_dimension_latent_features,
-                                                                        sampling_method, search_iterations,
-                                                                        semi_hard_triplet,
-                                                                        sobol_iterations, x_train_val_e,
-                                                                        x_train_val_m, x_train_val_c, y_train_val,
-                                                                        device,
-                                                                        deactivate_skip_bad_iterations)
+            best_parameters, experiment = optimise_independent_super_felt_parameter(combine_latent_features,
+                                                                                    random_seed,
+                                                                                    same_dimension_latent_features,
+                                                                                    sampling_method, search_iterations,
+                                                                                    semi_hard_triplet,
+                                                                                    sobol_iterations, x_train_val_e,
+                                                                                    x_train_val_m, x_train_val_c,
+                                                                                    y_train_val,
+                                                                                    device,
+                                                                                    deactivate_skip_bad_iterations)
         else:
             best_parameters, experiment = optimise_super_felt_parameter(combine_latent_features, random_seed,
                                                                         same_dimension_latent_features,
@@ -170,6 +175,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
         iteration += 1
 
+    end_time = time.time()
+    result_file.write(f'\tMinutes needed: {round((end_time - start_time) / 60)}')
     write_results_to_file(drug_name, extern_auc_list, extern_auprc_list, result_file, test_auc_list, test_auprc_list)
     save_auroc_with_variance_plots(objectives_list, result_path, 'final', sobol_iterations)
     positive_extern = np.count_nonzero(extern_r == 1)
