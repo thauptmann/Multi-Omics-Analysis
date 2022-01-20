@@ -1,64 +1,55 @@
-Start experiment at 2022-01-07 01:54:33.160414
+Start experiment at 2022-01-16 12:26:43.496514
 	iteration = 0. 
-		str(best_parameters) = "{'epochs': 12, 'mini_batch': 16, 'h_dim1': 64, 'h_dim2': 32, 'h_dim3': 64, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.001, 'dropout_rate_e': 0.1, 'dropout_rate_m': 0.3, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.3, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 0.5, 'combination': 3}"
-		Best Erlotinib validation Auroc = 0.6920817214700193
-		Erlotinib test Auroc = 0.7897435897435897
-		Erlotinib test AUPRC = 0.47808020955079783
-		Erlotinib extern AUROC = 0.6296296296296297
-		Erlotinib extern AUPRC = 0.4666666666666667
+		str(best_parameters) = "{'epochs': 20, 'mini_batch': 16, 'h_dim1': 128, 'h_dim2': 128, 'h_dim3': 64, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.001, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.7, 'weight_decay': 0.0001, 'gamma': 0.3, 'margin': 0.2, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.7390997743391361
 	iteration = 1. 
-		str(best_parameters) = "{'epochs': 10, 'mini_batch': 32, 'h_dim1': 256, 'h_dim2': 512, 'h_dim3': 128, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.001, 'dropout_rate_e': 0.1, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.1, 'weight_decay': 0.0001, 'gamma': 0.5, 'margin': 1.0, 'combination': 3}"
-		Best Erlotinib validation Auroc = 0.7041747259832366
-		Erlotinib test Auroc = 0.5474358974358974
-		Erlotinib test AUPRC = 0.3025019381319338
-		Erlotinib extern AUROC = 0.7222222222222222
-		Erlotinib extern AUPRC = 0.49831649831649827
+		str(best_parameters) = "{'epochs': 3, 'mini_batch': 16, 'h_dim1': 64, 'h_dim2': 32, 'h_dim3': 32, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.1, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'weight_decay': 0.1, 'gamma': 0.3, 'margin': 1.0, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.7724556737588653
 	iteration = 2. 
-		str(best_parameters) = "{'epochs': 11, 'mini_batch': 16, 'h_dim1': 128, 'h_dim2': 64, 'h_dim3': 128, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.01, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.3, 'weight_decay': 0.1, 'gamma': 0.3, 'margin': 0.2, 'combination': 3}"
-		Best Erlotinib validation Auroc = 0.7131495809155384
-		Erlotinib test Auroc = 0.75
-		Erlotinib test AUPRC = 0.3872719626871645
-		Erlotinib extern AUROC = 0.5555555555555556
-		Erlotinib extern AUPRC = 0.21060606060606063
+		str(best_parameters) = "{'epochs': 6, 'mini_batch': 16, 'h_dim1': 512, 'h_dim2': 128, 'h_dim3': 64, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.001, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.1, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.1, 'weight_decay': 0.01, 'gamma': 0.0, 'margin': 0.2, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.7460332043842681
 	iteration = 3. 
-		str(best_parameters) = "{'epochs': 9, 'mini_batch': 16, 'h_dim1': 256, 'h_dim2': 64, 'h_dim3': 256, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.001, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.1, 'weight_decay': 0.05, 'gamma': 0.3, 'margin': 1.0, 'combination': 3}"
-		Best Erlotinib validation Auroc = 0.712658768536428
-		Erlotinib test Auroc = 0.7092568448500651
-		Erlotinib test AUPRC = 0.3446207191628926
-		Erlotinib extern AUROC = 0.5740740740740741
-		Erlotinib extern AUPRC = 0.21536796536796537
+		str(best_parameters) = "{'epochs': 17, 'mini_batch': 16, 'h_dim1': 1024, 'h_dim2': 64, 'h_dim3': 256, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.001, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.7, 'weight_decay': 0.0001, 'gamma': 0.1, 'margin': 0.5, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.7559614764667957
 	iteration = 4. 
-		str(best_parameters) = "{'epochs': 14, 'mini_batch': 64, 'h_dim1': 256, 'h_dim2': 64, 'h_dim3': 128, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.01, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.3, 'dropout_rate_clf': 0.1, 'weight_decay': 0.0001, 'gamma': 0.5, 'margin': 0.2, 'combination': 3}"
-		Best Erlotinib validation Auroc = 0.6236137975499677
-		Erlotinib test Auroc = 0.848761408083442
-		Erlotinib test AUPRC = 0.550861491418295
-		Erlotinib extern AUROC = 0.6296296296296297
-		Erlotinib extern AUPRC = 0.2754901960784314
-	Mean Result for Erlotinib:
+		str(best_parameters) = "{'epochs': 7, 'mini_batch': 32, 'h_dim1': 1024, 'h_dim2': 256, 'h_dim3': 256, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.3, 'weight_decay': 0.01, 'gamma': 0.1, 'margin': 0.5, 'combination': 3}"
+		Best Erlotinib validation Auroc = 0.6956922952933591
+	Minutes needed: 1299	Mean Result for Erlotinib:
 
-		validation auroc max: 0.7131495809155384
-		validation auroc min: 0.6236137975499677
-		validation auroc mean: 0.689135718891038
-		validation auroc std: 0.033639180357705474
+		validation auroc max: 0.7724556737588653
+		validation auroc min: 0.6956922952933591
+		validation auroc mean: 0.7418484848484848
+		validation auroc std: 0.02565711467301145
 
-		test auroc max: 0.848761408083442
-		test auroc min: 0.5474358974358974
-		test auroc mean: 0.7290395480225988
-		test auroc std: 0.10181246117840212
+		test auroc max: 0.8735332464146023
+		test auroc min: 0.6010430247718384
+		test auroc mean: 0.7272015790236129
+		test auroc std: 0.10209126159227622
 
-		test auprc max: 0.550861491418295
-		test auprc min: 0.3025019381319338
-		test auprc mean: 0.4126672641902168
-		test auprc std: 0.09031959981535177
+		test auprc max: 0.5067539195382998
+		test auprc min: 0.3748368735840938
+		test auprc mean: 0.42290093536162726
+		test auprc std: 0.04644807673402146
 
-		extern auroc max: 0.7222222222222222
-		extern auroc min: 0.5555555555555556
-		extern auroc mean: 0.6222222222222222
-		extern auroc std: 0.05809032274577081
+		extern auroc max: 0.6851851851851852
+		extern auroc min: 0.5185185185185185
+		extern auroc mean: 0.6296296296296295
+		extern auroc std: 0.0652104328209593
 
-		extern auprc max: 0.49831649831649827
-		extern auprc min: 0.21060606060606063
-		extern auprc mean: 0.3332894774071245
-		extern auprc std: 0.12435501833596997
+		extern auprc max: 0.32857142857142857
+		extern auprc min: 0.20276292335115864
+		extern auprc mean: 0.2730403746580217
+		extern auprc std: 0.0507411252447885
 
-	Minutes needed: 36
+
+ No skill predictor extern AUPRC: 0.14285714285714285 
+
+ test auroc list: [0.7743589743589744, 0.6217948717948718, 0.7652777777777777, 0.6010430247718384, 0.8735332464146023] 
+
+ test auprc list: [0.4281919744499453, 0.3748368735840938, 0.3854218658138886, 0.41930004342190863, 0.5067539195382998] 
+
+ extern auroc list: [0.6666666666666666, 0.5925925925925926, 0.6851851851851851, 0.6851851851851852, 0.5185185185185185] 
+
+ extern auprc list: [0.32857142857142857, 0.22916666666666663, 0.3269230769230769, 0.2777777777777778, 0.20276292335115864] 
+
+ validation auroc list: [0.7390997743391361, 0.7724556737588653, 0.7460332043842681, 0.7559614764667957, 0.6956922952933591] 
