@@ -1,64 +1,55 @@
-Start experiment at 2022-01-07 01:14:23.276349
+Start experiment at 2022-01-15 13:35:03.861855
 	iteration = 0. 
-		str(best_parameters) = "{'epochs': 13, 'mini_batch': 8, 'h_dim1': 32, 'h_dim2': 1024, 'h_dim3': 256, 'h_dim4': 32, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.3, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.8, 'dropout_rate_middle': 0.3, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 0.2, 'combination': 1}"
-		Best Docetaxel validation Auroc = 0.7992857402493547
-		Docetaxel test Auroc = 0.787833081950729
-		Docetaxel test AUPRC = 0.463886550089109
-		Docetaxel extern AUROC = 0.46875
-		Docetaxel extern AUPRC = 0.49925213675213675
+		str(best_parameters) = "{'epochs': 9, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 512, 'h_dim3': 64, 'h_dim4': 512, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.1, 'dropout_rate_middle': 0.7, 'weight_decay': 0.001, 'gamma': 0.3, 'margin': 1.0, 'combination': 1}"
+		Best Docetaxel validation Auroc = 0.8250680333927034
 	iteration = 1. 
-		str(best_parameters) = "{'epochs': 20, 'mini_batch': 64, 'h_dim1': 32, 'h_dim2': 256, 'h_dim3': 64, 'h_dim4': 1024, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.7, 'dropout_rate_middle': 0.8, 'weight_decay': 0.1, 'gamma': 0.1, 'margin': 0.2, 'combination': 4}"
-		Best Docetaxel validation Auroc = 0.7647898416391019
-		Docetaxel test Auroc = 0.8190045248868778
-		Docetaxel test AUPRC = 0.3044910400117035
-		Docetaxel extern AUROC = 0.578125
-		Docetaxel extern AUPRC = 0.5380275974025974
+		str(best_parameters) = "{'epochs': 8, 'mini_batch': 16, 'h_dim1': 128, 'h_dim2': 32, 'h_dim3': 32, 'h_dim4': 512, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.1, 'dropout_rate_middle': 0.1, 'weight_decay': 0.01, 'gamma': 0.0, 'margin': 0.5, 'combination': 0}"
+		Best Docetaxel validation Auroc = 0.819000884494687
 	iteration = 2. 
-		str(best_parameters) = "{'epochs': 13, 'mini_batch': 32, 'h_dim1': 1024, 'h_dim2': 128, 'h_dim3': 128, 'h_dim4': 128, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.001, 'lr_middle': 0.001, 'dropout_rate_e': 0.8, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.7, 'weight_decay': 0.0001, 'gamma': 0.1, 'margin': 0.5, 'combination': 2}"
-		Best Docetaxel validation Auroc = 0.815653375013631
-		Docetaxel test Auroc = 0.693815987933635
-		Docetaxel test AUPRC = 0.22206027457047287
-		Docetaxel extern AUROC = 0.5625
-		Docetaxel extern AUPRC = 0.5430215617715618
+		str(best_parameters) = "{'epochs': 18, 'mini_batch': 8, 'h_dim1': 512, 'h_dim2': 128, 'h_dim3': 1024, 'h_dim4': 32, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.7, 'dropout_rate_middle': 0.1, 'weight_decay': 0.05, 'gamma': 0.0, 'margin': 1.0, 'combination': 1}"
+		Best Docetaxel validation Auroc = 0.8732989228551004
 	iteration = 3. 
-		str(best_parameters) = "{'epochs': 2, 'mini_batch': 64, 'h_dim1': 128, 'h_dim2': 256, 'h_dim3': 512, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.8, 'dropout_rate_middle': 0.3, 'weight_decay': 0.0001, 'gamma': 0.3, 'margin': 0.2, 'combination': 1}"
-		Best Docetaxel validation Auroc = 0.8009421685871105
-		Docetaxel test Auroc = 0.8748114630467572
-		Docetaxel test AUPRC = 0.32645854262614427
-		Docetaxel extern AUROC = 0.609375
-		Docetaxel extern AUPRC = 0.5579184704184704
+		str(best_parameters) = "{'epochs': 2, 'mini_batch': 32, 'h_dim1': 1024, 'h_dim2': 64, 'h_dim3': 32, 'h_dim4': 64, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.01, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.7, 'dropout_rate_middle': 0.3, 'weight_decay': 0.001, 'gamma': 0.3, 'margin': 1.0, 'combination': 1}"
+		Best Docetaxel validation Auroc = 0.8213392218870027
 	iteration = 4. 
-		str(best_parameters) = "{'epochs': 5, 'mini_batch': 32, 'h_dim1': 256, 'h_dim2': 64, 'h_dim3': 512, 'h_dim4': 256, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.3, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.7, 'weight_decay': 0.0001, 'gamma': 0.3, 'margin': 0.2, 'combination': 3}"
-		Best Docetaxel validation Auroc = 0.7940867289447857
-		Docetaxel test Auroc = 0.7682186234817814
-		Docetaxel test AUPRC = 0.3651114247295179
-		Docetaxel extern AUROC = 0.59375
-		Docetaxel extern AUPRC = 0.5787660256410256
-	Mean Result for Docetaxel:
+		str(best_parameters) = "{'epochs': 4, 'mini_batch': 32, 'h_dim1': 128, 'h_dim2': 128, 'h_dim3': 128, 'h_dim4': 128, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.001, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.1, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.7, 'weight_decay': 0.01, 'gamma': 0.5, 'margin': 1.0, 'combination': 1}"
+		Best Docetaxel validation Auroc = 0.829797535531242
+	Minutes needed: 1197	Mean Result for Docetaxel:
 
-		validation auroc max: 0.815653375013631
-		validation auroc min: 0.7647898416391019
-		validation auroc mean: 0.7949515708867967
-		validation auroc std: 0.01669559727456352
+		validation auroc max: 0.8732989228551004
+		validation auroc min: 0.819000884494687
+		validation auroc mean: 0.8337009196321471
+		validation auroc std: 0.020132896441854863
 
-		test auroc max: 0.8748114630467572
-		test auroc min: 0.693815987933635
-		test auroc mean: 0.788736736259956
-		test auroc std: 0.05959321375073463
+		test auroc max: 0.8582202111613877
+		test auroc min: 0.49924585218702866
+		test auroc mean: 0.754280119605197
+		test auroc std: 0.12963311567252805
 
-		test auprc max: 0.463886550089109
-		test auprc min: 0.22206027457047287
-		test auprc mean: 0.33640156640538954
-		test auprc std: 0.0790793948698447
+		test auprc max: 0.5324591192107424
+		test auprc min: 0.1006059250586972
+		test auprc mean: 0.34304361582992354
+		test auprc std: 0.14231352885453874
 
-		extern auroc max: 0.609375
-		extern auroc min: 0.46875
-		extern auroc mean: 0.5625
-		extern auroc std: 0.04941058844013093
+		extern auroc max: 0.734375
+		extern auroc min: 0.578125
+		extern auroc mean: 0.646875
+		extern auroc std: 0.06599597525607148
 
-		extern auprc max: 0.5787660256410256
-		extern auprc min: 0.49925213675213675
-		extern auprc mean: 0.5433971583971584
-		extern auprc std: 0.026228158406847803
+		extern auprc max: 0.6917478354978355
+		extern auprc min: 0.5643554362304363
+		extern auprc mean: 0.6316697885447885
+		extern auprc std: 0.05374477049357344
 
-	Minutes needed: 45
+
+ No skill predictor extern AUPRC: 0.5 
+
+ test auroc list: [0.8582202111613877, 0.8240321769733534, 0.49924585218702866, 0.7963800904977376, 0.7935222672064777] 
+
+ test auprc list: [0.5324591192107424, 0.29921417900792635, 0.1006059250586972, 0.39185514754965967, 0.3910837083225919] 
+
+ extern auroc list: [0.71875, 0.734375, 0.578125, 0.609375, 0.59375] 
+
+ extern auprc list: [0.6917478354978355, 0.6551948051948052, 0.6765151515151515, 0.5643554362304363, 0.5705357142857144] 
+
+ validation auroc list: [0.8250680333927034, 0.819000884494687, 0.8732989228551004, 0.8213392218870027, 0.829797535531242] 

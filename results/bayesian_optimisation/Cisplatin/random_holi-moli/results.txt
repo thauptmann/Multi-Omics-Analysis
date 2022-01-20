@@ -1,64 +1,55 @@
-Start experiment at 2022-01-07 00:26:00.260303
+Start experiment at 2022-01-14 15:01:50.335190
 	iteration = 0. 
-		str(best_parameters) = "{'epochs': 12, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 256, 'h_dim3': 32, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.01, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.7, 'weight_decay': 0.01, 'gamma': 0.3, 'margin': 1.0, 'combination': 1}"
-		Best Cisplatin validation Auroc = 0.7322886204704386
-		Cisplatin test Auroc = 0.7050772626931568
-		Cisplatin test AUPRC = 0.2756001455241495
-		Cisplatin extern AUROC = 0.8166666666666667
-		Cisplatin extern AUPRC = 0.9791402972993697
+		str(best_parameters) = "{'epochs': 11, 'mini_batch': 32, 'h_dim1': 1024, 'h_dim2': 32, 'h_dim3': 64, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.001, 'lr_middle': 0.001, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.7, 'dropout_rate_clf': 0.1, 'dropout_rate_middle': 0.5, 'weight_decay': 0.05, 'gamma': 0.5, 'margin': 1.0, 'combination': 1}"
+		Best Cisplatin validation Auroc = 0.7529068658614113
 	iteration = 1. 
-		str(best_parameters) = "{'epochs': 12, 'mini_batch': 32, 'h_dim1': 32, 'h_dim2': 32, 'h_dim3': 64, 'h_dim4': 1024, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.3, 'dropout_rate_clf': 0.1, 'dropout_rate_middle': 0.1, 'weight_decay': 0.01, 'gamma': 0.5, 'margin': 0.5, 'combination': 1}"
-		Best Cisplatin validation Auroc = 0.6729522497704316
-		Cisplatin test Auroc = 0.7562913907284768
-		Cisplatin test AUPRC = 0.2349864311210122
-		Cisplatin extern AUROC = 0.5750000000000001
-		Cisplatin extern AUPRC = 0.9198692963221576
+		str(best_parameters) = "{'epochs': 20, 'mini_batch': 8, 'h_dim1': 128, 'h_dim2': 1024, 'h_dim3': 256, 'h_dim4': 128, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.01, 'lr_middle': 0.01, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.7, 'dropout_rate_middle': 0.3, 'weight_decay': 0.1, 'gamma': 0.0, 'margin': 1.0, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.7203117715617715
 	iteration = 2. 
-		str(best_parameters) = "{'epochs': 13, 'mini_batch': 8, 'h_dim1': 128, 'h_dim2': 32, 'h_dim3': 256, 'h_dim4': 64, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.3, 'weight_decay': 0.05, 'gamma': 0.3, 'margin': 0.2, 'combination': 3}"
-		Best Cisplatin validation Auroc = 0.7380423995196722
-		Cisplatin test Auroc = 0.6825
-		Cisplatin test AUPRC = 0.25434349088296815
-		Cisplatin extern AUROC = 0.7194444444444444
-		Cisplatin extern AUPRC = 0.964717337421424
+		str(best_parameters) = "{'epochs': 14, 'mini_batch': 32, 'h_dim1': 256, 'h_dim2': 32, 'h_dim3': 32, 'h_dim4': 512, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.001, 'lr_middle': 0.001, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.3, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.7, 'weight_decay': 0.05, 'gamma': 0.5, 'margin': 0.5, 'combination': 0}"
+		Best Cisplatin validation Auroc = 0.7727673589037225
 	iteration = 3. 
-		str(best_parameters) = "{'epochs': 14, 'mini_batch': 32, 'h_dim1': 1024, 'h_dim2': 32, 'h_dim3': 32, 'h_dim4': 512, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.5, 'weight_decay': 0.1, 'gamma': 0.5, 'margin': 1.0, 'combination': 0}"
-		Best Cisplatin validation Auroc = 0.6905030197075652
-		Cisplatin test Auroc = 0.8275
-		Cisplatin test AUPRC = 0.3132622714018478
-		Cisplatin extern AUROC = 0.861111111111111
-		Cisplatin extern AUPRC = 0.9853885193824865
+		str(best_parameters) = "{'epochs': 11, 'mini_batch': 16, 'h_dim1': 512, 'h_dim2': 1024, 'h_dim3': 32, 'h_dim4': 256, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.01, 'lr_middle': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.5, 'dropout_rate_middle': 0.1, 'weight_decay': 0.1, 'gamma': 0.5, 'margin': 0.2, 'combination': 2}"
+		Best Cisplatin validation Auroc = 0.737398901603447
 	iteration = 4. 
-		str(best_parameters) = "{'epochs': 5, 'mini_batch': 8, 'h_dim1': 512, 'h_dim2': 512, 'h_dim3': 128, 'h_dim4': 256, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.8, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.1, 'dropout_rate_middle': 0.8, 'weight_decay': 0.001, 'gamma': 0.3, 'margin': 0.5, 'combination': 1}"
-		Best Cisplatin validation Auroc = 0.6954863318499682
-		Cisplatin test Auroc = 0.8191111111111111
-		Cisplatin test AUPRC = 0.3424726473143122
-		Cisplatin extern AUROC = 0.7166666666666667
-		Cisplatin extern AUPRC = 0.9460257587200934
-	Mean Result for Cisplatin:
+		str(best_parameters) = "{'epochs': 11, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 128, 'h_dim3': 256, 'h_dim4': 256, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.01, 'lr_middle': 0.001, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.3, 'dropout_rate_clf': 0.3, 'dropout_rate_middle': 0.5, 'weight_decay': 0.1, 'gamma': 0.1, 'margin': 1.0, 'combination': 1}"
+		Best Cisplatin validation Auroc = 0.6977608250335523
+	Minutes needed: 1353	Mean Result for Cisplatin:
 
-		validation auroc max: 0.7380423995196722
-		validation auroc min: 0.6729522497704316
-		validation auroc mean: 0.7058545242636151
-		validation auroc std: 0.025141792015115856
+		validation auroc max: 0.7727673589037225
+		validation auroc min: 0.6977608250335523
+		validation auroc mean: 0.7362291445927809
+		validation auroc std: 0.025875587711701013
 
-		test auroc max: 0.8275
-		test auroc min: 0.6825
-		test auroc mean: 0.758095952906549
-		test auroc std: 0.05842731781645476
+		test auroc max: 0.844150110375276
+		test auroc min: 0.6966666666666668
+		test auroc mean: 0.7456025754231053
+		test auroc std: 0.05123612103599613
 
-		test auprc max: 0.3424726473143122
-		test auprc min: 0.2349864311210122
-		test auprc mean: 0.284132997248858
-		test auprc std: 0.039058004538577405
+		test auprc max: 0.37540089348877886
+		test auprc min: 0.20372215933048102
+		test auprc mean: 0.2691512533073415
+		test auprc std: 0.06648079190669916
 
-		extern auroc max: 0.861111111111111
-		extern auroc min: 0.5750000000000001
-		extern auroc mean: 0.7377777777777779
-		extern auroc std: 0.09870457229831142
+		extern auroc max: 0.7944444444444444
+		extern auroc min: 0.65
+		extern auroc mean: 0.7388888888888888
+		extern auroc std: 0.06027201713384672
 
-		extern auprc max: 0.9853885193824865
-		extern auprc min: 0.9198692963221576
-		extern auprc mean: 0.9590282418291063
-		extern auprc std: 0.02380845394730645
+		extern auprc max: 0.9759185520983708
+		extern auprc min: 0.947576026460882
+		extern auprc mean: 0.9648818230255334
+		extern auprc std: 0.012708319175029348
 
-	Minutes needed: 48
+
+ No skill predictor extern AUPRC: 0.9090909090909091 
+
+ test auroc list: [0.7289183222958057, 0.844150110375276, 0.6966666666666668, 0.7191666666666667, 0.7391111111111112] 
+
+ test auprc list: [0.24026459653160925, 0.37540089348877886, 0.2101613027970266, 0.20372215933048102, 0.3162073143888119] 
+
+ extern auroc list: [0.775, 0.65, 0.6833333333333333, 0.7944444444444444, 0.7916666666666666] 
+
+ extern auprc list: [0.9743660697656351, 0.947576026460882, 0.9512100866665114, 0.9753383801362676, 0.9759185520983708] 
+
+ validation auroc list: [0.7529068658614113, 0.7203117715617715, 0.7727673589037225, 0.737398901603447, 0.6977608250335523] 
