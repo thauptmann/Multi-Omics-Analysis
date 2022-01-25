@@ -62,7 +62,7 @@ Classifier_epoch = 5
 random_seed = 42
 
 
-def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, triplet_selector_type):
+def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -75,7 +75,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
     np.random.seed(random_seed)
     torch.cuda.manual_seed_all(random_seed)
 
-    triplet_selector = get_triplet_selector(marg, triplet_selector_type)
+    triplet_selector = get_triplet_selector(marg, False)
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=marg, p=2)
     BCE_loss_fun = torch.nn.BCELoss()
 
@@ -170,7 +170,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
                 C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
                 TripSel = OnlineTestTriplet(marg, triplet_selector)
 
-                final_Clas = Classifier(OE_dim + OM_dim + OC_dim, 1, C_dr)
+                final_Clas = Classifier(OE_dim + OM_dim + OC_dim, C_dr)
                 final_Clas.to(device)
                 Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
@@ -404,7 +404,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, trip
         C_optimizer = optim.Adagrad(final_C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
         TripSel = OnlineTestTriplet(marg, triplet_selector)
 
-        final_Clas = Classifier(OE_dim + OM_dim + OC_dim, 1, C_dr)
+        final_Clas = Classifier(OE_dim + OM_dim + OC_dim, C_dr)
         final_Clas.to(device)
         Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
@@ -538,9 +538,7 @@ if __name__ == '__main__':
     parser.add_argument('--gpu_number', type=int)
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
-    parser.add_argument('--triplet_selector_type', default='all', choices=['all', 'hardest', 'random', 'semi_hard',
-                                                                           'none'])
     args = parser.parse_args()
 
     for drug, extern_dataset in drugs.items():
-        super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.triplet_selector_type)
+        super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number)
