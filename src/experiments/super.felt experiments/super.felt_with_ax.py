@@ -8,7 +8,6 @@ from pathlib import Path
 import sklearn.preprocessing as sk
 from ax import optimize
 from scipy.stats import sem
-from sklearn.metrics import roc_auc_score, average_precision_score
 from torch import optim
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
@@ -21,7 +20,7 @@ from utils.experiment_utils import create_generation_strategy
 from utils.searchspaces import get_super_felt_search_space
 from models.super_felt_model import SupervisedEncoder, Classifier
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, create_sampler, train_encoder, \
-    train_classifier, train_validate_classifier
+    train_classifier, train_validate_classifier, super_felt_test
 from utils import multi_omics_data
 from utils.choose_gpu import get_free_gpu
 from independent_super_felt import optimise_independent_super_felt_parameter, compute_independent_super_felt_metrics
@@ -92,28 +91,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                                 x_train_val_m, x_train_val_c,
                                                                                 y_train_val, device,
                                                                                 deactivate_skip_bad_iterations)
-        elif optimise_independent:
-            best_parameters, experiment = optimise_independent_super_felt_parameter(combine_latent_features,
-                                                                                    random_seed,
-                                                                                    same_dimension_latent_features,
-                                                                                    sampling_method, search_iterations,
-                                                                                    semi_hard_triplet,
-                                                                                    sobol_iterations, x_train_val_e,
-                                                                                    x_train_val_m, x_train_val_c,
-                                                                                    y_train_val,
-                                                                                    device,
-                                                                                    deactivate_skip_bad_iterations)
-        else:
-            best_parameters, experiment = optimise_super_felt_parameter(combine_latent_features, random_seed,
-                                                                        same_dimension_latent_features,
-                                                                        sampling_method, search_iterations,
-                                                                        semi_hard_triplet,
-                                                                        sobol_iterations, x_train_val_e,
-                                                                        x_train_val_m, x_train_val_c, y_train_val,
-                                                                        device,
-                                                                        deactivate_skip_bad_iterations)
-
-        if combine_latent_features:
             external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_encoded_super_felt_metrics(x_test_e, x_test_m,
                                                                                                     x_test_c,
                                                                                                     x_train_val_e,
@@ -130,6 +107,17 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                                                     y_test,
                                                                                                     y_train_val)
         elif optimise_independent:
+            best_parameters, experiment, final_encoder_e, final_encoder_m, final_encoder_c, scaler_e = \
+                optimise_independent_super_felt_parameter(combine_latent_features,
+                                                          random_seed,
+                                                          same_dimension_latent_features,
+                                                          sampling_method, search_iterations,
+                                                          semi_hard_triplet,
+                                                          sobol_iterations, x_train_val_e,
+                                                          x_train_val_m, x_train_val_c,
+                                                          y_train_val,
+                                                          device,
+                                                          deactivate_skip_bad_iterations)
             external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_independent_super_felt_metrics(x_test_e,
                                                                                                         x_test_m,
                                                                                                         x_test_c,
@@ -142,11 +130,21 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                                                         extern_m,
                                                                                                         extern_c,
                                                                                                         extern_r,
-                                                                                                        same_dimension_latent_features,
-                                                                                                        semi_hard_triplet,
                                                                                                         y_test,
-                                                                                                        y_train_val)
+                                                                                                        y_train_val,
+                                                                                                        final_encoder_e,
+                                                                                                        final_encoder_m,
+                                                                                                        final_encoder_c,
+                                                                                                        scaler_e)
         else:
+            best_parameters, experiment = optimise_super_felt_parameter(combine_latent_features, random_seed,
+                                                                        same_dimension_latent_features,
+                                                                        sampling_method, search_iterations,
+                                                                        semi_hard_triplet,
+                                                                        sobol_iterations, x_train_val_e,
+                                                                        x_train_val_m, x_train_val_c, y_train_val,
+                                                                        device,
+                                                                        deactivate_skip_bad_iterations)
             external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_super_felt_metrics(x_test_e, x_test_m,
                                                                                             x_test_c,
                                                                                             x_train_val_e,
@@ -220,14 +218,14 @@ def compute_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_tr
     final_scaler_gdsc = train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_parameters,
                                     device, semi_hard_triplet, same_dimension_latent_features)
     # Test
-    test_AUC, test_AUCPR = test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encoder,
-                                final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
-                                final_scaler_gdsc)
+    test_AUC, test_AUCPR = super_felt_test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encoder,
+                                           final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
+                                           final_scaler_gdsc)
     # Extern
-    external_AUC, external_AUCPR = test(extern_e, extern_m, extern_c, extern_r, device,
-                                        final_C_Supervised_Encoder,
-                                        final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
-                                        final_scaler_gdsc)
+    external_AUC, external_AUCPR = super_felt_test(extern_e, extern_m, extern_c, extern_r, device,
+                                                   final_C_Supervised_Encoder,
+                                                   final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
+                                                   final_scaler_gdsc)
     return external_AUC, external_AUCPR, test_AUC, test_AUCPR
 
 
@@ -345,23 +343,8 @@ def write_results_to_file(drug_name, extern_auc_list, extern_auprc_list, result_
     calculate_mean_and_std_auc(result_dict, result_file, drug_name)
 
 
-def test(x_test_e, x_test_m, x_test_c, y_test, device, final_c_supervised_encoder, final_classifier,
-         final_e_supervised_encoder, final_m_supervised_encoder, final_scaler_gdsc):
-    x_test_e = torch.FloatTensor(final_scaler_gdsc.transform(x_test_e))
-    encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))
-    encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))
-    encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))
-    test_Pred = final_classifier(encoded_test_E, encoded_test_M, encoded_test_C)
-    test_y_true = y_test
-    test_y_pred = test_Pred.cpu().detach().numpy()
-    test_AUC = roc_auc_score(test_y_true, test_y_pred)
-    test_AUCPR = average_precision_score(test_y_true, test_y_pred)
-    return test_AUC, test_AUCPR
-
-
 def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
                 device, semi_hard_triplet, same_dimension_latent_features):
-    bce_loss_function = torch.nn.BCELoss()
     E_dr = best_hyperparameter['encoder_dropout']
     C_dr = best_hyperparameter['classifier_dropout']
     Cwd = best_hyperparameter['classifier_weight_decay']
@@ -451,8 +434,15 @@ if __name__ == '__main__':
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     args = parser.parse_args()
 
-    for drug, extern_dataset in parameter['drugs'].items():
-        super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.search_iterations,
+    if args.drug == 'all':
+        for drug, extern_dataset in parameter['drugs'].items():
+            super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.search_iterations,
+                       args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
+                       args.deactivate_skip_bad_iterations, args.semi_hard_triplet, args.combine_latent_features,
+                       args.optimise_independent, args.same_dimension_latent_features)
+    else:
+        extern_dataset = parameter['drugs'][args.drug]
+        super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.search_iterations,
                    args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
                    args.deactivate_skip_bad_iterations, args.semi_hard_triplet, args.combine_latent_features,
                    args.optimise_independent, args.same_dimension_latent_features)
