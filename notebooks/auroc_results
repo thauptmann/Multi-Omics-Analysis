@@ -1,281 +1,351 @@
 ,Drug,Dataset,Auroc,Method
-0,Cisplatin,Test,0.6821192052980133,Bo-Holi-MOLI
-0,Cisplatin,Test,0.7487858719646798,Bo-Holi-MOLI
-0,Cisplatin,Test,0.6479166666666667,Bo-Holi-MOLI
-0,Cisplatin,Test,0.7429166666666667,Bo-Holi-MOLI
-0,Cisplatin,Test,0.7871111111111111,Bo-Holi-MOLI
-0,Cisplatin,Extern,0.6194444444444445,Bo-Holi-MOLI
-0,Cisplatin,Extern,0.49444444444444446,Bo-Holi-MOLI
-0,Cisplatin,Extern,0.44166666666666665,Bo-Holi-MOLI
-0,Cisplatin,Extern,0.775,Bo-Holi-MOLI
-0,Cisplatin,Extern,0.763888888888889,Bo-Holi-MOLI
-0,Cisplatin,Test,0.7271523178807946,MOLI
-0,Cisplatin,Test,0.7479028697571745,MOLI
-0,Cisplatin,Test,0.6341666666666667,MOLI
-0,Cisplatin,Test,0.8025,MOLI
-0,Cisplatin,Test,0.7688888888888888,MOLI
-0,Cisplatin,Extern,0.7861111111111112,MOLI
-0,Cisplatin,Extern,0.6777777777777777,MOLI
-0,Cisplatin,Extern,0.4888888888888889,MOLI
-0,Cisplatin,Extern,0.6000000000000001,MOLI
-0,Cisplatin,Extern,0.7222222222222222,MOLI
-0,Cisplatin,Test,0.7156732891832229,Random-Holi-MOLI
-0,Cisplatin,Test,0.743046357615894,Random-Holi-MOLI
-0,Cisplatin,Test,0.6120833333333333,Random-Holi-MOLI
-0,Cisplatin,Test,0.78,Random-Holi-MOLI
-0,Cisplatin,Test,0.7266666666666667,Random-Holi-MOLI
-0,Cisplatin,Extern,0.6833333333333332,Random-Holi-MOLI
-0,Cisplatin,Extern,0.5888888888888889,Random-Holi-MOLI
-0,Cisplatin,Extern,0.6194444444444445,Random-Holi-MOLI
-0,Cisplatin,Extern,0.5388888888888889,Random-Holi-MOLI
-0,Cisplatin,Extern,0.7722222222222223,Random-Holi-MOLI
-0,Cisplatin,Test,0.7293598233995584,Holi-Moli-more-Sobol
-0,Cisplatin,Test,0.8150110375275939,Holi-Moli-more-Sobol
-0,Cisplatin,Test,0.7170833333333333,Holi-Moli-more-Sobol
-0,Cisplatin,Test,0.7487499999999999,Holi-Moli-more-Sobol
-0,Cisplatin,Test,0.7613333333333333,Holi-Moli-more-Sobol
-0,Cisplatin,Extern,0.7500000000000001,Holi-Moli-more-Sobol
-0,Cisplatin,Extern,0.8222222222222223,Holi-Moli-more-Sobol
-0,Cisplatin,Extern,0.5027777777777779,Holi-Moli-more-Sobol
-0,Cisplatin,Extern,0.5194444444444445,Holi-Moli-more-Sobol
-0,Cisplatin,Extern,0.6805555555555556,Holi-Moli-more-Sobol
-0,Docetaxel,Test,0.8320764203117145,Bo-Holi-MOLI
-0,Docetaxel,Test,0.8109602815485168,Bo-Holi-MOLI
-0,Docetaxel,Test,0.681246857717446,Bo-Holi-MOLI
-0,Docetaxel,Test,0.856711915535445,Bo-Holi-MOLI
-0,Docetaxel,Test,0.7474696356275304,Bo-Holi-MOLI
-0,Docetaxel,Extern,0.65625,Bo-Holi-MOLI
-0,Docetaxel,Extern,0.59375,Bo-Holi-MOLI
-0,Docetaxel,Extern,0.515625,Bo-Holi-MOLI
-0,Docetaxel,Extern,0.65625,Bo-Holi-MOLI
-0,Docetaxel,Extern,0.609375,Bo-Holi-MOLI
-0,Docetaxel,Test,0.8215183509301156,MOLI
-0,Docetaxel,Test,0.7621920563097033,MOLI
-0,Docetaxel,Test,0.5957767722473605,MOLI
-0,Docetaxel,Test,0.8662644544997488,MOLI
-0,Docetaxel,Test,0.6978744939271255,MOLI
-0,Docetaxel,Extern,0.546875,MOLI
-0,Docetaxel,Extern,0.765625,MOLI
-0,Docetaxel,Extern,0.53125,MOLI
-0,Docetaxel,Extern,0.609375,MOLI
-0,Docetaxel,Extern,0.578125,MOLI
-0,Docetaxel,Test,0.7893413775766717,Random-Holi-MOLI
-0,Docetaxel,Test,0.8044243338360986,Random-Holi-MOLI
-0,Docetaxel,Test,0.7164404223227752,Random-Holi-MOLI
-0,Docetaxel,Test,0.8919054801407743,Random-Holi-MOLI
-0,Docetaxel,Test,0.7601214574898786,Random-Holi-MOLI
-0,Docetaxel,Extern,0.53125,Random-Holi-MOLI
-0,Docetaxel,Extern,0.625,Random-Holi-MOLI
-0,Docetaxel,Extern,0.6875,Random-Holi-MOLI
-0,Docetaxel,Extern,0.75,Random-Holi-MOLI
-0,Docetaxel,Extern,0.53125,Random-Holi-MOLI
-0,Docetaxel,Test,0.8612368024132729,Holi-Moli-more-Sobol
-0,Docetaxel,Test,0.7928607340372047,Holi-Moli-more-Sobol
-0,Docetaxel,Test,0.7043740573152338,Holi-Moli-more-Sobol
-0,Docetaxel,Test,0.877325289089995,Holi-Moli-more-Sobol
-0,Docetaxel,Test,0.7449392712550608,Holi-Moli-more-Sobol
-0,Docetaxel,Extern,0.65625,Holi-Moli-more-Sobol
-0,Docetaxel,Extern,0.609375,Holi-Moli-more-Sobol
-0,Docetaxel,Extern,0.671875,Holi-Moli-more-Sobol
-0,Docetaxel,Extern,0.6875,Holi-Moli-more-Sobol
-0,Docetaxel,Extern,0.515625,Holi-Moli-more-Sobol
-0,Paclitaxel,Test,0.49589041095890407,Bo-Holi-MOLI
-0,Paclitaxel,Test,0.5232876712328767,Bo-Holi-MOLI
-0,Paclitaxel,Test,0.7369863013698631,Bo-Holi-MOLI
-0,Paclitaxel,Test,0.6828703703703705,Bo-Holi-MOLI
-0,Paclitaxel,Test,0.6972222222222222,Bo-Holi-MOLI
-0,Paclitaxel,Extern,0.7105263157894738,Bo-Holi-MOLI
-0,Paclitaxel,Extern,0.3368421052631579,Bo-Holi-MOLI
-0,Paclitaxel,Extern,0.531578947368421,Bo-Holi-MOLI
-0,Paclitaxel,Extern,0.5894736842105264,Bo-Holi-MOLI
-0,Paclitaxel,Extern,0.5,Bo-Holi-MOLI
-0,Paclitaxel,Test,0.6684931506849315,MOLI
-0,Paclitaxel,Test,0.4602739726027397,MOLI
-0,Paclitaxel,Test,0.7506849315068493,MOLI
-0,Paclitaxel,Test,0.5231481481481481,MOLI
-0,Paclitaxel,Test,0.8777777777777778,MOLI
-0,Paclitaxel,Extern,0.43157894736842106,MOLI
-0,Paclitaxel,Extern,0.5631578947368421,MOLI
-0,Paclitaxel,Extern,0.43157894736842106,MOLI
-0,Paclitaxel,Extern,0.41578947368421054,MOLI
-0,Paclitaxel,Extern,0.736842105263158,MOLI
-0,Paclitaxel,Test,0.5753424657534246,Random-Holi-MOLI
-0,Paclitaxel,Test,0.8383561643835616,Random-Holi-MOLI
-0,Paclitaxel,Test,0.6657534246575343,Random-Holi-MOLI
-0,Paclitaxel,Test,0.5578703703703703,Random-Holi-MOLI
-0,Paclitaxel,Test,0.8583333333333334,Random-Holi-MOLI
-0,Paclitaxel,Extern,0.24210526315789474,Random-Holi-MOLI
-0,Paclitaxel,Extern,0.631578947368421,Random-Holi-MOLI
-0,Paclitaxel,Extern,0.6473684210526316,Random-Holi-MOLI
-0,Paclitaxel,Extern,0.4631578947368421,Random-Holi-MOLI
-0,Paclitaxel,Extern,0.5526315789473684,Random-Holi-MOLI
-0,Paclitaxel,Test,0.6356164383561644,Holi-Moli-more-Sobol
-0,Paclitaxel,Test,0.6986301369863014,Holi-Moli-more-Sobol
-0,Paclitaxel,Test,0.6958904109589041,Holi-Moli-more-Sobol
-0,Paclitaxel,Test,0.6180555555555556,Holi-Moli-more-Sobol
-0,Paclitaxel,Test,0.7388888888888889,Holi-Moli-more-Sobol
-0,Paclitaxel,Extern,0.4105263157894737,Holi-Moli-more-Sobol
-0,Paclitaxel,Extern,0.5947368421052632,Holi-Moli-more-Sobol
-0,Paclitaxel,Extern,0.536842105263158,Holi-Moli-more-Sobol
-0,Paclitaxel,Extern,0.5368421052631578,Holi-Moli-more-Sobol
-0,Paclitaxel,Extern,0.4631578947368421,Holi-Moli-more-Sobol
-0,Cetuximab,Test,0.8149659863945578,Bo-Holi-MOLI
-0,Cetuximab,Test,0.7346938775510203,Bo-Holi-MOLI
-0,Cetuximab,Test,0.7242063492063493,Bo-Holi-MOLI
-0,Cetuximab,Test,0.789965986394558,Bo-Holi-MOLI
-0,Cetuximab,Test,0.7882653061224489,Bo-Holi-MOLI
-0,Cetuximab,Extern,0.3018181818181819,Bo-Holi-MOLI
-0,Cetuximab,Extern,0.36363636363636365,Bo-Holi-MOLI
-0,Cetuximab,Extern,0.36,Bo-Holi-MOLI
-0,Cetuximab,Extern,0.3345454545454546,Bo-Holi-MOLI
-0,Cetuximab,Extern,0.36000000000000004,Bo-Holi-MOLI
-0,Cetuximab,Test,0.8160544217687073,MOLI
-0,Cetuximab,Test,0.7301587301587301,MOLI
-0,Cetuximab,Test,0.683390022675737,MOLI
-0,Cetuximab,Test,0.7718253968253969,MOLI
-0,Cetuximab,Test,0.745748299319728,MOLI
-0,Cetuximab,Extern,0.5963636363636364,MOLI
-0,Cetuximab,Extern,0.2472727272727273,MOLI
-0,Cetuximab,Extern,0.44727272727272727,MOLI
-0,Cetuximab,Extern,0.3890909090909091,MOLI
-0,Cetuximab,Extern,0.44,MOLI
-0,Cetuximab,Test,0.823673469387755,Random-Holi-MOLI
-0,Cetuximab,Test,0.7261904761904762,Random-Holi-MOLI
-0,Cetuximab,Test,0.7463151927437641,Random-Holi-MOLI
-0,Cetuximab,Test,0.7865646258503401,Random-Holi-MOLI
-0,Cetuximab,Test,0.6907596371882085,Random-Holi-MOLI
-0,Cetuximab,Extern,0.32727272727272727,Random-Holi-MOLI
-0,Cetuximab,Extern,0.3745454545454545,Random-Holi-MOLI
-0,Cetuximab,Extern,0.32,Random-Holi-MOLI
-0,Cetuximab,Extern,0.3381818181818182,Random-Holi-MOLI
-0,Cetuximab,Extern,0.22545454545454546,Random-Holi-MOLI
-0,Cetuximab,Test,0.8299319727891157,Holi-Moli-more-Sobol
-0,Cetuximab,Test,0.7310090702947846,Holi-Moli-more-Sobol
-0,Cetuximab,Test,0.7293083900226758,Holi-Moli-more-Sobol
-0,Cetuximab,Test,0.7777777777777778,Holi-Moli-more-Sobol
-0,Cetuximab,Test,0.7780612244897959,Holi-Moli-more-Sobol
-0,Cetuximab,Extern,0.23272727272727273,Holi-Moli-more-Sobol
-0,Cetuximab,Extern,0.24363636363636365,Holi-Moli-more-Sobol
-0,Cetuximab,Extern,0.2872727272727273,Holi-Moli-more-Sobol
-0,Cetuximab,Extern,0.26181818181818184,Holi-Moli-more-Sobol
-0,Cetuximab,Extern,0.36000000000000004,Holi-Moli-more-Sobol
-0,Gemcitabine with PDX,Test,0.6139240506329114,Bo-Holi-MOLI
-0,Gemcitabine with PDX,Test,0.4833141542002301,Bo-Holi-MOLI
-0,Gemcitabine with PDX,Test,0.715765247410817,Bo-Holi-MOLI
-0,Gemcitabine with PDX,Test,0.7922899884925201,Bo-Holi-MOLI
-0,Gemcitabine with PDX,Test,0.6050632911392404,Bo-Holi-MOLI
-0,Gemcitabine with PDX,Extern,0.753968253968254,Bo-Holi-MOLI
-0,Gemcitabine with PDX,Extern,0.746031746031746,Bo-Holi-MOLI
-0,Gemcitabine with PDX,Extern,0.5793650793650793,Bo-Holi-MOLI
-0,Gemcitabine with PDX,Extern,0.5793650793650793,Bo-Holi-MOLI
-0,Gemcitabine with PDX,Extern,0.6666666666666667,Bo-Holi-MOLI
-0,Gemcitabine with PDX,Test,0.5759493670886076,MOLI
-0,Gemcitabine with PDX,Test,0.5057537399309551,MOLI
-0,Gemcitabine with PDX,Test,0.5782508630609897,MOLI
-0,Gemcitabine with PDX,Test,0.6208285385500575,MOLI
-0,Gemcitabine with PDX,Test,0.620253164556962,MOLI
-0,Gemcitabine with PDX,Extern,0.7222222222222222,MOLI
-0,Gemcitabine with PDX,Extern,0.746031746031746,MOLI
-0,Gemcitabine with PDX,Extern,0.5873015873015873,MOLI
-0,Gemcitabine with PDX,Extern,0.6904761904761905,MOLI
-0,Gemcitabine with PDX,Extern,0.6904761904761905,MOLI
-0,Gemcitabine with PDX,Test,0.6081703107019563,Random-Holi-MOLI
-0,Gemcitabine with PDX,Test,0.5109321058688148,Random-Holi-MOLI
-0,Gemcitabine with PDX,Test,0.6542002301495973,Random-Holi-MOLI
-0,Gemcitabine with PDX,Test,0.7146144994246261,Random-Holi-MOLI
-0,Gemcitabine with PDX,Test,0.689873417721519,Random-Holi-MOLI
-0,Gemcitabine with PDX,Extern,0.7936507936507937,Random-Holi-MOLI
-0,Gemcitabine with PDX,Extern,0.6031746031746031,Random-Holi-MOLI
-0,Gemcitabine with PDX,Extern,0.6666666666666667,Random-Holi-MOLI
-0,Gemcitabine with PDX,Extern,0.5555555555555556,Random-Holi-MOLI
-0,Gemcitabine with PDX,Extern,0.7222222222222222,Random-Holi-MOLI
-0,Gemcitabine with PDX,Test,0.3849252013808976,Holi-Moli-more-Sobol
-0,Gemcitabine with PDX,Test,0.4332566168009206,Holi-Moli-more-Sobol
-0,Gemcitabine with PDX,Test,0.6260069044879171,Holi-Moli-more-Sobol
-0,Gemcitabine with PDX,Test,0.7255466052934407,Holi-Moli-more-Sobol
-0,Gemcitabine with PDX,Test,0.6544303797468354,Holi-Moli-more-Sobol
-0,Gemcitabine with PDX,Extern,0.8015873015873016,Holi-Moli-more-Sobol
-0,Gemcitabine with PDX,Extern,0.8412698412698414,Holi-Moli-more-Sobol
-0,Gemcitabine with PDX,Extern,0.6587301587301586,Holi-Moli-more-Sobol
-0,Gemcitabine with PDX,Extern,0.753968253968254,Holi-Moli-more-Sobol
-0,Gemcitabine with PDX,Extern,0.611111111111111,Holi-Moli-more-Sobol
-0,Erlotinib,Test,0.7769230769230769,Bo-Holi-MOLI
-0,Erlotinib,Test,0.5756410256410256,Bo-Holi-MOLI
-0,Erlotinib,Test,0.7486111111111111,Bo-Holi-MOLI
-0,Erlotinib,Test,0.6297262059973925,Bo-Holi-MOLI
-0,Erlotinib,Test,0.8487614080834419,Bo-Holi-MOLI
-0,Erlotinib,Extern,0.5185185185185185,Bo-Holi-MOLI
-0,Erlotinib,Extern,0.6296296296296297,Bo-Holi-MOLI
-0,Erlotinib,Extern,0.5,Bo-Holi-MOLI
-0,Erlotinib,Extern,0.7592592592592593,Bo-Holi-MOLI
-0,Erlotinib,Extern,0.37037037037037035,Bo-Holi-MOLI
-0,Erlotinib,Test,0.6871794871794872,MOLI
-0,Erlotinib,Test,0.5871794871794872,MOLI
-0,Erlotinib,Test,0.5986111111111112,MOLI
-0,Erlotinib,Test,0.6727509778357236,MOLI
-0,Erlotinib,Test,0.9269882659713168,MOLI
-0,Erlotinib,Extern,0.4444444444444444,MOLI
-0,Erlotinib,Extern,0.35185185185185186,MOLI
-0,Erlotinib,Extern,0.2962962962962963,MOLI
-0,Erlotinib,Extern,0.6296296296296297,MOLI
-0,Erlotinib,Extern,0.4444444444444444,MOLI
-0,Erlotinib,Test,0.7307692307692308,Random-Holi-MOLI
-0,Erlotinib,Test,0.6512820512820513,Random-Holi-MOLI
-0,Erlotinib,Test,0.6472222222222223,Random-Holi-MOLI
-0,Erlotinib,Test,0.6962190352020861,Random-Holi-MOLI
-0,Erlotinib,Test,0.8709256844850065,Random-Holi-MOLI
-0,Erlotinib,Extern,0.37037037037037035,Random-Holi-MOLI
-0,Erlotinib,Extern,0.7777777777777778,Random-Holi-MOLI
-0,Erlotinib,Extern,0.6851851851851852,Random-Holi-MOLI
-0,Erlotinib,Extern,0.6851851851851852,Random-Holi-MOLI
-0,Erlotinib,Extern,0.4074074074074074,Random-Holi-MOLI
-0,Erlotinib,Test,0.8487179487179487,Holi-Moli-more-Sobol
-0,Erlotinib,Test,0.6641025641025641,Holi-Moli-more-Sobol
-0,Erlotinib,Test,0.6402777777777778,Holi-Moli-more-Sobol
-0,Erlotinib,Test,0.6792698826597131,Holi-Moli-more-Sobol
-0,Erlotinib,Test,0.8631029986962191,Holi-Moli-more-Sobol
-0,Erlotinib,Extern,0.5925925925925926,Holi-Moli-more-Sobol
-0,Erlotinib,Extern,0.5925925925925926,Holi-Moli-more-Sobol
-0,Erlotinib,Extern,0.40740740740740744,Holi-Moli-more-Sobol
-0,Erlotinib,Extern,0.7037037037037037,Holi-Moli-more-Sobol
-0,Erlotinib,Extern,0.25925925925925924,Holi-Moli-more-Sobol
-0,Gemcitabine with TCGA,Test,0.6680092059838895,Bo-Holi-MOLI
-0,Gemcitabine with TCGA,Test,0.5143843498273878,Bo-Holi-MOLI
-0,Gemcitabine with TCGA,Test,0.5851553509781358,Bo-Holi-MOLI
-0,Gemcitabine with TCGA,Test,0.7571921749136938,Bo-Holi-MOLI
-0,Gemcitabine with TCGA,Test,0.5424050632911392,Bo-Holi-MOLI
-0,Gemcitabine with TCGA,Extern,0.6137566137566137,Bo-Holi-MOLI
-0,Gemcitabine with TCGA,Extern,0.5,Bo-Holi-MOLI
-0,Gemcitabine with TCGA,Extern,0.521164021164021,Bo-Holi-MOLI
-0,Gemcitabine with TCGA,Extern,0.48677248677248675,Bo-Holi-MOLI
-0,Gemcitabine with TCGA,Extern,0.6587301587301588,Bo-Holi-MOLI
-0,Gemcitabine with TCGA,Test,0.5017261219792866,MOLI
-0,Gemcitabine with TCGA,Test,0.4712313003452244,MOLI
-0,Gemcitabine with TCGA,Test,0.7278481012658228,MOLI
-0,Gemcitabine with TCGA,Test,0.7957422324510932,MOLI
-0,Gemcitabine with TCGA,Test,0.5930379746835444,MOLI
-0,Gemcitabine with TCGA,Extern,0.5383597883597884,MOLI
-0,Gemcitabine with TCGA,Extern,0.48148148148148145,MOLI
-0,Gemcitabine with TCGA,Extern,0.5992063492063492,MOLI
-0,Gemcitabine with TCGA,Extern,0.5582010582010581,MOLI
-0,Gemcitabine with TCGA,Extern,0.6031746031746031,MOLI
-0,Gemcitabine with TCGA,Test,0.6398158803222094,Random-Holi-MOLI
-0,Gemcitabine with TCGA,Test,0.5627157652474108,Random-Holi-MOLI
-0,Gemcitabine with TCGA,Test,0.5771001150747985,Random-Holi-MOLI
-0,Gemcitabine with TCGA,Test,0.7042577675489068,Random-Holi-MOLI
-0,Gemcitabine with TCGA,Test,0.6113924050632911,Random-Holi-MOLI
-0,Gemcitabine with TCGA,Extern,0.5158730158730158,Random-Holi-MOLI
-0,Gemcitabine with TCGA,Extern,0.6283068783068784,Random-Holi-MOLI
-0,Gemcitabine with TCGA,Extern,0.6190476190476191,Random-Holi-MOLI
-0,Gemcitabine with TCGA,Extern,0.5648148148148149,Random-Holi-MOLI
-0,Gemcitabine with TCGA,Extern,0.6335978835978836,Random-Holi-MOLI
-0,Gemcitabine with TCGA,Test,0.5840046029919448,Holi-Moli-more-Sobol
-0,Gemcitabine with TCGA,Test,0.6237054085155351,Holi-Moli-more-Sobol
-0,Gemcitabine with TCGA,Test,0.5678941311852704,Holi-Moli-more-Sobol
-0,Gemcitabine with TCGA,Test,0.7802071346375143,Holi-Moli-more-Sobol
-0,Gemcitabine with TCGA,Test,0.6341772151898735,Holi-Moli-more-Sobol
-0,Gemcitabine with TCGA,Extern,0.6018518518518519,Holi-Moli-more-Sobol
-0,Gemcitabine with TCGA,Extern,0.5185185185185184,Holi-Moli-more-Sobol
-0,Gemcitabine with TCGA,Extern,0.5555555555555555,Holi-Moli-more-Sobol
-0,Gemcitabine with TCGA,Extern,0.593915343915344,Holi-Moli-more-Sobol
-0,Gemcitabine with TCGA,Extern,0.5396825396825397,Holi-Moli-more-Sobol
+0,Paclitaxel,Test,0.7397260273972602,random_holi_moli_semi_hard
+0,Paclitaxel,Test,0.6082191780821917,random_holi_moli_semi_hard
+0,Paclitaxel,Test,0.6164383561643836,random_holi_moli_semi_hard
+0,Paclitaxel,Test,0.650462962962963,random_holi_moli_semi_hard
+0,Paclitaxel,Test,0.8083333333333332,random_holi_moli_semi_hard
+0,Paclitaxel,Extern,0.5368421052631579,random_holi_moli_semi_hard
+0,Paclitaxel,Extern,0.5368421052631579,random_holi_moli_semi_hard
+0,Paclitaxel,Extern,0.4473684210526316,random_holi_moli_semi_hard
+0,Paclitaxel,Extern,0.49473684210526314,random_holi_moli_semi_hard
+0,Paclitaxel,Extern,0.31578947368421056,random_holi_moli_semi_hard
+0,Paclitaxel,Test,0.6904109589041096,random_moli
+0,Paclitaxel,Test,0.4931506849315068,random_moli
+0,Paclitaxel,Test,0.4273972602739726,random_moli
+0,Paclitaxel,Test,0.6342592592592593,random_moli
+0,Paclitaxel,Test,0.7361111111111112,random_moli
+0,Paclitaxel,Extern,0.6631578947368422,random_moli
+0,Paclitaxel,Extern,0.43157894736842106,random_moli
+0,Paclitaxel,Extern,0.6842105263157895,random_moli
+0,Paclitaxel,Extern,0.5736842105263158,random_moli
+0,Paclitaxel,Extern,0.3842105263157895,random_moli
+0,Paclitaxel,Test,0.7753424657534247,random_holi-moli
+0,Paclitaxel,Test,0.40273972602739727,random_holi-moli
+0,Paclitaxel,Test,0.6301369863013699,random_holi-moli
+0,Paclitaxel,Test,0.6087962962962963,random_holi-moli
+0,Paclitaxel,Test,0.8111111111111111,random_holi-moli
+0,Paclitaxel,Extern,0.4421052631578948,random_holi-moli
+0,Paclitaxel,Extern,0.45263157894736844,random_holi-moli
+0,Paclitaxel,Extern,0.3526315789473684,random_holi-moli
+0,Paclitaxel,Extern,0.7,random_holi-moli
+0,Paclitaxel,Extern,0.5105263157894737,random_holi-moli
+0,Paclitaxel,Test,0.5534246575342466,random_moli_without_elbow
+0,Paclitaxel,Test,0.526027397260274,random_moli_without_elbow
+0,Paclitaxel,Test,0.6219178082191781,random_moli_without_elbow
+0,Paclitaxel,Test,0.7152777777777778,random_moli_without_elbow
+0,Paclitaxel,Test,0.775,random_moli_without_elbow
+0,Paclitaxel,Extern,0.5631578947368422,random_moli_without_elbow
+0,Paclitaxel,Extern,0.6105263157894737,random_moli_without_elbow
+0,Paclitaxel,Extern,0.3894736842105263,random_moli_without_elbow
+0,Paclitaxel,Extern,0.7578947368421053,random_moli_without_elbow
+0,Paclitaxel,Extern,0.7473684210526316,random_moli_without_elbow
+0,Cetuximab,Test,0.7929251700680272,random_holi_moli_semi_hard
+0,Cetuximab,Test,0.7210884353741497,random_holi_moli_semi_hard
+0,Cetuximab,Test,0.7599206349206349,random_holi_moli_semi_hard
+0,Cetuximab,Test,0.7777777777777778,random_holi_moli_semi_hard
+0,Cetuximab,Test,0.6714852607709751,random_holi_moli_semi_hard
+0,Cetuximab,Extern,0.46545454545454545,random_holi_moli_semi_hard
+0,Cetuximab,Extern,0.49454545454545457,random_holi_moli_semi_hard
+0,Cetuximab,Extern,0.5127272727272727,random_holi_moli_semi_hard
+0,Cetuximab,Extern,0.5636363636363637,random_holi_moli_semi_hard
+0,Cetuximab,Extern,0.48363636363636364,random_holi_moli_semi_hard
+0,Cetuximab,Test,0.7463945578231292,random_moli
+0,Cetuximab,Test,0.7463151927437641,random_moli
+0,Cetuximab,Test,0.6763038548752834,random_moli
+0,Cetuximab,Test,0.7721088435374149,random_moli
+0,Cetuximab,Test,0.7142857142857142,random_moli
+0,Cetuximab,Extern,0.5018181818181818,random_moli
+0,Cetuximab,Extern,0.4945454545454546,random_moli
+0,Cetuximab,Extern,0.3054545454545454,random_moli
+0,Cetuximab,Extern,0.6472727272727273,random_moli
+0,Cetuximab,Extern,0.6472727272727273,random_moli
+0,Cetuximab,Test,0.7948299319727891,random_holi-moli
+0,Cetuximab,Test,0.7477324263038548,random_holi-moli
+0,Cetuximab,Test,0.7312925170068028,random_holi-moli
+0,Cetuximab,Test,0.7808956916099774,random_holi-moli
+0,Cetuximab,Test,0.6510770975056689,random_holi-moli
+0,Cetuximab,Extern,0.5345454545454545,random_holi-moli
+0,Cetuximab,Extern,0.41454545454545455,random_holi-moli
+0,Cetuximab,Extern,0.4727272727272728,random_holi-moli
+0,Cetuximab,Extern,0.44727272727272727,random_holi-moli
+0,Cetuximab,Extern,0.5272727272727273,random_holi-moli
+0,Cetuximab,Test,0.819047619047619,random_moli_without_elbow
+0,Cetuximab,Test,0.7293083900226757,random_moli_without_elbow
+0,Cetuximab,Test,0.7202380952380952,random_moli_without_elbow
+0,Cetuximab,Test,0.7851473922902494,random_moli_without_elbow
+0,Cetuximab,Test,0.6726190476190477,random_moli_without_elbow
+0,Cetuximab,Extern,0.4909090909090909,random_moli_without_elbow
+0,Cetuximab,Extern,0.3272727272727273,random_moli_without_elbow
+0,Cetuximab,Extern,0.5090909090909091,random_moli_without_elbow
+0,Cetuximab,Extern,0.38545454545454555,random_moli_without_elbow
+0,Cetuximab,Extern,0.4,random_moli_without_elbow
+0,Gemcitabine with TCGA,Test,0.5788262370540851,random_holi_moli_semi_hard
+0,Gemcitabine with TCGA,Test,0.6104718066743383,random_holi_moli_semi_hard
+0,Gemcitabine with TCGA,Test,0.6478711162255466,random_holi_moli_semi_hard
+0,Gemcitabine with TCGA,Test,0.7813578826237054,random_holi_moli_semi_hard
+0,Gemcitabine with TCGA,Test,0.7069620253164557,random_holi_moli_semi_hard
+0,Gemcitabine with TCGA,Extern,0.6375661375661376,random_holi_moli_semi_hard
+0,Gemcitabine with TCGA,Extern,0.6455026455026456,random_holi_moli_semi_hard
+0,Gemcitabine with TCGA,Extern,0.6044973544973545,random_holi_moli_semi_hard
+0,Gemcitabine with TCGA,Extern,0.5886243386243386,random_holi_moli_semi_hard
+0,Gemcitabine with TCGA,Extern,0.6044973544973545,random_holi_moli_semi_hard
+0,Gemcitabine with TCGA,Test,0.49827387802071343,random_moli
+0,Gemcitabine with TCGA,Test,0.5575373993095513,random_moli
+0,Gemcitabine with TCGA,Test,0.6812428078250862,random_moli
+0,Gemcitabine with TCGA,Test,0.8319907940161104,random_moli
+0,Gemcitabine with TCGA,Test,0.5696202531645569,random_moli
+0,Gemcitabine with TCGA,Extern,0.6865079365079365,random_moli
+0,Gemcitabine with TCGA,Extern,0.6626984126984127,random_moli
+0,Gemcitabine with TCGA,Extern,0.6243386243386244,random_moli
+0,Gemcitabine with TCGA,Extern,0.5780423280423279,random_moli
+0,Gemcitabine with TCGA,Extern,0.6468253968253967,random_moli
+0,Gemcitabine with TCGA,Test,0.5397008055235903,random_holi-moli
+0,Gemcitabine with TCGA,Test,0.567318757192175,random_holi-moli
+0,Gemcitabine with TCGA,Test,0.547180667433832,random_holi-moli
+0,Gemcitabine with TCGA,Test,0.8245109321058688,random_holi-moli
+0,Gemcitabine with TCGA,Test,0.6189873417721519,random_holi-moli
+0,Gemcitabine with TCGA,Extern,0.6097883597883598,random_holi-moli
+0,Gemcitabine with TCGA,Extern,0.5859788359788359,random_holi-moli
+0,Gemcitabine with TCGA,Extern,0.6283068783068784,random_holi-moli
+0,Gemcitabine with TCGA,Extern,0.5793650793650794,random_holi-moli
+0,Gemcitabine with TCGA,Extern,0.6587301587301587,random_holi-moli
+0,Gemcitabine with TCGA,Test,0.7180667433831991,random_moli_without_elbow
+0,Gemcitabine with TCGA,Test,0.41944764096662834,random_moli_without_elbow
+0,Gemcitabine with TCGA,Test,0.6685845799769852,random_moli_without_elbow
+0,Gemcitabine with TCGA,Test,0.6524741081703107,random_moli_without_elbow
+0,Gemcitabine with TCGA,Test,0.6987341772151899,random_moli_without_elbow
+0,Gemcitabine with TCGA,Extern,0.6746031746031746,random_moli_without_elbow
+0,Gemcitabine with TCGA,Extern,0.5238095238095238,random_moli_without_elbow
+0,Gemcitabine with TCGA,Extern,0.7486772486772487,random_moli_without_elbow
+0,Gemcitabine with TCGA,Extern,0.5105820105820105,random_moli_without_elbow
+0,Gemcitabine with TCGA,Extern,0.5965608465608466,random_moli_without_elbow
+0,Erlotinib,Test,0.8666666666666666,random_holi_moli_semi_hard
+0,Erlotinib,Test,0.617948717948718,random_holi_moli_semi_hard
+0,Erlotinib,Test,0.6888888888888889,random_holi_moli_semi_hard
+0,Erlotinib,Test,0.7079530638852674,random_holi_moli_semi_hard
+0,Erlotinib,Test,0.7979139504563234,random_holi_moli_semi_hard
+0,Erlotinib,Extern,0.7777777777777779,random_holi_moli_semi_hard
+0,Erlotinib,Extern,0.5925925925925926,random_holi_moli_semi_hard
+0,Erlotinib,Extern,0.5,random_holi_moli_semi_hard
+0,Erlotinib,Extern,0.7592592592592593,random_holi_moli_semi_hard
+0,Erlotinib,Extern,0.5185185185185185,random_holi_moli_semi_hard
+0,Erlotinib,Test,0.6782051282051282,random_moli
+0,Erlotinib,Test,0.6384615384615385,random_moli
+0,Erlotinib,Test,0.6597222222222222,random_moli
+0,Erlotinib,Test,0.7405475880052151,random_moli
+0,Erlotinib,Test,0.8083441981747066,random_moli
+0,Erlotinib,Extern,0.7777777777777778,random_moli
+0,Erlotinib,Extern,0.8703703703703703,random_moli
+0,Erlotinib,Extern,0.537037037037037,random_moli
+0,Erlotinib,Extern,0.8148148148148148,random_moli
+0,Erlotinib,Extern,0.6111111111111112,random_moli
+0,Erlotinib,Test,0.8358974358974359,random_holi-moli
+0,Erlotinib,Test,0.6012820512820514,random_holi-moli
+0,Erlotinib,Test,0.6291666666666667,random_holi-moli
+0,Erlotinib,Test,0.7275097783572361,random_holi-moli
+0,Erlotinib,Test,0.7783572359843547,random_holi-moli
+0,Erlotinib,Extern,0.5555555555555556,random_holi-moli
+0,Erlotinib,Extern,0.5185185185185185,random_holi-moli
+0,Erlotinib,Extern,0.5925925925925926,random_holi-moli
+0,Erlotinib,Extern,0.7962962962962963,random_holi-moli
+0,Erlotinib,Extern,0.8333333333333334,random_holi-moli
+0,Erlotinib,Test,0.7743589743589744,random_moli_without_elbow
+0,Erlotinib,Test,0.6217948717948718,random_moli_without_elbow
+0,Erlotinib,Test,0.7652777777777777,random_moli_without_elbow
+0,Erlotinib,Test,0.6010430247718384,random_moli_without_elbow
+0,Erlotinib,Test,0.8735332464146023,random_moli_without_elbow
+0,Erlotinib,Extern,0.6666666666666666,random_moli_without_elbow
+0,Erlotinib,Extern,0.5925925925925926,random_moli_without_elbow
+0,Erlotinib,Extern,0.6851851851851851,random_moli_without_elbow
+0,Erlotinib,Extern,0.6851851851851852,random_moli_without_elbow
+0,Erlotinib,Extern,0.5185185185185185,random_moli_without_elbow
+0,Gemcitabine with PDX,Test,0.5949367088607594,random_holi_moli_semi_hard
+0,Gemcitabine with PDX,Test,0.6070195627157652,random_holi_moli_semi_hard
+0,Gemcitabine with PDX,Test,0.6599539700805523,random_holi_moli_semi_hard
+0,Gemcitabine with PDX,Test,0.6208285385500576,random_holi_moli_semi_hard
+0,Gemcitabine with PDX,Test,0.5537974683544304,random_holi_moli_semi_hard
+0,Gemcitabine with PDX,Extern,0.5555555555555556,random_holi_moli_semi_hard
+0,Gemcitabine with PDX,Extern,0.5079365079365079,random_holi_moli_semi_hard
+0,Gemcitabine with PDX,Extern,0.46031746031746035,random_holi_moli_semi_hard
+0,Gemcitabine with PDX,Extern,0.8015873015873016,random_holi_moli_semi_hard
+0,Gemcitabine with PDX,Extern,0.5793650793650794,random_holi_moli_semi_hard
+0,Gemcitabine with PDX,Test,0.4994246260069045,random_moli
+0,Gemcitabine with PDX,Test,0.615650172612198,random_moli
+0,Gemcitabine with PDX,Test,0.6536248561565017,random_moli
+0,Gemcitabine with PDX,Test,0.7882623705408515,random_moli
+0,Gemcitabine with PDX,Test,0.5544303797468355,random_moli
+0,Gemcitabine with PDX,Extern,0.6984126984126984,random_moli
+0,Gemcitabine with PDX,Extern,0.5952380952380951,random_moli
+0,Gemcitabine with PDX,Extern,0.5714285714285714,random_moli
+0,Gemcitabine with PDX,Extern,0.6111111111111112,random_moli
+0,Gemcitabine with PDX,Extern,0.5952380952380952,random_moli
+0,Gemcitabine with PDX,Test,0.49712313003452246,random_holi-moli
+0,Gemcitabine with PDX,Test,0.643843498273878,random_holi-moli
+0,Gemcitabine with PDX,Test,0.5661680092059839,random_holi-moli
+0,Gemcitabine with PDX,Test,0.7508630609896433,random_holi-moli
+0,Gemcitabine with PDX,Test,0.6063291139240506,random_holi-moli
+0,Gemcitabine with PDX,Extern,0.4444444444444444,random_holi-moli
+0,Gemcitabine with PDX,Extern,0.7301587301587301,random_holi-moli
+0,Gemcitabine with PDX,Extern,0.49999999999999994,random_holi-moli
+0,Gemcitabine with PDX,Extern,0.47619047619047616,random_holi-moli
+0,Gemcitabine with PDX,Extern,0.5793650793650793,random_holi-moli
+0,Gemcitabine with PDX,Test,0.600115074798619,random_moli_without_elbow
+0,Gemcitabine with PDX,Test,0.6087456846950517,random_moli_without_elbow
+0,Gemcitabine with PDX,Test,0.615650172612198,random_moli_without_elbow
+0,Gemcitabine with PDX,Test,0.668584579976985,random_moli_without_elbow
+0,Gemcitabine with PDX,Test,0.49367088607594933,random_moli_without_elbow
+0,Gemcitabine with PDX,Extern,0.5793650793650793,random_moli_without_elbow
+0,Gemcitabine with PDX,Extern,0.6507936507936508,random_moli_without_elbow
+0,Gemcitabine with PDX,Extern,0.6587301587301587,random_moli_without_elbow
+0,Gemcitabine with PDX,Extern,0.5873015873015873,random_moli_without_elbow
+0,Gemcitabine with PDX,Extern,0.5476190476190477,random_moli_without_elbow
+0,Cisplatin,Test,0.6816777041942604,random_holi_moli_semi_hard
+0,Cisplatin,Test,0.7686534216335541,random_holi_moli_semi_hard
+0,Cisplatin,Test,0.6687500000000001,random_holi_moli_semi_hard
+0,Cisplatin,Test,0.7441666666666666,random_holi_moli_semi_hard
+0,Cisplatin,Test,0.7471111111111111,random_holi_moli_semi_hard
+0,Cisplatin,Extern,0.7166666666666667,random_holi_moli_semi_hard
+0,Cisplatin,Extern,0.7277777777777777,random_holi_moli_semi_hard
+0,Cisplatin,Extern,0.575,random_holi_moli_semi_hard
+0,Cisplatin,Extern,0.7388888888888889,random_holi_moli_semi_hard
+0,Cisplatin,Extern,0.6694444444444445,random_holi_moli_semi_hard
+0,Cisplatin,Test,0.7430463576158941,random_moli
+0,Cisplatin,Test,0.8198675496688741,random_moli
+0,Cisplatin,Test,0.7158333333333333,random_moli
+0,Cisplatin,Test,0.79875,random_moli
+0,Cisplatin,Test,0.7404444444444443,random_moli
+0,Cisplatin,Extern,0.6472222222222223,random_moli
+0,Cisplatin,Extern,0.663888888888889,random_moli
+0,Cisplatin,Extern,0.6361111111111111,random_moli
+0,Cisplatin,Extern,0.7027777777777778,random_moli
+0,Cisplatin,Extern,0.7194444444444444,random_moli
+0,Cisplatin,Test,0.7289183222958057,random_holi-moli
+0,Cisplatin,Test,0.844150110375276,random_holi-moli
+0,Cisplatin,Test,0.6966666666666668,random_holi-moli
+0,Cisplatin,Test,0.7191666666666667,random_holi-moli
+0,Cisplatin,Test,0.7391111111111112,random_holi-moli
+0,Cisplatin,Extern,0.775,random_holi-moli
+0,Cisplatin,Extern,0.65,random_holi-moli
+0,Cisplatin,Extern,0.6833333333333333,random_holi-moli
+0,Cisplatin,Extern,0.7944444444444444,random_holi-moli
+0,Cisplatin,Extern,0.7916666666666666,random_holi-moli
+0,Cisplatin,Test,0.6913907284768213,random_moli_without_elbow
+0,Cisplatin,Test,0.8463576158940398,random_moli_without_elbow
+0,Cisplatin,Test,0.6879166666666667,random_moli_without_elbow
+0,Cisplatin,Test,0.7404166666666667,random_moli_without_elbow
+0,Cisplatin,Test,0.7155555555555556,random_moli_without_elbow
+0,Cisplatin,Extern,0.6972222222222222,random_moli_without_elbow
+0,Cisplatin,Extern,0.6361111111111111,random_moli_without_elbow
+0,Cisplatin,Extern,0.6277777777777778,random_moli_without_elbow
+0,Cisplatin,Extern,0.48611111111111105,random_moli_without_elbow
+0,Cisplatin,Extern,0.6583333333333332,random_moli_without_elbow
+0,Docetaxel,Test,0.844142785319256,random_holi_moli_semi_hard
+0,Docetaxel,Test,0.8330819507290097,random_holi_moli_semi_hard
+0,Docetaxel,Test,0.7285067873303167,random_holi_moli_semi_hard
+0,Docetaxel,Test,0.8903971845148315,random_holi_moli_semi_hard
+0,Docetaxel,Test,0.7348178137651822,random_holi_moli_semi_hard
+0,Docetaxel,Extern,0.625,random_holi_moli_semi_hard
+0,Docetaxel,Extern,0.640625,random_holi_moli_semi_hard
+0,Docetaxel,Extern,0.5,random_holi_moli_semi_hard
+0,Docetaxel,Extern,0.71875,random_holi_moli_semi_hard
+0,Docetaxel,Extern,0.609375,random_holi_moli_semi_hard
+0,Docetaxel,Test,0.8426344896933132,random_moli
+0,Docetaxel,Test,0.8476621417797888,random_moli
+0,Docetaxel,Test,0.6224233283056813,random_moli
+0,Docetaxel,Test,0.8959276018099549,random_moli
+0,Docetaxel,Test,0.75,random_moli
+0,Docetaxel,Extern,0.65625,random_moli
+0,Docetaxel,Extern,0.6875,random_moli
+0,Docetaxel,Extern,0.578125,random_moli
+0,Docetaxel,Extern,0.578125,random_moli
+0,Docetaxel,Extern,0.671875,random_moli
+0,Docetaxel,Test,0.8582202111613877,random_holi-moli
+0,Docetaxel,Test,0.8240321769733534,random_holi-moli
+0,Docetaxel,Test,0.49924585218702866,random_holi-moli
+0,Docetaxel,Test,0.7963800904977376,random_holi-moli
+0,Docetaxel,Test,0.7935222672064777,random_holi-moli
+0,Docetaxel,Extern,0.71875,random_holi-moli
+0,Docetaxel,Extern,0.734375,random_holi-moli
+0,Docetaxel,Extern,0.578125,random_holi-moli
+0,Docetaxel,Extern,0.609375,random_holi-moli
+0,Docetaxel,Extern,0.59375,random_holi-moli
+0,Docetaxel,Test,0.848667672197084,random_moli_without_elbow
+0,Docetaxel,Test,0.7295123177476118,random_moli_without_elbow
+0,Docetaxel,Test,0.6259426847662142,random_moli_without_elbow
+0,Docetaxel,Test,0.8652589240824535,random_moli_without_elbow
+0,Docetaxel,Test,0.7879554655870445,random_moli_without_elbow
+0,Docetaxel,Extern,0.609375,random_moli_without_elbow
+0,Docetaxel,Extern,0.65625,random_moli_without_elbow
+0,Docetaxel,Extern,0.515625,random_moli_without_elbow
+0,Docetaxel,Extern,0.546875,random_moli_without_elbow
+0,Docetaxel,Extern,0.609375,random_moli_without_elbow
+0,Paclitaxel,Test,0.7479452054794521,super_felt_paper
+0,Paclitaxel,Test,0.6164383561643836,super_felt_paper
+0,Paclitaxel,Test,0.736986301369863,super_felt_paper
+0,Paclitaxel,Test,0.5787037037037037,super_felt_paper
+0,Paclitaxel,Test,0.888888888888889,super_felt_paper
+0,Paclitaxel,Extern,0.5947368421052632,super_felt_paper
+0,Paclitaxel,Extern,0.6000000000000001,super_felt_paper
+0,Paclitaxel,Extern,0.5578947368421052,super_felt_paper
+0,Paclitaxel,Extern,0.6578947368421053,super_felt_paper
+0,Paclitaxel,Extern,0.43157894736842106,super_felt_paper
+0,Cetuximab,Test,0.8234013605442176,super_felt_paper
+0,Cetuximab,Test,0.745748299319728,super_felt_paper
+0,Cetuximab,Test,0.7372448979591837,super_felt_paper
+0,Cetuximab,Test,0.7726757369614512,super_felt_paper
+0,Cetuximab,Test,0.7103174603174603,super_felt_paper
+0,Cetuximab,Extern,0.5927272727272728,super_felt_paper
+0,Cetuximab,Extern,0.5672727272727274,super_felt_paper
+0,Cetuximab,Extern,0.5527272727272727,super_felt_paper
+0,Cetuximab,Extern,0.5963636363636364,super_felt_paper
+0,Cetuximab,Extern,0.5854545454545454,super_felt_paper
+0,Gemcitabine with TCGA,Test,0.6559263521288838,super_felt_paper
+0,Gemcitabine with TCGA,Test,0.6162255466052935,super_felt_paper
+0,Gemcitabine with TCGA,Test,0.623705408515535,super_felt_paper
+0,Gemcitabine with TCGA,Test,0.6731875719217492,super_felt_paper
+0,Gemcitabine with TCGA,Test,0.6518987341772151,super_felt_paper
+0,Gemcitabine with TCGA,Extern,0.5925925925925926,super_felt_paper
+0,Gemcitabine with TCGA,Extern,0.5753968253968254,super_felt_paper
+0,Gemcitabine with TCGA,Extern,0.5753968253968254,super_felt_paper
+0,Gemcitabine with TCGA,Extern,0.6309523809523809,super_felt_paper
+0,Gemcitabine with TCGA,Extern,0.6640211640211641,super_felt_paper
+0,Erlotinib,Test,0.8012820512820512,super_felt_paper
+0,Erlotinib,Test,0.6141025641025641,super_felt_paper
+0,Erlotinib,Test,0.7333333333333333,super_felt_paper
+0,Erlotinib,Test,0.7301173402868318,super_felt_paper
+0,Erlotinib,Test,0.8865710560625815,super_felt_paper
+0,Erlotinib,Extern,0.7037037037037037,super_felt_paper
+0,Erlotinib,Extern,0.9074074074074074,super_felt_paper
+0,Erlotinib,Extern,0.6481481481481481,super_felt_paper
+0,Erlotinib,Extern,0.6481481481481481,super_felt_paper
+0,Erlotinib,Extern,0.7407407407407408,super_felt_paper
+0,Gemcitabine with PDX,Test,0.636939010356732,super_felt_paper
+0,Gemcitabine with PDX,Test,0.547180667433832,super_felt_paper
+0,Gemcitabine with PDX,Test,0.7554660529344074,super_felt_paper
+0,Gemcitabine with PDX,Test,0.6990794016110471,super_felt_paper
+0,Gemcitabine with PDX,Test,0.5765822784810126,super_felt_paper
+0,Gemcitabine with PDX,Extern,0.873015873015873,super_felt_paper
+0,Gemcitabine with PDX,Extern,0.6666666666666666,super_felt_paper
+0,Gemcitabine with PDX,Extern,0.8174603174603174,super_felt_paper
+0,Gemcitabine with PDX,Extern,0.7142857142857143,super_felt_paper
+0,Gemcitabine with PDX,Extern,0.8095238095238095,super_felt_paper
+0,Cisplatin,Test,0.693598233995585,super_felt_paper
+0,Cisplatin,Test,0.8490066225165562,super_felt_paper
+0,Cisplatin,Test,0.70625,super_felt_paper
+0,Cisplatin,Test,0.7995833333333333,super_felt_paper
+0,Cisplatin,Test,0.8022222222222222,super_felt_paper
+0,Cisplatin,Extern,0.7305555555555555,super_felt_paper
+0,Cisplatin,Extern,0.6666666666666666,super_felt_paper
+0,Cisplatin,Extern,0.6888888888888889,super_felt_paper
+0,Cisplatin,Extern,0.8,super_felt_paper
+0,Cisplatin,Extern,0.6833333333333333,super_felt_paper
+0,Docetaxel,Test,0.7983911513323279,super_felt_paper
+0,Docetaxel,Test,0.8617395676219206,super_felt_paper
+0,Docetaxel,Test,0.6913021618903972,super_felt_paper
+0,Docetaxel,Test,0.8642533936651584,super_felt_paper
+0,Docetaxel,Test,0.7464574898785425,super_felt_paper
+0,Docetaxel,Extern,0.625,super_felt_paper
+0,Docetaxel,Extern,0.46875,super_felt_paper
+0,Docetaxel,Extern,0.515625,super_felt_paper
+0,Docetaxel,Extern,0.546875,super_felt_paper
+0,Docetaxel,Extern,0.734375,super_felt_paper

@@ -24,7 +24,7 @@ from utils.choose_gpu import get_free_gpu
 
 
 def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset_name, gpu_number,
-                                      iterations):
+                                      iterations, semi_hard_triplet):
     device = determine_device(gpu_number)
     set_random_seeds()
 
@@ -65,8 +65,7 @@ def super_felt_optimise_independently(experiment_name, drug_name, extern_dataset
             name="Sobol"
         )
 
-
-        encoder_search_space = get_encoder_search_space()
+        encoder_search_space = get_encoder_search_space(semi_hard_triplet)
 
         best_parameters_e, values, experiment, model = optimize(
             total_trials=iterations,

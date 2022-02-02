@@ -154,7 +154,6 @@ def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device,
     for epoch in trange(supervised_encoder_epoch):
         last_epochs = False if epoch < supervised_encoder_epoch - 2 else True
         for data in train_loader:
-
             if independent:
                 x = data[0]
             else:
@@ -223,3 +222,17 @@ def train_classifier(classifier, classifier_epoch, train_loader, classifier_opti
             cl_loss.backward()
             classifier_optimizer.step()
     classifier.eval()
+
+
+def super_felt_test(x_test_e, x_test_m, x_test_c, y_test, device, final_c_supervised_encoder, final_classifier,
+                    final_e_supervised_encoder, final_m_supervised_encoder, final_scaler_gdsc):
+    x_test_e = torch.FloatTensor(final_scaler_gdsc.transform(x_test_e))
+    encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))
+    encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))
+    encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))
+    test_Pred = final_classifier(encoded_test_E, encoded_test_M, encoded_test_C)
+    test_y_true = y_test
+    test_y_pred = test_Pred.cpu().detach().numpy()
+    test_AUC = roc_auc_score(test_y_true, test_y_pred)
+    test_AUCPR = average_precision_score(test_y_true, test_y_pred)
+    return test_AUC, test_AUCPR

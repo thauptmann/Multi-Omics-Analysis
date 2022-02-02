@@ -114,7 +114,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
         auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device)
 
-        result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
+        result_file.write(f'\t\tBest {drug_name} validation Auroc = {max_objective}\n')
         objectives_list.append(objectives)
         max_objective_list.append(max_objective)
         test_auc_list.append(auc_test)
@@ -144,7 +144,6 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     result_file.write(f'\n extern auroc list: {extern_auc_list} \n')
     result_file.write(f'\n extern auprc list: {extern_auprc_list} \n')
     result_file.write(f'\n validation auroc list: {max_objective_list} \n')
-
 
     result_file.close()
 
@@ -181,8 +180,8 @@ if __name__ == '__main__':
                     args.small_search_space, args.deactivate_skip_bad_iterations, args.semi_hard_triplet,
                     args.deactivate_elbow_method)
     else:
-        drug, extern_dataset = parameter['drugs'][args.drug]
+        extern_dataset = parameter['drugs'][args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-                args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
+                args.combination, args.sampling_method, args.drug, extern_dataset, args.gpu_number,
                 args.small_search_space, args.deactivate_skip_bad_iterations, args.semi_hard_triplet,
                 args.deactivate_elbow_method)

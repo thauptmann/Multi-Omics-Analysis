@@ -170,7 +170,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         objectives_list.append(objectives)
 
         test_validation_list.append(max_objective)
-        result_file.write(f'\t\tBest {drug} validation Auroc = {max_objective}\n')
+        result_file.write(f'\t\tBest {drug_name} validation Auroc = {max_objective}\n')
         iteration += 1
 
     end_time = time.time()
