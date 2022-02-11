@@ -231,7 +231,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                     for i, (_, dataM, _, target) in enumerate(trainLoader):
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                             if noisy:
-                                dataM += np.random.normal(loc=0, scale=0.1, size=dataM.shape)
+                                dataM += np.random.normal(loc=0, scale=0.05, size=dataM.shape)
                                 dataM = torch.clamp(dataM, 0, 1)
 
                             dataM = dataM.to(device)

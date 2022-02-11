@@ -132,7 +132,7 @@ def create_holi_moli_search_space(combination, small_search_space, semi_hard_tri
     return search_space
 
 
-def get_super_felt_search_space(semi_hard_triplet, same_dimension_latent_features, combine_latent_features):
+def get_super_felt_search_space(semi_hard_triplet, combine_latent_features):
     batch_size_choices = parameter['batch_size_hard_triplets_choices'] if semi_hard_triplet \
         else parameter['all_triplet_batch_size_choices']
     search_space = [{'name': 'encoder_dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice',
@@ -164,16 +164,11 @@ def get_super_felt_search_space(semi_hard_triplet, same_dimension_latent_feature
                      'type': 'range', 'value_type': 'int'},
                     {'name': 'mini_batch', 'values': batch_size_choices, 'value_type': 'int', 'type': 'choice'},
                     {'name': 'margin', 'values': parameter['margin_choices'], 'type': 'choice', 'value_type': 'float'},
-                    ]
-    if same_dimension_latent_features:
-        dimensions = [{'name': 'encoder_dimension', 'values': parameter['dim_choice'],
-                       'type': 'choice', 'value_type': 'int'}]
-    else:
-        dimensions = [{'name': 'e_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
-                      {'name': 'm_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
-                      {'name': 'c_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'}
-                      ]
-    search_space.extend(dimensions)
+
+    {'name': 'e_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
+                  {'name': 'm_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'},
+                  {'name': 'c_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'}
+                  ]
 
     if combine_latent_features:
         combiner_features = [

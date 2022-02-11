@@ -149,7 +149,7 @@ def create_sampler(y_train):
 
 
 def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device, supervised_encoder, train_loader,
-                  trip_loss_fun, semi_hard_triplet, omic_number, independent=False):
+                  trip_loss_fun, semi_hard_triplet, omic_number, independent=False, noisy=False):
     supervised_encoder.train()
     for epoch in trange(supervised_encoder_epoch):
         last_epochs = False if epoch < supervised_encoder_epoch - 2 else True
@@ -161,6 +161,8 @@ def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device,
             target = data[-1]
             if torch.mean(target) != 0. and torch.mean(target) != 1.:
                 optimizer.zero_grad()
+                if noisy:
+                    x += torch.normal(0.0, 0.05, x.shape)
                 x = x.to(device)
                 encoded_data = supervised_encoder(x)
                 if not last_epochs and semi_hard_triplet:
