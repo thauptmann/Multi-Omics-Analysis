@@ -62,7 +62,7 @@ Classifier_epoch = 5
 random_seed = 42
 
 
-def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
+def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, noisy, use_vae):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -100,6 +100,10 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
     extern_auc_list = []
     test_auprc_list = []
     extern_auprc_list = []
+    if use_vae:
+        pass
+    else:
+        encoder = SupervisedEncoder
     cv_splits = 5
     skf_outer = StratifiedKFold(n_splits=cv_splits, random_state=random_seed, shuffle=True)
     for train_index_outer, test_index in tqdm(skf_outer.split(GDSCE, GDSCR), total=skf_outer.get_n_splits(),
@@ -157,9 +161,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                 cost_tr = []
                 auc_tr = []
 
-                E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr)
-                M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr)
-                C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, E_dr)
+                E_Supervised_Encoder = encoder(IE_dim, OE_dim, E_dr)
+                M_Supervised_Encoder = encoder(IM_dim, OM_dim, E_dr)
+                C_Supervised_Encoder = encoder(IC_dim, OC_dim, E_dr)
 
                 E_Supervised_Encoder.to(device)
                 M_Supervised_Encoder.to(device)
@@ -182,9 +186,10 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                     flag = 0
                     for i, (dataE, _, _, target) in enumerate(trainLoader):
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
+                            if noisy:
+                                dataE += torch.normal(0.0, 0.1, dataE.shape)
                             dataE = dataE.to(device)
                             encoded_E = E_Supervised_Encoder(dataE)
-
                             E_Triplets_list = TripSel(encoded_E, target)
                             E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
                                                    encoded_E[E_Triplets_list[:, 1], :],
@@ -225,7 +230,13 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                     flag = 0
                     for i, (_, dataM, _, target) in enumerate(trainLoader):
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
+                            if noisy:
+                                dataM += np.random.normal(loc=0, scale=0.1, size=dataM.shape)
+                                dataM = torch.clamp(dataM, 0, 1)
+
                             dataM = dataM.to(device)
+                            dataM = dataM.float()
+
                             encoded_M = M_Supervised_Encoder(dataM)
                             M_Triplets_list = TripSel(encoded_M, target)
                             M_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
@@ -267,7 +278,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
                     flag = 0
                     for i, (_, _, dataC, target) in enumerate(trainLoader):
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
+                            if noisy:
+                                dataC += np.random.normal(loc=0, scale=0.1, size=dataC.shape)
+                                dataC = torch.clamp(dataC, 0, 1)
                             dataC = dataC.to(device)
+                            dataC = dataC.float()
                             encoded_C = C_Supervised_Encoder(dataC)
 
                             C_Triplets_list = TripSel(encoded_C, target)
@@ -391,9 +406,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
         n_sampM, IM_dim = X_train_valM.shape
         n_sampC, IC_dim = X_train_valC.shape
 
-        final_E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr)
-        final_M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr)
-        final_C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, E_dr)
+        final_E_Supervised_Encoder = encoder(IE_dim, OE_dim, E_dr)
+        final_M_Supervised_Encoder = encoder(IM_dim, OM_dim, E_dr)
+        final_C_Supervised_Encoder = encoder(IC_dim, OC_dim, E_dr)
 
         final_E_Supervised_Encoder.to(device)
         final_M_Supervised_Encoder.to(device)
@@ -413,6 +428,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
             final_E_Supervised_Encoder.train()
             for i, (dataE, _, _, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
+                    if noisy:
+                        dataE += torch.normal(0.0, 0.1, dataE.shape)
                     dataE = dataE.to(device)
                     encoded_E = final_E_Supervised_Encoder(dataE)
 
@@ -431,7 +448,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
             final_M_Supervised_Encoder.train().to(device)
             for i, (_, dataM, _, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
+                    if noisy:
+                        dataM += np.random.normal(loc=0, scale=0.1, size=dataM.shape)
+                        dataM = torch.clamp(dataM, 0, 1)
                     dataM = dataM.to(device)
+                    dataM = dataM.float()
                     encoded_M = final_M_Supervised_Encoder(dataM)
                     M_Triplets_list = TripSel(encoded_M, target)
                     M_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
@@ -448,7 +469,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number):
             final_C_Supervised_Encoder.train()
             for i, (_, _, dataC, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
+                    if noisy:
+                        dataC += np.random.normal(loc=0, scale=0.1, size=dataC.shape)
+                        dataC = torch.clamp(dataC, 0, 1)
                     dataC = dataC.to(device)
+                    dataC = dataC.float()
                     encoded_C = final_C_Supervised_Encoder(dataC)
 
                     C_Triplets_list = TripSel(encoded_C, target)
@@ -536,9 +561,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiment_name', required=True)
     parser.add_argument('--gpu_number', type=int)
+    parser.add_argument('--noisy', default=False, action='store_true')
+    parser.add_argument('--use_vae', default=False, action='store_true')
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     args = parser.parse_args()
 
     for drug, extern_dataset in drugs.items():
-        super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number)
+        super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.noisy, args.use_vae)

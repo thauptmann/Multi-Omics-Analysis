@@ -108,8 +108,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                                                     y_train_val)
         elif optimise_independent:
             best_parameters, experiment, final_encoder_e, final_encoder_m, final_encoder_c, scaler_e = \
-                optimise_independent_super_felt_parameter(combine_latent_features,
-                                                          random_seed,
+                optimise_independent_super_felt_parameter(random_seed,
                                                           same_dimension_latent_features,
                                                           sampling_method, search_iterations,
                                                           semi_hard_triplet,
@@ -137,7 +136,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                                                         final_encoder_c,
                                                                                                         scaler_e)
         else:
-            best_parameters, experiment = optimise_super_felt_parameter(combine_latent_features, random_seed,
+            best_parameters, experiment = optimise_super_felt_parameter(random_seed,
                                                                         same_dimension_latent_features,
                                                                         sampling_method, search_iterations,
                                                                         semi_hard_triplet,
@@ -185,7 +184,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
     print("Done!")
 
 
-def optimise_super_felt_parameter(combine_latent_features, random_seed, same_dimension_latent_features, sampling_method,
+def optimise_super_felt_parameter(random_seed, same_dimension_latent_features, sampling_method,
                                   search_iterations, semi_hard_triplet, sobol_iterations, x_train_val_e,
                                   x_train_val_m, x_train_val_c, y_train_val, device, deactivate_skip_bad_iterations):
     evaluation_function = lambda parameterization: train_validate_hyperparameter_set(x_train_val_e,
@@ -197,7 +196,7 @@ def optimise_super_felt_parameter(combine_latent_features, random_seed, same_dim
                                                                                      same_dimension_latent_features)
     generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
     search_space = get_super_felt_search_space(semi_hard_triplet, same_dimension_latent_features,
-                                               combine_latent_features)
+                                               False)
     best_parameters, values, experiment, model = optimize(
         total_trials=search_iterations,
         experiment_name='Super.FELT',
