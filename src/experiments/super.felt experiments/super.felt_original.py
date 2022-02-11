@@ -14,7 +14,7 @@ from tqdm import tqdm
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, feature_selection
 from utils import multi_omics_data
-from models.super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier
+from models.super_felt_model import SupervisedEncoder, OnlineTestTriplet, Classifier, SupervisedVariationalEncoder
 
 from utils.choose_gpu import get_free_gpu
 
@@ -101,7 +101,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
     test_auprc_list = []
     extern_auprc_list = []
     if use_vae:
-        pass
+        encoder = SupervisedVariationalEncoder
     else:
         encoder = SupervisedEncoder
     cv_splits = 5

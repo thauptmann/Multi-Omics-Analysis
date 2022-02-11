@@ -33,7 +33,7 @@ best_auroc = 0
 
 def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, search_iterations, sobol_iterations,
                sampling_method, deactivate_elbow_method, deactivate_skip_bad_iterations, semi_hard_triplet,
-               combine_latent_features, optimise_independent, same_dimension_latent_features):
+               combine_latent_features, optimise_independent, same_dimension_latent_features, noisy):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -431,6 +431,8 @@ if __name__ == '__main__':
     parser.add_argument('--same_dimension_latent_features', default=False, action='store_true')
     parser.add_argument('--optimise_independent', default=False, action='store_true')
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
+    parser.add_argument('--noisy', default=False, action='store_true')
+
     args = parser.parse_args()
 
     if args.drug == 'all':
@@ -444,4 +446,4 @@ if __name__ == '__main__':
         super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.search_iterations,
                    args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
                    args.deactivate_skip_bad_iterations, args.semi_hard_triplet, args.combine_latent_features,
-                   args.optimise_independent, args.same_dimension_latent_features)
+                   args.optimise_independent, args.same_dimension_latent_features, args.noisy)
