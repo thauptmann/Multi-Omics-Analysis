@@ -18,7 +18,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.experiment_utils import create_generation_strategy
 from utils.searchspaces import get_super_felt_search_space
-from models.super_felt_model import SupervisedEncoder, Classifier
+from models.super_felt_model import SupervisedEncoder, Classifier, AdaptedClassifier
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, create_sampler, train_encoder, \
     train_classifier, train_validate_classifier, super_felt_test
 from utils import multi_omics_data
@@ -33,7 +33,8 @@ best_auroc = 0
 
 def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, search_iterations, sobol_iterations,
                sampling_method, deactivate_elbow_method, deactivate_skip_bad_iterations, semi_hard_triplet,
-               combine_latent_features, optimise_independent, same_dimension_latent_features, noisy):
+               combine_latent_features, optimise_independent, same_dimension_latent_features, noisy,
+               use_adapted_classifier, architecture):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -59,6 +60,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
     else:
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_drug_data_with_elbow(data_path, drug_name, extern_dataset_name)
+
+    if use_adapted_classifier:
+        classifier_type = AdaptedClassifier
+    else:
+        classifier_type = Classifier
 
     test_auc_list = []
     extern_auc_list = []
@@ -413,8 +419,11 @@ if __name__ == '__main__':
     parser.add_argument('--deactivate_skip_bad_iterations', default=False, action='store_true')
     parser.add_argument('--same_dimension_latent_features', default=False, action='store_true')
     parser.add_argument('--optimise_independent', default=False, action='store_true')
+    parser.add_argument('--use_adapted_classifier', default=False, action='store_true')
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     parser.add_argument('--noisy', default=False, action='store_true')
+    parser.add_argument('--architecture', default=None, choices=['supervised-vae', 'vae', 'ae', 'supervised_ae',
+                                                                 'supervised_e', 'supervised_ve'])
 
     args = parser.parse_args()
 
@@ -423,10 +432,12 @@ if __name__ == '__main__':
             super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.search_iterations,
                        args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
                        args.deactivate_skip_bad_iterations, args.semi_hard_triplet, args.combine_latent_features,
-                       args.optimise_independent, args.same_dimension_latent_features, args.noisy)
+                       args.optimise_independent, args.same_dimension_latent_features, args.noisy,
+                       args.use_adapted_classifier, args.architecture)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.search_iterations,
                    args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
                    args.deactivate_skip_bad_iterations, args.semi_hard_triplet, args.combine_latent_features,
-                   args.optimise_independent, args.same_dimension_latent_features, args.noisy)
+                   args.optimise_independent, args.same_dimension_latent_features, args.noisy,
+                   args.use_adapted_classifier, args.architecture)

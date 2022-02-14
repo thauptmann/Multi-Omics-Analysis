@@ -18,20 +18,22 @@ from utils.searchspaces import get_encoder_search_space, get_classifier_search_s
 from models.super_felt_model import SupervisedEncoder, Classifier
 
 
-def optimise_independent_super_felt_parameter(combine_latent_features, random_seed, same_dimension_latent_features,
+def optimise_independent_super_felt_parameter(random_seed,
                                               sampling_method, search_iterations, semi_hard_triplet, sobol_iterations,
                                               x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, device,
-                                              deactivate_skip_bad_iterations):
+                                              noisy):
     best_parameters_list = list()
     generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
     encoder_search_space = get_encoder_search_space(semi_hard_triplet)
     evaluation_function_e = lambda parameterization: train_validate_encoder(parameterization, x_train_val_e,
                                                                             y_train_val, semi_hard_triplet, device, 0,
-                                                                            True)
+                                                                            True, noisy)
     evaluation_function_m = lambda parameterization: train_validate_encoder(parameterization, x_train_val_m,
-                                                                            y_train_val, semi_hard_triplet, device, 1)
+                                                                            y_train_val, semi_hard_triplet, device, 1,
+                                                                            noisy)
     evaluation_function_c = lambda parameterization: train_validate_encoder(parameterization, x_train_val_c,
-                                                                            y_train_val, semi_hard_triplet, device, 2)
+                                                                            y_train_val, semi_hard_triplet, device, 2,
+                                                                            noisy)
 
     for evaluation_function in (evaluation_function_e, evaluation_function_m, evaluation_function_c):
         best_parameters, values, experiment, _ = optimize(
@@ -155,7 +157,7 @@ def train_validate_classifier(hyperparameters, x_train_val_e, x_train_val_m, x_t
 
 
 def train_validate_encoder(hyperparameters, x_train_val, y_train_val, semi_hard_triplet, device, omic_number,
-                           scale=False):
+                           scale=False, noisy=False):
     margin = hyperparameters['margin']
     output_dimension = hyperparameters['dimension']
     dropout = hyperparameters['dropout']
@@ -178,6 +180,8 @@ def train_validate_encoder(hyperparameters, x_train_val, y_train_val, semi_hard_
             scaler = sk.StandardScaler()
             X_train = scaler.fit_transform(X_train)
             X_val = scaler.transform(X_val)
+        if noisy:
+            X_train += torch.normal(0.0, 0.05, X_train.shape)
 
         trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(X_train),
                                                       torch.FloatTensor(y_train.astype(int)))
