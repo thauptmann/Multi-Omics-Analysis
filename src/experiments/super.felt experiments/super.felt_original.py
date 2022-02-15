@@ -40,7 +40,7 @@ lrM = 0.01
 lrC = 0.001
 lrCL = 0.01
 sigmoid = torch.nn.Sigmoid()
-mse = torch.nn.MSELoss()
+
 
 hyperparameters_set_list = [
  {'E_dr': 0.1, 'C_dr': 0.1, 'Cwd': 0.0, 'Ewd': 0.0},
@@ -80,7 +80,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
 
     triplet_selector = get_triplet_selector(marg, False)
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=marg, p=2)
-    BCE_loss_fun = torch.nn.BCEWithLogitsLoss()
 
     data_path = Path('..', '..', '..', 'data')
     result_path = Path('..', '..', '..', 'results', 'experiments', drug_name, experiment_name)
@@ -111,6 +110,13 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
         encoder = SupervisedVariationalEncoder
     else:
         encoder = SupervisedEncoder
+
+    if architecture in ('vae', 'supervised-vae', 'supervised-ve'):
+        mse = torch.nn.MSELoss(reduction='sum')
+        BCE_loss_fun = torch.nn.BCEWithLogitsLoss(reduction='sum')
+    else:
+        mse = torch.nn.MSELoss()
+        BCE_loss_fun = torch.nn.BCEWithLogitsLoss()
     cv_splits = 5
     skf_outer = StratifiedKFold(n_splits=cv_splits, random_state=random_seed, shuffle=True)
     for train_index_outer, test_index in tqdm(skf_outer.split(GDSCE, GDSCR), total=skf_outer.get_n_splits(),
@@ -197,8 +203,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                 E_loss = mse(reconstruction, original_E)
                             elif architecture == 'vae':
                                 encoded_E, reconstruction, mu, log_var = E_Supervised_Encoder(dataE)
-                                print(mse(reconstruction, original_E))
-                                print(kl_loss_function(mu, log_var))
+                                #print(mse(reconstruction, original_E))
+                                #print(kl_loss_function(mu, log_var))
                                 E_loss = mse(reconstruction, original_E) + kl_loss_function(mu, log_var)
                             elif architecture == 'supervised-ae':
                                 encoded_E, reconstruction = E_Supervised_Encoder(dataE)
