@@ -595,9 +595,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
 
         # Test
         X_testE = torch.FloatTensor(final_scalerGDSC.transform(X_testE))
-        encoded_test_E, _ = final_E_Supervised_Encoder.encode(torch.FloatTensor(X_testE).to(device))
-        encoded_test_M, _ = final_M_Supervised_Encoder.encode(torch.FloatTensor(X_testM).to(device))
-        encoded_test_C, _ = final_C_Supervised_Encoder.encode(torch.FloatTensor(X_testC).to(device))
+        encoded_test_E = final_E_Supervised_Encoder.encode(torch.FloatTensor(X_testE).to(device))
+        encoded_test_M = final_M_Supervised_Encoder.encode(torch.FloatTensor(X_testM).to(device))
+        encoded_test_C = final_C_Supervised_Encoder.encode(torch.FloatTensor(X_testC).to(device))
         test_Pred = final_Clas(encoded_test_E, encoded_test_M, encoded_test_C)
         test_y_pred = sigmoid(test_Pred).cpu().detach().numpy()
 
@@ -606,9 +606,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
 
         # Extern
         ExternalE = torch.FloatTensor(final_scalerGDSC.transform(ExternalE))
-        encoded_external_E, _ = final_E_Supervised_Encoder.encode(torch.FloatTensor(ExternalE).to(device))
-        encoded_external_M, _ = final_M_Supervised_Encoder.encode(torch.FloatTensor(ExternalM.to_numpy()).to(device))
-        encoded_external_C, _ = final_C_Supervised_Encoder.encode(torch.FloatTensor(ExternalC.to_numpy()).to(device))
+        encoded_external_E = final_E_Supervised_Encoder.encode(torch.FloatTensor(ExternalE).to(device))
+        encoded_external_M = final_M_Supervised_Encoder.encode(torch.FloatTensor(ExternalM.to_numpy()).to(device))
+        encoded_external_C = final_C_Supervised_Encoder.encode(torch.FloatTensor(ExternalC.to_numpy()).to(device))
         external_Pred = final_Clas(encoded_external_E, encoded_external_M, encoded_external_C)
         external_Pred = sigmoid(external_Pred)
         external_y_pred = external_Pred.cpu().detach().numpy()
