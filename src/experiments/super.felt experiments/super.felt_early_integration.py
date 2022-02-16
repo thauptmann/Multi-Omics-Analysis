@@ -236,7 +236,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         encoded_val_E = Supervised_Encoder.encode(X_val)
 
                         #print(encoded_val_C)
-                        test_Pred = train_Clas(encoded_val_E, torch.FloatTensor(), torch.FloatTensor())
+                        test_Pred = train_Clas(encoded_val_E, torch.FloatTensor().to(device),
+                                               torch.FloatTensor().to(device))
                         test_Pred = sigmoid(test_Pred)
                         #print(test_Pred)
                         val_AUC = roc_auc_score(Y_val, test_Pred.cpu().detach().numpy())
