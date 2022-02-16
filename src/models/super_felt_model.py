@@ -41,7 +41,7 @@ class OnlineTestTriplet(nn.Module):
 
 
 class SupervisedEncoder(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
+    def __init__(self, input_dim, output_dim, drop_rate, noisy):
         super(SupervisedEncoder, self).__init__()
         self.model = torch.nn.Sequential(
             nn.Linear(input_dim, output_dim),
@@ -49,8 +49,13 @@ class SupervisedEncoder(nn.Module):
             nn.ReLU(),
             nn.Dropout(drop_rate),
         )
+        self.noisy = noisy
+        if self.noisy:
+            self.noise_layer = nn.Dropout(0.01)
 
     def forward(self, x):
+        if self.noisy:
+            x = self.noise_layer(x)
         output = self.model(x)
         return output
 
@@ -59,7 +64,7 @@ class SupervisedEncoder(nn.Module):
 
 
 class AutoEncoder(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
+    def __init__(self, input_dim, output_dim, drop_rate, noisy=False):
         super(AutoEncoder, self).__init__()
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, output_dim),
@@ -67,11 +72,16 @@ class AutoEncoder(nn.Module):
             nn.ReLU(),
             nn.Dropout(drop_rate),
         )
+        self.noisy = noisy
+        if self.noisy:
+            self.noise_layer = nn.Dropout(0.01)
 
         self.decoder = nn.Sequential(
             nn.Linear(output_dim, input_dim))
 
     def forward(self, x):
+        if self.noisy:
+            x = self.noise_layer(x)
         latent = self.encoder(x)
         reconstruction = self.decoder(latent)
         return latent, reconstruction
