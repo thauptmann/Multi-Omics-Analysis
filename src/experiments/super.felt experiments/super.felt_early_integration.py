@@ -222,7 +222,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                             dataE = dataE.to(device)
                             target = target.to(device)
                             encoded_E = Supervised_Encoder.encode(dataE)
-                            Pred = train_Clas(encoded_E, torch.FloatTensor(), torch.FloatTensor())
+                            Pred = train_Clas(encoded_E, torch.FloatTensor().to(device),
+                                              torch.FloatTensor().to(device))
                             cl_loss = BCE_loss_fun(Pred, target.view(-1, 1))
                             cl_loss.backward()
                             Cl_optimizer.step()
@@ -342,7 +343,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                     target = target.to(device)
                     encoded_E = final_E_Supervised_Encoder.encode(dataE)
 
-                    Pred = final_Clas(encoded_E, torch.FloatTensor(), torch.FloatTensor())
+                    Pred = final_Clas(encoded_E, torch.FloatTensor().to(device),
+                                      torch.FloatTensor().to(device))
                     cl_loss = BCE_loss_fun(Pred, target.view(-1, 1))
 
                     cl_loss.backward()
