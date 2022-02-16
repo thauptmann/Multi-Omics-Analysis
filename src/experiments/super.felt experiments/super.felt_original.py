@@ -90,6 +90,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
     mutation_intersection_genes_index = GDSCM.columns.intersection(extern_m.columns)
     cna_intersection_genes_index = GDSCC.columns.intersection(extern_c.columns)
     GDSCR = gdsc_r
+    number_of_variables_e = gdsc_e.shape[-1]
+    number_of_variables_m = gdsc_m.shape[-1]
+    number_of_variables_c = gdsc_c.shape[-1]
 
     ExternalE = extern_e.loc[:, expression_intersection_genes_index]
     ExternalM = extern_m.loc[:, mutation_intersection_genes_index]
@@ -196,9 +199,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                 encoded_E, reconstruction = E_Supervised_Encoder(dataE)
                                 E_loss = mse(reconstruction, original_E)
                             elif architecture == 'vae':
-                                number_of_variables = dataE.shape[-1]
                                 encoded_E, reconstruction, mu, log_var = E_Supervised_Encoder(dataE)
-                                E_loss = torch.mean(number_of_variables * mse(reconstruction, original_E)
+                                E_loss = torch.mean(number_of_variables_e * mse(reconstruction, original_E)
                                                     + kl_loss_function(mu, log_var))
                             elif architecture == 'supervised-ae':
                                 encoded_E, reconstruction = E_Supervised_Encoder(dataE)
@@ -214,8 +216,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                 E_triplets_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
                                                                 encoded_E[E_Triplets_list[:, 1], :],
                                                                 encoded_E[E_Triplets_list[:, 2], :])
-                                E_reconstruction_loss = mse(reconstruction, original_E)
-                                E_loss = E_triplets_loss + E_reconstruction_loss + kl_loss_function(mu, log_var)
+                                E_reconstruction_loss = number_of_variables_e * mse(reconstruction, original_E)
+                                E_loss = E_triplets_loss \
+                                         + torch.mean(E_reconstruction_loss + kl_loss_function(mu, log_var))
                             elif architecture == 'supervised-ve':
                                 encoded_E, mu, log_var = E_Supervised_Encoder(dataE)
                                 E_Triplets_list = TripSel(encoded_E, target)
@@ -256,7 +259,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                 M_loss = M_triplets_loss + M_reconstruction_loss
                             elif architecture == 'vae':
                                 encoded_M, reconstruction, mu, log_var = M_Supervised_Encoder(dataM)
-                                M_loss = BCE_loss_fun(reconstruction, originalM) + kl_loss_function(mu, log_var)
+                                M_loss = torch.mean(BCE_loss_fun(reconstruction, originalM) * number_of_variables_m \
+                                                    + kl_loss_function(mu, log_var))
                             elif architecture == 'supervised-vae':
                                 encoded_M, reconstruction, mu, log_var = M_Supervised_Encoder(dataM)
                                 M_Triplets_list = TripSel(encoded_M, target)
@@ -264,7 +268,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                                                 encoded_M[M_Triplets_list[:, 1], :],
                                                                 encoded_M[M_Triplets_list[:, 2], :])
                                 M_reconstruction_loss = BCE_loss_fun(reconstruction, originalM)
-                                M_loss = M_triplets_loss + M_reconstruction_loss + kl_loss_function(mu, log_var)
+                                M_loss = M_triplets_loss + torch.mean(M_reconstruction_loss * number_of_variables_m +
+                                                                      kl_loss_function(mu, log_var))
                             elif architecture == 'supervised-ve':
                                 encoded_M, mu, log_var = M_Supervised_Encoder(dataM)
                                 M_Triplets_list = TripSel(encoded_M, target)
@@ -305,7 +310,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                 C_loss = C_triplets_loss + C_reconstruction_loss
                             elif architecture == 'vae':
                                 encoded_C, reconstruction, mu, log_var = C_Supervised_Encoder(dataC)
-                                C_loss = BCE_loss_fun(reconstruction, originalC) + kl_loss_function(mu, log_var)
+                                C_loss = torch.mean(BCE_loss_fun(reconstruction, originalC) * number_of_variables_c
+                                                    + kl_loss_function(mu, log_var))
                             elif architecture == 'supervised-vae':
                                 encoded_C, reconstruction, mu, log_var = C_Supervised_Encoder(dataC)
                                 C_Triplets_list = TripSel(encoded_C, target)
@@ -313,7 +319,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                                                 encoded_C[C_Triplets_list[:, 1], :],
                                                                 encoded_C[C_Triplets_list[:, 2], :])
                                 C_reconstruction_loss = BCE_loss_fun(reconstruction, originalC)
-                                C_loss = C_triplets_loss + C_reconstruction_loss + kl_loss_function(mu, log_var)
+                                C_loss = C_triplets_loss + torch.mean(C_reconstruction_loss  * number_of_variables_c
+                                                                      + kl_loss_function(mu, log_var))
                             elif architecture == 'supervised-ve':
                                 encoded_C, mu, log_var = C_Supervised_Encoder(dataC)
                                 C_Triplets_list = TripSel(encoded_C, target)
@@ -441,7 +448,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         E_loss = E_triplets_loss + E_reconstruction_loss
                     elif architecture == 'vae':
                         encoded_E, reconstruction, mu, log_var = final_E_Supervised_Encoder(dataE)
-                        E_loss = mse(reconstruction, originalE) + kl_loss_function(mu, log_var)
+                        E_loss = torch.mean(mse(reconstruction, originalE) * number_of_variables_e
+                                            + kl_loss_function(mu, log_var))
                     elif architecture == 'supervised-vae':
                         encoded_E, reconstruction, mu, log_var = final_E_Supervised_Encoder(dataE)
                         E_Triplets_list = TripSel(encoded_E, target)
@@ -449,7 +457,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                                         encoded_E[E_Triplets_list[:, 1], :],
                                                         encoded_E[E_Triplets_list[:, 2], :])
                         E_reconstruction_loss = mse(reconstruction, originalE)
-                        E_loss = E_triplets_loss + E_reconstruction_loss + kl_loss_function(mu, log_var)
+                        E_loss = E_triplets_loss + torch.mean(E_reconstruction_loss * number_of_variables_e
+                                                              + kl_loss_function(mu, log_var))
                     elif architecture == 'supervised-ve':
                         encoded_E, mu, log_var = final_E_Supervised_Encoder(dataE)
                         E_Triplets_list = TripSel(encoded_E, target)
@@ -491,7 +500,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         M_loss = M_triplets_loss + M_reconstruction_loss
                     elif architecture == 'vae':
                         encoded_M, reconstruction, mu, log_var = final_M_Supervised_Encoder(dataM)
-                        M_loss = BCE_loss_fun(reconstruction, original_M) + kl_loss_function(mu, log_var)
+                        M_loss = torch.mean(BCE_loss_fun(reconstruction, original_M) * number_of_variables_m
+                                            + kl_loss_function(mu, log_var))
                     elif architecture == 'supervised-vae':
                         encoded_M, reconstruction, mu, log_var = final_M_Supervised_Encoder(dataM)
                         M_Triplets_list = TripSel(encoded_M, target)
@@ -499,7 +509,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                                         encoded_M[M_Triplets_list[:, 1], :],
                                                         encoded_M[M_Triplets_list[:, 2], :])
                         M_reconstruction_loss = BCE_loss_fun(reconstruction, original_M)
-                        M_loss = M_triplets_loss + M_reconstruction_loss + kl_loss_function(mu, log_var)
+                        M_loss = M_triplets_loss + torch.mean(M_reconstruction_loss * number_of_variables_m
+                                                              + kl_loss_function(mu, log_var))
                     elif architecture == 'supervised-ve':
                         encoded_M, mu, log_var = final_M_Supervised_Encoder(dataM)
                         M_Triplets_list = TripSel(encoded_M, target)
@@ -543,7 +554,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         C_loss = C_triplets_loss + C_reconstruction_loss
                     elif architecture == 'vae':
                         encoded_C, reconstruction, mu, log_var = final_C_Supervised_Encoder(dataC)
-                        C_loss = BCE_loss_fun(reconstruction, originalC) + kl_loss_function(mu, log_var)
+                        C_loss = torch.mean(BCE_loss_fun(reconstruction, originalC) * number_of_variables_c
+                                            + kl_loss_function(mu, log_var))
                     elif architecture == 'supervised-vae':
                         encoded_C, reconstruction, mu, log_var = final_C_Supervised_Encoder(dataC)
                         C_Triplets_list = TripSel(encoded_C, target)
@@ -551,7 +563,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                                         encoded_C[C_Triplets_list[:, 1], :],
                                                         encoded_C[C_Triplets_list[:, 2], :])
                         C_reconstruction_loss = BCE_loss_fun(reconstruction, originalC)
-                        C_loss = C_triplets_loss + C_reconstruction_loss + kl_loss_function(mu, log_var)
+                        C_loss = C_triplets_loss + torch.mean(C_reconstruction_loss * number_of_variables_c
+                                                              + kl_loss_function(mu, log_var))
                     elif architecture == 'supervised-ve':
                         encoded_C, mu, log_var = final_C_Supervised_Encoder(dataC)
                         C_Triplets_list = TripSel(encoded_C, target)
