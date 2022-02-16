@@ -41,7 +41,7 @@ class OnlineTestTriplet(nn.Module):
 
 
 class SupervisedEncoder(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate, noisy):
+    def __init__(self, input_dim, output_dim, drop_rate, noisy=False):
         super(SupervisedEncoder, self).__init__()
         self.model = torch.nn.Sequential(
             nn.Linear(input_dim, output_dim),
@@ -91,7 +91,7 @@ class AutoEncoder(nn.Module):
 
 
 class SupervisedVariationalEncoder(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
+    def __init__(self, input_dim, output_dim, drop_rate, noisy=False):
         super(SupervisedVariationalEncoder, self).__init__()
         self.mu_layer = nn.Linear(input_dim, output_dim)
         self.log_var_layer = nn.Linear(input_dim, output_dim)
@@ -121,7 +121,7 @@ class SupervisedVariationalEncoder(nn.Module):
 
 
 class VariationalAutoEncoder(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
+    def __init__(self, input_dim, output_dim, drop_rate, noisy=False):
         super(VariationalAutoEncoder, self).__init__()
         self.mu = nn.Linear(input_dim, output_dim)
         self.log_var = nn.Linear(input_dim, output_dim)
