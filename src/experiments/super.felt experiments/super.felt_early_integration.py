@@ -168,8 +168,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                     for i, (dataE, target) in enumerate(trainLoader):
                         optimizer.zero_grad()
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                            dataE = dataE.to(device)
                             original_E = dataE.clone()
+                            dataE = dataE.to(device)
                             if noisy:
                                 dataE += torch.normal(0.0, 0.05, dataE.shape)
                             if architecture == 'ae':

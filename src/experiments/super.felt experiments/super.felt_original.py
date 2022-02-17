@@ -191,10 +191,10 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                     for i, (dataE, _, _, target) in enumerate(trainLoader):
                         E_optimizer.zero_grad()
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                            dataE = dataE.to(device)
                             original_E = dataE.clone()
                             if noisy:
                                 dataE += torch.normal(0.0, 0.05, dataE.shape)
+                            dataE = dataE.to(device)
                             if architecture == 'ae':
                                 encoded_E, reconstruction = E_Supervised_Encoder(dataE)
                                 E_loss = mse(reconstruction, original_E)
@@ -241,11 +241,10 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                     for i, (_, dataM, _, target) in enumerate(trainLoader):
                         M_optimizer.zero_grad()
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                            dataM = dataM.to(device)
                             originalM = dataM.clone()
                             if noisy:
                                 dataM += torch.normal(0, 0.05, size=dataM.shape)
-
+                            dataM = dataM.to(device)
                             if architecture == 'ae':
                                 encoded_M, reconstruction = M_Supervised_Encoder(dataM)
                                 M_loss = BCE_loss_fun(reconstruction, originalM)
@@ -293,10 +292,10 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                     for i, (_, _, dataC, target) in enumerate(trainLoader):
                         C_optimizer.zero_grad()
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                            dataC = dataC.to(device)
                             originalC = dataC.clone()
                             if noisy:
                                 dataC += torch.normal(0, 0.05, size=dataC.shape)
+                            dataC = dataC.to(device)
                             if architecture == 'ae':
                                 encoded_C, reconstruction = C_Supervised_Encoder(dataC)
                                 C_loss = BCE_loss_fun(reconstruction, originalC)
@@ -431,10 +430,10 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
             final_E_Supervised_Encoder.train()
             for i, (dataE, _, _, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                    dataE = dataE.to(device)
                     originalE = dataE.clone()
                     if noisy:
                         dataE += torch.normal(0.0, 0.05, dataE.shape)
+                    dataE = dataE.to(device)
                     if architecture == 'ae':
                         encoded_E, reconstruction = final_E_Supervised_Encoder(dataE)
                         E_loss = mse(reconstruction, originalE)
@@ -482,11 +481,10 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
             final_M_Supervised_Encoder.train().to(device)
             for i, (_, dataM, _, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                    dataM = dataM.to(device)
-                    dataM = dataM.float()
                     original_M = dataM.clone()
                     if noisy:
                         dataM += torch.normal(0, 0.05, size=dataM.shape)
+                    dataM = dataM.to(device)
                     if architecture == 'ae':
                         encoded_M, reconstruction = final_M_Supervised_Encoder(dataM)
                         M_loss = BCE_loss_fun(reconstruction, original_M)
@@ -534,12 +532,10 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
             final_C_Supervised_Encoder.train()
             for i, (_, _, dataC, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
-                    dataC = dataC.to(device)
-                    dataC = dataC.float()
                     originalC = dataC.clone()
                     if noisy:
                         dataC += torch.normal(0, 0.05, size=dataC.shape)
-                        dataC = torch.clamp(dataC, 0, 1)
+                    dataC = dataC.to(device)
 
                     if architecture == 'ae':
                         encoded_C, reconstruction = final_C_Supervised_Encoder(dataC)
