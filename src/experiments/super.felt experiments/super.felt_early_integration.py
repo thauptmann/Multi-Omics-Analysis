@@ -235,11 +235,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         """
                         encoded_val_E = Supervised_Encoder.encode(X_val)
 
-                        #print(encoded_val_C)
                         test_Pred = train_Clas(encoded_val_E, torch.FloatTensor().to(device),
                                                torch.FloatTensor().to(device))
                         test_Pred = sigmoid(test_Pred)
-                        #print(test_Pred)
                         val_AUC = roc_auc_score(Y_val, test_Pred.cpu().detach().numpy())
                 print(f'validation auroc: {val_AUC}')
 
@@ -356,7 +354,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
         # Test
         X_test = torch.FloatTensor(final_scalerGDSC.transform(X_test))
         encoded_test_E = final_E_Supervised_Encoder.encode(torch.FloatTensor(X_test).to(device))
-        test_Pred = final_Clas(encoded_test_E, torch.FloatTensor(), torch.FloatTensor())
+        test_Pred = final_Clas(encoded_test_E, torch.FloatTensor().to(device), torch.FloatTensor().to(device))
         test_y_pred = sigmoid(test_Pred).cpu().detach().numpy()
 
         test_AUC = roc_auc_score(Y_test, test_y_pred)
@@ -365,7 +363,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
         # Extern
         external = torch.FloatTensor(final_scalerGDSC.transform(external))
         encoded_external_E = final_E_Supervised_Encoder.encode(torch.FloatTensor(external).to(device))
-        external_Pred = final_Clas(encoded_external_E, torch.FloatTensor(), torch.FloatTensor())
+        external_Pred = final_Clas(encoded_external_E, torch.FloatTensor().to(device), torch.FloatTensor().to(device))
         external_Pred = sigmoid(external_Pred)
         external_y_pred = external_Pred.cpu().detach().numpy()
         external_AUC = roc_auc_score(ExternalY, external_y_pred)
