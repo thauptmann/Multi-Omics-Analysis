@@ -242,7 +242,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         M_optimizer.zero_grad()
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                             originalM = dataM.clone()
-                            original_M = original_M.to(device)
+                            originalM = originalM.to(device)
                             if noisy:
                                 dataM += torch.normal(0, 0.05, size=dataM.shape)
                             dataM = dataM.to(device)
@@ -292,7 +292,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         C_optimizer.zero_grad()
                         if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                             originalC = dataC.clone()
-                            original_C = original_C.to(device)
+                            originalC = originalC.to(device)
                             if noisy:
                                 dataC += torch.normal(0, 0.05, size=dataC.shape)
                             dataC = dataC.to(device)
@@ -429,7 +429,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
             for i, (dataE, _, _, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                     originalE = dataE.clone()
-                    original_E = original_E.to(device)
+                    originalE = originalE.to(device)
                     if noisy:
                         dataE += torch.normal(0.0, 0.05, dataE.shape)
                     dataE = dataE.to(device)
@@ -529,7 +529,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
             for i, (_, _, dataC, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
                     originalC = dataC.clone()
-                    original_C = original_C.to(device)
+                    originalC = originalC.to(device)
                     if noisy:
                         dataC += torch.normal(0, 0.05, size=dataC.shape)
                     dataC = dataC.to(device)
