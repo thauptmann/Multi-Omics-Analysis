@@ -19,7 +19,7 @@ from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.experiment_utils import create_generation_strategy
 from utils.searchspaces import get_super_felt_search_space
 from models.super_felt_model import SupervisedEncoder, Classifier, AdaptedClassifier, NonLinearClassifier
-from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, create_sampler,\
+from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, create_sampler, \
     train_encoder, \
     train_classifier, train_validate_classifier, super_felt_test
 from utils import multi_omics_data
@@ -31,8 +31,8 @@ best_auroc = 0
 
 
 def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, search_iterations, sobol_iterations,
-               sampling_method, deactivate_elbow_method, deactivate_skip_bad_iterations, semi_hard_triplet, noisy,
-               classifier_type, architecture):
+               sampling_method, deactivate_elbow_method, semi_hard_triplet, noisy,
+               classifier_type, dimension_reduction):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -171,7 +171,8 @@ def compute_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_tr
     # Extern
     external_AUC, external_AUCPR = super_felt_test(extern_e, extern_m, extern_c, extern_r, device,
                                                    final_C_Supervised_Encoder,
-                                                   final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
+                                                   final_Classifier, final_E_Supervised_Encoder,
+                                                   final_M_Supervised_Encoder,
                                                    final_scaler_gdsc)
     return external_AUC, external_AUCPR, test_AUC, test_AUCPR
 
@@ -285,7 +286,7 @@ def write_results_to_file(drug_name, extern_auc_list, extern_auprc_list, result_
 
 
 def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
-                device, semi_hard_triplet, noisy):
+                device, semi_hard_triplet, noisy, classifier_type):
     E_dr = best_hyperparameter['encoder_dropout']
     C_dr = best_hyperparameter['classifier_dropout']
     Cwd = best_hyperparameter['classifier_weight_decay']
@@ -326,7 +327,7 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     C_optimizer = optim.Adagrad(final_C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
     triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
     OCP_dim = OE_dim + OM_dim + OC_dim
-    final_classifier = Classifier(OCP_dim, C_dr).to(device)
+    final_classifier = classifier_type(OCP_dim, C_dr).to(device)
     classifier_optimizer = optim.Adagrad(final_classifier.parameters(), lr=lrCL, weight_decay=Cwd)
 
     # train each Supervised_Encoder with triplet loss
@@ -361,15 +362,13 @@ if __name__ == '__main__':
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     parser.add_argument('--semi_hard_triplet', default=False, action='store_true')
     parser.add_argument('--deactivate_elbow_method', default=False, action='store_true')
-    parser.add_argument('--combine_latent_features', default=False, action='store_true')
     parser.add_argument('--search_iterations', default=200, type=int)
     parser.add_argument('--sobol_iterations', default=50, type=int)
-    parser.add_argument('--deactivate_skip_bad_iterations', default=False, action='store_true')
     parser.add_argument('--classifier_type', default='super_felt', choices=['adapted', 'non-linear'])
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     parser.add_argument('--noisy', default=False, action='store_true')
-    parser.add_argument('--architecture', default=None, choices=['supervised-vae', 'vae', 'ae', 'supervised_ae',
-                                                                 'supervised_e', 'supervised_ve'])
+    parser.add_argument('--dimension_reduction', default=None, choices=['supervised-vae', 'vae', 'ae', 'supervised_ae',
+                                                                        'supervised_e', 'supervised_ve'])
 
     args = parser.parse_args()
 
@@ -377,13 +376,9 @@ if __name__ == '__main__':
         for drug, extern_dataset in parameter['drugs'].items():
             super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.search_iterations,
                        args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
-                       args.deactivate_skip_bad_iterations, args.semi_hard_triplet, args.combine_latent_features,
-                        args.noisy,
-                       args.classifier_type, args.architecture)
+                       args.semi_hard_triplet, args.noisy, args.classifier_type, args.dimension_reduction)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.search_iterations,
                    args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
-                   args.deactivate_skip_bad_iterations, args.semi_hard_triplet, args.combine_latent_features,
-                 args.noisy,
-                   args.classifier_type, args.architecture)
+                   args.semi_hard_triplet, args.noisy, args.classifier_type, args.dimension_reduction)

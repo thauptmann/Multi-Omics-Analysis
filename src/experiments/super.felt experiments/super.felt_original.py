@@ -16,7 +16,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, feature_selection
 from utils import multi_omics_data
 from models.super_felt_model import SupervisedEncoder, OnlineTestTriplet, AdaptedClassifier, \
-    SupervisedVariationalEncoder, AutoEncoder, VariationalAutoEncoder
+    SupervisedVariationalEncoder, AutoEncoder, VariationalAutoEncoder, NonLinearClassifier, Classifier
 
 from utils.choose_gpu import get_free_gpu
 
@@ -64,7 +64,7 @@ def kl_loss_function(mu, log_var):
     return -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
 
-def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, noisy, architecture):
+def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, noisy, architecture, classifier_type):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -79,6 +79,13 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
 
     triplet_selector = get_triplet_selector(marg, False)
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=marg, p=2)
+
+    if classifier_type == 'adapted':
+        classifier = AdaptedClassifier
+    elif classifier_type == 'non-linear':
+        classifier = NonLinearClassifier
+    else:
+        classifier = Classifier
 
     data_path = Path('..', '..', '..', 'data')
     result_path = Path('..', '..', '..', 'results', 'experiments', drug_name, experiment_name)
@@ -183,7 +190,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                 C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
                 TripSel = OnlineTestTriplet(marg, triplet_selector)
 
-                train_Clas = AdaptedClassifier(OE_dim + OM_dim + OC_dim, C_dr)
+                train_Clas = classifier(OE_dim + OM_dim + OC_dim, C_dr)
                 train_Clas.to(device)
                 Cl_optimizer = optim.Adagrad(train_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
@@ -420,7 +427,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
         C_optimizer = optim.Adagrad(final_C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
         TripSel = OnlineTestTriplet(marg, triplet_selector)
 
-        final_Clas = AdaptedClassifier(OE_dim + OM_dim + OC_dim, C_dr)
+        final_Clas = classifier(OE_dim + OM_dim + OC_dim, C_dr)
         final_Clas.to(device)
         Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
@@ -655,11 +662,15 @@ if __name__ == '__main__':
                                                                  'supervised-e', 'supervised-ve'])
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
+    parser.add_argument('--classifier_type', default='super_felt', choices=['adapted', 'non-linear'])
+
     args = parser.parse_args()
 
     if args.drug == 'all':
         for drug, extern_dataset in drugs.items():
-            super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.noisy, args.architecture)
+            super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.noisy, args.architecture,
+                       args.classifier_type)
     else:
         extern_dataset = parameter['drugs'][args.drug]
-        super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.noisy, args.architecture)
+        super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.noisy, args.architecture,
+                   args.classifier_type)
