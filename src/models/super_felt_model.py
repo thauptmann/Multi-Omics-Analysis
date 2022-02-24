@@ -19,12 +19,13 @@ class Classifier(nn.Module):
 class NonLinearClassifier(nn.Module):
     def __init__(self, input_dim, drop_rate):
         super(NonLinearClassifier, self).__init__()
+        hal_input_dim = int(0.5 * input_dim)
         self.model = torch.nn.Sequential(
             nn.Dropout(drop_rate),
-            nn.Linear(input_dim, input_dim * 0.5),
+            nn.Linear(input_dim, hal_input_dim),
             nn.ReLU(),
             nn.Dropout(drop_rate),
-            nn.Linear(input_dim * 0.5, 1)
+            nn.Linear(hal_input_dim, 1)
         )
 
     def forward(self, encoded_e, encoded_m, encoded_c):

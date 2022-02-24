@@ -189,7 +189,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                 E_optimizer = optim.Adagrad(E_Supervised_Encoder.parameters(), lr=lrE, weight_decay=Ewd)
                 M_optimizer = optim.Adagrad(M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=Ewd)
                 C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
-                TripSel = OnlineTestTriplet(marg, triplet_selector)
 
                 train_Clas = classifier(OE_dim + OM_dim + OC_dim, C_dr)
                 train_Clas.to(device)
