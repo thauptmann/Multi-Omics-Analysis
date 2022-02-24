@@ -308,9 +308,9 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
 
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
     sampler = create_sampler(y_train_val)
-    final_scaler_gdsc = sk.StandardScaler()
-    final_scaler_gdsc.fit(x_train_val_e)
-    x_train_val_e = final_scaler_gdsc.transform(x_train_val_e)
+    final_scaler = sk.StandardScaler()
+    final_scaler.fit(x_train_val_e)
+    x_train_val_e = final_scaler.transform(x_train_val_e)
     trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_train_val_e), torch.FloatTensor(x_train_val_m),
                                                   torch.FloatTensor(x_train_val_c),
                                                   torch.FloatTensor(y_train_val.astype(int)))
@@ -319,34 +319,33 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     IE_dim = x_train_val_e.shape[-1]
     IM_dim = x_train_val_m.shape[-1]
     IC_dim = x_train_val_c.shape[-1]
-    final_E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr).to(device)
-    final_M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr).to(device)
-    final_C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, E_dr).to(device)
-    E_optimizer = optim.Adagrad(final_E_Supervised_Encoder.parameters(), lr=lrE, weight_decay=Ewd)
-    M_optimizer = optim.Adagrad(final_M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=Ewd)
-    C_optimizer = optim.Adagrad(final_C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
+    final_E_encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr).to(device)
+    final_M_encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr).to(device)
+    final_C_encoder = SupervisedEncoder(IC_dim, OC_dim, E_dr).to(device)
+    E_optimizer = optim.Adagrad(final_E_encoder.parameters(), lr=lrE, weight_decay=Ewd)
+    M_optimizer = optim.Adagrad(final_M_encoder.parameters(), lr=lrM, weight_decay=Ewd)
+    C_optimizer = optim.Adagrad(final_C_encoder.parameters(), lr=lrC, weight_decay=Ewd)
     triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
     OCP_dim = OE_dim + OM_dim + OC_dim
     final_classifier = classifier_type(OCP_dim, C_dr).to(device)
     classifier_optimizer = optim.Adagrad(final_classifier.parameters(), lr=lrCL, weight_decay=Cwd)
 
     # train each Supervised_Encoder with triplet loss
-    train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, final_E_Supervised_Encoder,
+    train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, final_E_encoder,
                   train_loader,
                   trip_loss_fun, semi_hard_triplet, 0, noisy)
-    train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, final_M_Supervised_Encoder,
+    train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, final_M_encoder,
                   train_loader,
                   trip_loss_fun, semi_hard_triplet, 1, noisy)
-    train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, final_C_Supervised_Encoder,
+    train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, final_C_encoder,
                   train_loader,
                   trip_loss_fun, semi_hard_triplet, 2, noisy)
 
     # train classifier
-    train_classifier(final_classifier, classifier_epoch, train_loader, classifier_optimizer, final_E_Supervised_Encoder,
-                     final_M_Supervised_Encoder, final_C_Supervised_Encoder,
+    train_classifier(final_classifier, classifier_epoch, train_loader, classifier_optimizer, final_E_encoder,
+                     final_M_encoder, final_C_encoder,
                      device)
-    return final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_classifier, \
-           final_scaler_gdsc
+    return final_E_encoder, final_M_encoder, final_C_encoder, final_classifier, final_scaler
 
 
 def check_best_auroc(best_reachable_auroc):

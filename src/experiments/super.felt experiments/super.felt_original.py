@@ -64,7 +64,8 @@ def kl_loss_function(mu, log_var):
     return -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
 
-def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, noisy, architecture, classifier_type):
+def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, noisy, architecture, classifier_type,
+               semi_hard_triplet):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -77,7 +78,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
     np.random.seed(random_seed)
     torch.cuda.manual_seed_all(random_seed)
 
-    triplet_selector = get_triplet_selector(marg, False)
+    triplet_selector = get_triplet_selector(marg, semi_hard_triplet)
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=marg, p=2)
 
     if classifier_type == 'adapted':
@@ -195,7 +196,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                 Cl_optimizer = optim.Adagrad(train_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
                 # train each Supervised_Encoder with triplet loss
-                for e_epoch in range(E_Supervised_Encoder_epoch):
+                for epoch in range(E_Supervised_Encoder_epoch):
+                    last_epochs = False if epoch < E_Supervised_Encoder_epoch - 2 else True
                     E_Supervised_Encoder.train()
                     for i, (dataE, _, _, target) in enumerate(trainLoader):
                         E_optimizer.zero_grad()
@@ -213,38 +215,43 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                 E_loss = mse(reconstruction, original_E) + kl_loss_function(mu, log_var)
                             elif architecture == 'supervised-ae':
                                 encoded_E, reconstruction = E_Supervised_Encoder(dataE)
-                                E_Triplets_list = TripSel(encoded_E, target)
-                                E_triplets_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
-                                                                encoded_E[E_Triplets_list[:, 1], :],
-                                                                encoded_E[E_Triplets_list[:, 2], :])
+                                triplets = generate_triplets(encoded_E, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                E_triplets_loss = trip_loss_fun(encoded_E[triplets[:, 0], :],
+                                                                encoded_E[triplets[:, 1], :],
+                                                                encoded_E[triplets[:, 2], :])
                                 E_reconstruction_loss = mse(reconstruction, original_E)
                                 E_loss = E_triplets_loss + E_reconstruction_loss
                             elif architecture == 'supervised-vae':
                                 encoded_E, reconstruction, mu, log_var = E_Supervised_Encoder(dataE)
-                                E_Triplets_list = TripSel(encoded_E, target)
-                                E_triplets_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
-                                                                encoded_E[E_Triplets_list[:, 1], :],
-                                                                encoded_E[E_Triplets_list[:, 2], :])
+                                triplets = generate_triplets(encoded_E, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                E_triplets_loss = trip_loss_fun(encoded_E[triplets[:, 0], :],
+                                                                encoded_E[triplets[:, 1], :],
+                                                                encoded_E[triplets[:, 2], :])
                                 E_reconstruction_loss = mse(reconstruction, original_E)
                                 E_loss = E_triplets_loss + E_reconstruction_loss + kl_loss_function(mu, log_var)
                             elif architecture == 'supervised-ve':
                                 encoded_E, mu, log_var = E_Supervised_Encoder(dataE)
-                                E_Triplets_list = TripSel(encoded_E, target)
-                                E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
-                                                       encoded_E[E_Triplets_list[:, 1], :],
-                                                       encoded_E[E_Triplets_list[:, 2], :]) + \
+                                triplets = generate_triplets(encoded_E, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                E_loss = trip_loss_fun(encoded_E[triplets[:, 0], :],
+                                                       encoded_E[triplets[:, 1], :],
+                                                       encoded_E[triplets[:, 2], :]) + \
                                          kl_loss_function(mu, log_var)
                             else:
                                 encoded_E = E_Supervised_Encoder(dataE)
-                                E_Triplets_list = TripSel(encoded_E, target)
-                                E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
-                                                       encoded_E[E_Triplets_list[:, 1], :],
-                                                       encoded_E[E_Triplets_list[:, 2], :])
+                                triplets = generate_triplets(encoded_E, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                E_loss = trip_loss_fun(encoded_E[triplets[:, 0], :],
+                                                       encoded_E[triplets[:, 1], :],
+                                                       encoded_E[triplets[:, 2], :])
                             E_loss.backward()
                             E_optimizer.step()
                 E_Supervised_Encoder.eval()
 
                 for m_epoch in range(M_Supervised_Encoder_epoch):
+                    last_epochs = False if m_epoch < M_Supervised_Encoder_epoch - 2 else True
                     M_Supervised_Encoder.train().to(device)
                     for i, (_, dataM, _, target) in enumerate(trainLoader):
                         M_optimizer.zero_grad()
@@ -259,10 +266,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                 M_loss = BCE_loss_fun(reconstruction, originalM)
                             elif architecture == 'supervised-ae':
                                 encoded_M, reconstruction = M_Supervised_Encoder(dataM)
-                                M_Triplets_list = TripSel(encoded_M, target)
-                                M_triplets_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
-                                                                encoded_M[M_Triplets_list[:, 1], :],
-                                                                encoded_M[M_Triplets_list[:, 2], :])
+                                triplets = generate_triplets(encoded_M, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                M_triplets_loss = trip_loss_fun(encoded_M[triplets[:, 0], :],
+                                                                encoded_M[triplets[:, 1], :],
+                                                                encoded_M[triplets[:, 2], :])
                                 M_reconstruction_loss = BCE_loss_fun(reconstruction, originalM)
                                 M_loss = M_triplets_loss + M_reconstruction_loss
                             elif architecture == 'vae':
@@ -270,31 +278,36 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                 M_loss = BCE_loss_fun(reconstruction, originalM) + kl_loss_function(mu, log_var)
                             elif architecture == 'supervised-vae':
                                 encoded_M, reconstruction, mu, log_var = M_Supervised_Encoder(dataM)
-                                M_Triplets_list = TripSel(encoded_M, target)
-                                M_triplets_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
-                                                                encoded_M[M_Triplets_list[:, 1], :],
-                                                                encoded_M[M_Triplets_list[:, 2], :])
+                                triplets = generate_triplets(encoded_M, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                M_triplets_loss = trip_loss_fun(encoded_M[triplets[:, 0], :],
+                                                                encoded_M[triplets[:, 1], :],
+                                                                encoded_M[triplets[:, 2], :])
                                 M_reconstruction_loss = BCE_loss_fun(reconstruction, originalM)
                                 M_loss = M_triplets_loss + M_reconstruction_loss  + kl_loss_function(mu, log_var)
                             elif architecture == 'supervised-ve':
                                 encoded_M, mu, log_var = M_Supervised_Encoder(dataM)
-                                M_Triplets_list = TripSel(encoded_M, target)
-                                M_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
-                                                       encoded_M[M_Triplets_list[:, 1], :],
-                                                       encoded_M[M_Triplets_list[:, 2], :]) \
+                                triplets = generate_triplets(encoded_M, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                M_loss = trip_loss_fun(encoded_M[triplets[:, 0], :],
+                                                       encoded_M[triplets[:, 1], :],
+                                                       encoded_M[triplets[:, 2], :]) \
                                          + kl_loss_function(mu, log_var)
                             else:
                                 encoded_M = M_Supervised_Encoder(dataM)
-                                M_Triplets_list = TripSel(encoded_M, target)
-                                M_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
-                                                       encoded_M[M_Triplets_list[:, 1], :],
-                                                       encoded_M[M_Triplets_list[:, 2], :])
+                                triplets = generate_triplets(encoded_M, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                M_loss = trip_loss_fun(encoded_M[triplets[:, 0], :],
+                                                       encoded_M[triplets[:, 1], :],
+                                                       encoded_M[triplets[:, 2], :])
                             M_loss.backward()
                             M_optimizer.step()
 
                 M_Supervised_Encoder.eval()
 
                 for c_epoch in range(C_Supervised_Encoder_epoch):
+                    last_epochs = False if c_epoch < C_Supervised_Encoder_epoch - 2 else True
+
                     C_Supervised_Encoder.train()
                     for i, (_, _, dataC, target) in enumerate(trainLoader):
                         C_optimizer.zero_grad()
@@ -309,10 +322,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                 C_loss = BCE_loss_fun(reconstruction, originalC)
                             elif architecture == 'supervised-ae':
                                 encoded_C, reconstruction = C_Supervised_Encoder(dataC)
-                                C_Triplets_list = TripSel(encoded_C, target)
-                                C_triplets_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
-                                                                encoded_C[C_Triplets_list[:, 1], :],
-                                                                encoded_C[C_Triplets_list[:, 2], :])
+                                triplets = generate_triplets(encoded_C, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                C_triplets_loss = trip_loss_fun(encoded_C[triplets[:, 0], :],
+                                                                encoded_C[triplets[:, 1], :],
+                                                                encoded_C[triplets[:, 2], :])
                                 C_reconstruction_loss = BCE_loss_fun(reconstruction, originalC)
                                 C_loss = C_triplets_loss + C_reconstruction_loss
                             elif architecture == 'vae':
@@ -320,26 +334,29 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                 C_loss = BCE_loss_fun(reconstruction, originalC) + kl_loss_function(mu, log_var)
                             elif architecture == 'supervised-vae':
                                 encoded_C, reconstruction, mu, log_var = C_Supervised_Encoder(dataC)
-                                C_Triplets_list = TripSel(encoded_C, target)
-                                C_triplets_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
-                                                                encoded_C[C_Triplets_list[:, 1], :],
-                                                                encoded_C[C_Triplets_list[:, 2], :])
+                                triplets = generate_triplets(encoded_C, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                C_triplets_loss = trip_loss_fun(encoded_C[triplets[:, 0], :],
+                                                                encoded_C[triplets[:, 1], :],
+                                                                encoded_C[triplets[:, 2], :])
                                 C_reconstruction_loss = BCE_loss_fun(reconstruction, originalC)
                                 C_loss = C_triplets_loss + C_reconstruction_loss + kl_loss_function(mu, log_var)
                             elif architecture == 'supervised-ve':
                                 encoded_C, mu, log_var = C_Supervised_Encoder(dataC)
-                                C_Triplets_list = TripSel(encoded_C, target)
-                                triplet_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
-                                                             encoded_C[C_Triplets_list[:, 1], :],
-                                                             encoded_C[C_Triplets_list[:, 2], :])
+                                triplets = generate_triplets(encoded_C, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                triplet_loss = trip_loss_fun(encoded_C[triplets[:, 0], :],
+                                                             encoded_C[triplets[:, 1], :],
+                                                             encoded_C[triplets[:, 2], :])
                                 kl_loss = kl_loss_function(mu, log_var)
                                 C_loss = triplet_loss + kl_loss
                             else:
                                 encoded_C = C_Supervised_Encoder(dataC)
-                                C_Triplets_list = TripSel(encoded_C, target)
-                                C_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
-                                                       encoded_C[C_Triplets_list[:, 1], :],
-                                                       encoded_C[C_Triplets_list[:, 2], :])
+                                triplets = generate_triplets(encoded_C, last_epochs, semi_hard_triplet, target,
+                                                             triplet_selector)
+                                C_loss = trip_loss_fun(encoded_C[triplets[:, 0], :],
+                                                       encoded_C[triplets[:, 1], :],
+                                                       encoded_C[triplets[:, 2], :])
                             C_loss.backward()
                             C_optimizer.step()
                 C_Supervised_Encoder.eval()
@@ -432,7 +449,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
         Cl_optimizer = optim.Adagrad(final_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
         # train each Supervised_Encoder with triplet loss
-        for e_epoch in range(E_Supervised_Encoder_epoch):
+        for epoch in range(E_Supervised_Encoder_epoch):
+            last_epochs = False if epoch < E_Supervised_Encoder_epoch - 2 else True
+
             final_E_Supervised_Encoder.train()
             for i, (dataE, _, _, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
@@ -446,10 +465,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         E_loss = mse(reconstruction, originalE)
                     elif architecture == 'supervised-ae':
                         encoded_E, reconstruction = final_E_Supervised_Encoder(dataE)
-                        E_Triplets_list = TripSel(encoded_E, target)
-                        E_triplets_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
-                                                        encoded_E[E_Triplets_list[:, 1], :],
-                                                        encoded_E[E_Triplets_list[:, 2], :])
+                        triplets = generate_triplets(encoded_E, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        E_triplets_loss = trip_loss_fun(encoded_E[triplets[:, 0], :],
+                                                        encoded_E[triplets[:, 1], :],
+                                                        encoded_E[triplets[:, 2], :])
                         E_reconstruction_loss = mse(reconstruction, originalE)
                         E_loss = E_triplets_loss + E_reconstruction_loss
                     elif architecture == 'vae':
@@ -457,24 +477,27 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         E_loss = mse(reconstruction, originalE) + kl_loss_function(mu, log_var)
                     elif architecture == 'supervised-vae':
                         encoded_E, reconstruction, mu, log_var = final_E_Supervised_Encoder(dataE)
-                        E_Triplets_list = TripSel(encoded_E, target)
-                        E_triplets_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
-                                                        encoded_E[E_Triplets_list[:, 1], :],
-                                                        encoded_E[E_Triplets_list[:, 2], :])
+                        triplets = generate_triplets(encoded_E, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        E_triplets_loss = trip_loss_fun(encoded_E[triplets[:, 0], :],
+                                                        encoded_E[triplets[:, 1], :],
+                                                        encoded_E[triplets[:, 2], :])
                         E_reconstruction_loss = mse(reconstruction, originalE)
                         E_loss = E_triplets_loss + E_reconstruction_loss + kl_loss_function(mu, log_var)
                     elif architecture == 'supervised-ve':
                         encoded_E, mu, log_var = final_E_Supervised_Encoder(dataE)
-                        E_Triplets_list = TripSel(encoded_E, target)
-                        E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
-                                               encoded_E[E_Triplets_list[:, 1], :],
-                                               encoded_E[E_Triplets_list[:, 2], :]) + kl_loss_function(mu, log_var)
+                        triplets = generate_triplets(encoded_E, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        E_loss = trip_loss_fun(encoded_E[triplets[:, 0], :],
+                                               encoded_E[triplets[:, 1], :],
+                                               encoded_E[triplets[:, 2], :]) + kl_loss_function(mu, log_var)
                     else:
                         encoded_E = final_E_Supervised_Encoder(dataE)
-                        E_Triplets_list = TripSel(encoded_E, target)
-                        E_loss = trip_loss_fun(encoded_E[E_Triplets_list[:, 0], :],
-                                               encoded_E[E_Triplets_list[:, 1], :],
-                                               encoded_E[E_Triplets_list[:, 2], :])
+                        triplets = generate_triplets(encoded_E, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        E_loss = trip_loss_fun(encoded_E[triplets[:, 0], :],
+                                               encoded_E[triplets[:, 1], :],
+                                               encoded_E[triplets[:, 2], :])
 
                     E_optimizer.zero_grad()
                     E_loss.backward()
@@ -483,6 +506,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
         final_E_Supervised_Encoder.eval()
 
         for m_epoch in range(M_Supervised_Encoder_epoch):
+            last_epochs = False if m_epoch < M_Supervised_Encoder_epoch - 2 else True
+
             final_M_Supervised_Encoder.train().to(device)
             for i, (_, dataM, _, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
@@ -496,10 +521,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         M_loss = BCE_loss_fun(reconstruction, original_M)
                     elif architecture == 'supervised-ae':
                         encoded_M, reconstruction = final_M_Supervised_Encoder(dataM)
-                        M_Triplets_list = TripSel(encoded_M, target)
-                        M_triplets_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
-                                                        encoded_M[M_Triplets_list[:, 1], :],
-                                                        encoded_M[M_Triplets_list[:, 2], :])
+                        triplets = generate_triplets(encoded_M, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        M_triplets_loss = trip_loss_fun(encoded_M[triplets[:, 0], :],
+                                                        encoded_M[triplets[:, 1], :],
+                                                        encoded_M[triplets[:, 2], :])
                         M_reconstruction_loss = BCE_loss_fun(reconstruction, original_M)
                         M_loss = M_triplets_loss + M_reconstruction_loss
                     elif architecture == 'vae':
@@ -507,25 +533,28 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         M_loss = BCE_loss_fun(reconstruction, original_M) + kl_loss_function(mu, log_var)
                     elif architecture == 'supervised-vae':
                         encoded_M, reconstruction, mu, log_var = final_M_Supervised_Encoder(dataM)
-                        M_Triplets_list = TripSel(encoded_M, target)
-                        M_triplets_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
-                                                        encoded_M[M_Triplets_list[:, 1], :],
-                                                        encoded_M[M_Triplets_list[:, 2], :])
+                        triplets = generate_triplets(encoded_M, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        M_triplets_loss = trip_loss_fun(encoded_M[triplets[:, 0], :],
+                                                        encoded_M[triplets[:, 1], :],
+                                                        encoded_M[triplets[:, 2], :])
                         M_reconstruction_loss = BCE_loss_fun(reconstruction, original_M)
                         M_loss = M_triplets_loss + M_reconstruction_loss + kl_loss_function(mu, log_var)
                     elif architecture == 'supervised-ve':
                         encoded_M, mu, log_var = final_M_Supervised_Encoder(dataM)
-                        M_Triplets_list = TripSel(encoded_M, target)
-                        M_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
-                                               encoded_M[M_Triplets_list[:, 1], :],
-                                               encoded_M[M_Triplets_list[:, 2], :]) \
+                        triplets = generate_triplets(encoded_M, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        M_loss = trip_loss_fun(encoded_M[triplets[:, 0], :],
+                                               encoded_M[triplets[:, 1], :],
+                                               encoded_M[triplets[:, 2], :]) \
                                  + kl_loss_function(mu, log_var)
                     else:
                         encoded_M = final_M_Supervised_Encoder(dataM)
-                        M_Triplets_list = TripSel(encoded_M, target)
-                        M_loss = trip_loss_fun(encoded_M[M_Triplets_list[:, 0], :],
-                                               encoded_M[M_Triplets_list[:, 1], :],
-                                               encoded_M[M_Triplets_list[:, 2], :])
+                        triplets = generate_triplets(encoded_M, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        M_loss = trip_loss_fun(encoded_M[triplets[:, 0], :],
+                                               encoded_M[triplets[:, 1], :],
+                                               encoded_M[triplets[:, 2], :])
                     M_optimizer.zero_grad()
                     M_loss.backward()
                     M_optimizer.step()
@@ -533,6 +562,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
         final_M_Supervised_Encoder.eval()
 
         for c_epoch in range(C_Supervised_Encoder_epoch):
+            last_epochs = False if c_epoch < C_Supervised_Encoder_epoch - 2 else True
+
             final_C_Supervised_Encoder.train()
             for i, (_, _, dataC, target) in enumerate(trainLoader):
                 if torch.mean(target) != 0. and torch.mean(target) != 1. and len(target) > 2:
@@ -547,10 +578,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         C_loss = BCE_loss_fun(reconstruction, originalC)
                     elif architecture == 'supervised-ae':
                         encoded_C, reconstruction = final_C_Supervised_Encoder(dataC)
-                        C_Triplets_list = TripSel(encoded_C, target)
-                        C_triplets_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
-                                                        encoded_C[C_Triplets_list[:, 1], :],
-                                                        encoded_C[C_Triplets_list[:, 2], :])
+                        triplets = generate_triplets(encoded_C, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        C_triplets_loss = trip_loss_fun(encoded_C[triplets[:, 0], :],
+                                                        encoded_C[triplets[:, 1], :],
+                                                        encoded_C[triplets[:, 2], :])
                         C_reconstruction_loss = BCE_loss_fun(reconstruction, originalC)
                         C_loss = C_triplets_loss + C_reconstruction_loss
                     elif architecture == 'vae':
@@ -558,25 +590,28 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         C_loss = BCE_loss_fun(reconstruction, originalC) + kl_loss_function(mu, log_var)
                     elif architecture == 'supervised-vae':
                         encoded_C, reconstruction, mu, log_var = final_C_Supervised_Encoder(dataC)
-                        C_Triplets_list = TripSel(encoded_C, target)
-                        C_triplets_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
-                                                        encoded_C[C_Triplets_list[:, 1], :],
-                                                        encoded_C[C_Triplets_list[:, 2], :])
+                        triplets = generate_triplets(encoded_C, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        C_triplets_loss = trip_loss_fun(encoded_C[triplets[:, 0], :],
+                                                        encoded_C[triplets[:, 1], :],
+                                                        encoded_C[triplets[:, 2], :])
                         C_reconstruction_loss = BCE_loss_fun(reconstruction, originalC)
                         C_loss = C_triplets_loss + C_reconstruction_loss  + kl_loss_function(mu, log_var)
                     elif architecture == 'supervised-ve':
                         encoded_C, mu, log_var = final_C_Supervised_Encoder(dataC)
-                        C_Triplets_list = TripSel(encoded_C, target)
-                        C_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
-                                               encoded_C[C_Triplets_list[:, 1], :],
-                                               encoded_C[C_Triplets_list[:, 2], :]) \
+                        triplets = generate_triplets(encoded_C, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        C_loss = trip_loss_fun(encoded_C[triplets[:, 0], :],
+                                               encoded_C[triplets[:, 1], :],
+                                               encoded_C[triplets[:, 2], :]) \
                                  + kl_loss_function(mu, log_var)
                     else:
                         encoded_C = final_C_Supervised_Encoder(dataC)
-                        C_Triplets_list = TripSel(encoded_C, target)
-                        C_loss = trip_loss_fun(encoded_C[C_Triplets_list[:, 0], :],
-                                               encoded_C[C_Triplets_list[:, 1], :],
-                                               encoded_C[C_Triplets_list[:, 2], :])
+                        triplets = generate_triplets(encoded_C, last_epochs, semi_hard_triplet, target,
+                                                     triplet_selector)
+                        C_loss = trip_loss_fun(encoded_C[triplets[:, 0], :],
+                                               encoded_C[triplets[:, 1], :],
+                                               encoded_C[triplets[:, 2], :])
 
                     C_optimizer.zero_grad()
                     C_loss.backward()
@@ -650,6 +685,16 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
     result_file.close()
 
 
+def generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target, triplet_selector):
+    if not last_epochs and semi_hard_triplet:
+        triplets = triplet_selector[0].get_triplets(encoded_data, target)
+    elif last_epochs and semi_hard_triplet:
+        triplets = triplet_selector[1].get_triplets(encoded_data, target)
+    else:
+        triplets = triplet_selector.get_triplets(encoded_data, target)
+    return triplets
+
+
 with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
     parameter = yaml.safe_load(stream)
 
@@ -663,14 +708,15 @@ if __name__ == '__main__':
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     parser.add_argument('--classifier_type', default='super_felt', choices=['adapted', 'non-linear'])
+    parser.add_argument('--semi_hard_triplet', default=False, action='store_true')
 
     args = parser.parse_args()
 
     if args.drug == 'all':
         for drug, extern_dataset in drugs.items():
             super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.noisy, args.architecture,
-                       args.classifier_type)
+                       args.classifier_type, args.semi_hard_triplet)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.noisy, args.architecture,
-                   args.classifier_type)
+                   args.classifier_type, args.semi_hard_triplet)

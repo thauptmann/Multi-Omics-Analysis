@@ -148,15 +148,12 @@ def create_sampler(y_train):
 
 
 def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device, supervised_encoder, train_loader,
-                  trip_loss_fun, semi_hard_triplet, omic_number, independent=False, noisy=False):
+                  trip_loss_fun, semi_hard_triplet, omic_number, noisy=False):
     supervised_encoder.train()
     for epoch in trange(supervised_encoder_epoch):
         last_epochs = False if epoch < supervised_encoder_epoch - 2 else True
         for data in train_loader:
-            if independent:
-                x = data[0]
-            else:
-                x = data[omic_number]
+            x = data[omic_number]
             target = data[-1]
             if torch.mean(target) != 0. and torch.mean(target) != 1.:
                 optimizer.zero_grad()
@@ -164,18 +161,23 @@ def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device,
                     x += torch.normal(0.0, 0.05, x.shape)
                 x = x.to(device)
                 encoded_data = supervised_encoder(x)
-                if not last_epochs and semi_hard_triplet:
-                    triplets = triplet_selector[0].get_triplets(encoded_data, target)
-                elif last_epochs and semi_hard_triplet:
-                    triplets = triplet_selector[1].get_triplets(encoded_data, target)
-                else:
-                    triplets = triplet_selector.get_triplets(encoded_data, target)
+                triplets = generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target, triplet_selector)
                 loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
                                      encoded_data[triplets[:, 1], :],
                                      encoded_data[triplets[:, 2], :])
                 loss.backward()
                 optimizer.step()
     supervised_encoder.eval()
+
+
+def generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target, triplet_selector):
+    if not last_epochs and semi_hard_triplet:
+        triplets = triplet_selector[0].get_triplets(encoded_data, target)
+    elif last_epochs and semi_hard_triplet:
+        triplets = triplet_selector[1].get_triplets(encoded_data, target)
+    else:
+        triplets = triplet_selector.get_triplets(encoded_data, target)
+    return triplets
 
 
 def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
