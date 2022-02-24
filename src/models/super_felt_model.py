@@ -16,6 +16,22 @@ class Classifier(nn.Module):
         return output
 
 
+class NonLinearClassifier(nn.Module):
+    def __init__(self, input_dim, drop_rate):
+        super(NonLinearClassifier, self).__init__()
+        self.model = torch.nn.Sequential(
+            nn.Dropout(drop_rate),
+            nn.Linear(input_dim, input_dim * 0.5),
+            nn.ReLU(),
+            nn.Dropout(drop_rate),
+            nn.Linear(input_dim * 0.5, 1)
+        )
+
+    def forward(self, encoded_e, encoded_m, encoded_c):
+        integrated_test_omics = torch.cat((encoded_e, encoded_m, encoded_c), 1)
+        return self.model(integrated_test_omics)
+
+
 class AdaptedClassifier(nn.Module):
     def __init__(self, input_dim, drop_rate):
         super(AdaptedClassifier, self).__init__()
@@ -51,7 +67,7 @@ class SupervisedEncoder(nn.Module):
         )
         self.noisy = noisy
         if self.noisy:
-            self.noise_layer = nn.Dropout(0.01)
+            self.noise_layer = nn.Dropout(0.02)
 
     def forward(self, x):
         if self.noisy:
@@ -74,7 +90,7 @@ class AutoEncoder(nn.Module):
         )
         self.noisy = noisy
         if self.noisy:
-            self.noise_layer = nn.Dropout(0.01)
+            self.noise_layer = nn.Dropout(0.02)
 
         self.decoder = nn.Sequential(
             nn.Linear(output_dim, input_dim))
@@ -98,8 +114,13 @@ class SupervisedVariationalEncoder(nn.Module):
         self.regularisation = nn.Sequential(nn.BatchNorm1d(output_dim),
                                             nn.ReLU(),
                                             nn.Dropout(drop_rate))
+        self.noisy = noisy
+        if self.noisy:
+            self.noise_layer = nn.Dropout(0.02)
 
     def forward(self, x):
+        if self.noisy:
+            x = self.noise_layer(x)
         mu = self.mu_layer(x)
         log_var = self.log_var_layer(x)
         param = self.reparametrize(mu, log_var)

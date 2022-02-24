@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import sklearn.preprocessing as sk
+import yaml
 from sklearn.metrics import roc_auc_score, average_precision_score
 from torch import optim
 import numpy as np
@@ -390,6 +391,9 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
     result_file.close()
 
 
+with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
+    parameter = yaml.safe_load(stream)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiment_name', required=True)
@@ -401,5 +405,10 @@ if __name__ == '__main__':
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     args = parser.parse_args()
 
-    for drug, extern_dataset in drugs.items():
-        super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.noisy, args.architecture)
+    if args.drug == 'all':
+        for drug, extern_dataset in drugs.items():
+            super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.noisy, args.architecture)
+    else:
+        extern_dataset = parameter['drugs'][args.drug]
+        super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.noisy, args.architecture)
+

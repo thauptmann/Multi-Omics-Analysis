@@ -18,13 +18,12 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.experiment_utils import create_generation_strategy
 from utils.searchspaces import get_super_felt_search_space
-from models.super_felt_model import SupervisedEncoder, Classifier, AdaptedClassifier
-from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, create_sampler, train_encoder, \
+from models.super_felt_model import SupervisedEncoder, Classifier, AdaptedClassifier, NonLinearClassifier
+from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, create_sampler,\
+    train_encoder, \
     train_classifier, train_validate_classifier, super_felt_test
 from utils import multi_omics_data
 from utils.choose_gpu import get_free_gpu
-from independent_super_felt import optimise_independent_super_felt_parameter, compute_independent_super_felt_metrics
-from encoded_super_felt import optimise_encoded_super_felt_parameter, compute_encoded_super_felt_metrics
 
 with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
     parameter = yaml.safe_load(stream)
@@ -32,9 +31,8 @@ best_auroc = 0
 
 
 def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, search_iterations, sobol_iterations,
-               sampling_method, deactivate_elbow_method, deactivate_skip_bad_iterations, semi_hard_triplet,
-               combine_latent_features, optimise_independent, same_dimension_latent_features, noisy,
-               use_adapted_classifier, architecture):
+               sampling_method, deactivate_elbow_method, deactivate_skip_bad_iterations, semi_hard_triplet, noisy,
+               classifier_type, architecture):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -61,10 +59,12 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_drug_data_with_elbow(data_path, drug_name, extern_dataset_name)
 
-    if use_adapted_classifier:
-        classifier_type = AdaptedClassifier
+    if classifier_type == 'adapted':
+        classifier = AdaptedClassifier
+    elif classifier_type == 'non-linear':
+        classifier = NonLinearClassifier
     else:
-        classifier_type = Classifier
+        classifier = Classifier
 
     test_auc_list = []
     extern_auc_list = []
@@ -88,77 +88,24 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         x_test_c = gdsc_c[test_index]
         y_train_val = gdsc_r[train_index_outer]
         y_test = gdsc_r[test_index]
-        if combine_latent_features:
-            best_parameters, experiment = optimise_encoded_super_felt_parameter(combine_latent_features, random_seed,
-                                                                                same_dimension_latent_features,
-                                                                                sampling_method, search_iterations,
-                                                                                semi_hard_triplet,
-                                                                                sobol_iterations, x_train_val_e,
-                                                                                x_train_val_m, x_train_val_c,
-                                                                                y_train_val, device,
-                                                                                deactivate_skip_bad_iterations)
-            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_encoded_super_felt_metrics(x_test_e, x_test_m,
-                                                                                                    x_test_c,
-                                                                                                    x_train_val_e,
-                                                                                                    x_train_val_m,
-                                                                                                    x_train_val_c,
-                                                                                                    best_parameters,
-                                                                                                    combine_latent_features,
-                                                                                                    device,
-                                                                                                    extern_e, extern_m,
-                                                                                                    extern_c,
-                                                                                                    extern_r,
-                                                                                                    same_dimension_latent_features,
-                                                                                                    semi_hard_triplet,
-                                                                                                    y_test,
-                                                                                                    y_train_val)
-        elif optimise_independent:
-            best_parameters, experiment, final_encoder_e, final_encoder_m, final_encoder_c, scaler_e = \
-                optimise_independent_super_felt_parameter(random_seed,
-                                                          sampling_method, search_iterations,
-                                                          semi_hard_triplet,
-                                                          sobol_iterations, x_train_val_e,
-                                                          x_train_val_m, x_train_val_c,
-                                                          y_train_val,
-                                                          device, noisy)
-            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_independent_super_felt_metrics(x_test_e,
-                                                                                                        x_test_m,
-                                                                                                        x_test_c,
-                                                                                                        x_train_val_e,
-                                                                                                        x_train_val_m,
-                                                                                                        x_train_val_c,
-                                                                                                        best_parameters,
-                                                                                                        device,
-                                                                                                        extern_e,
-                                                                                                        extern_m,
-                                                                                                        extern_c,
-                                                                                                        extern_r,
-                                                                                                        y_test,
-                                                                                                        y_train_val,
-                                                                                                        final_encoder_e,
-                                                                                                        final_encoder_m,
-                                                                                                        final_encoder_c,
-                                                                                                        scaler_e)
-        else:
-            best_parameters, experiment = optimise_super_felt_parameter(random_seed,
-                                                                        sampling_method, search_iterations,
-                                                                        semi_hard_triplet,
-                                                                        sobol_iterations, x_train_val_e,
-                                                                        x_train_val_m, x_train_val_c, y_train_val,
-                                                                        device, noisy)
-            external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_super_felt_metrics(x_test_e, x_test_m,
-                                                                                            x_test_c,
-                                                                                            x_train_val_e,
-                                                                                            x_train_val_m,
-                                                                                            x_train_val_c,
-                                                                                            best_parameters,
-                                                                                            device,
-                                                                                            extern_e, extern_m,
-                                                                                            extern_c,
-                                                                                            extern_r,
-                                                                                            same_dimension_latent_features,
-                                                                                            semi_hard_triplet, y_test,
-                                                                                            y_train_val, noisy)
+        best_parameters, experiment = optimise_super_felt_parameter(random_seed,
+                                                                    sampling_method, search_iterations,
+                                                                    semi_hard_triplet,
+                                                                    sobol_iterations, x_train_val_e,
+                                                                    x_train_val_m, x_train_val_c, y_train_val,
+                                                                    device, noisy, classifier)
+        external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_super_felt_metrics(x_test_e, x_test_m,
+                                                                                        x_test_c,
+                                                                                        x_train_val_e,
+                                                                                        x_train_val_m,
+                                                                                        x_train_val_c,
+                                                                                        best_parameters,
+                                                                                        device,
+                                                                                        extern_e, extern_m,
+                                                                                        extern_c,
+                                                                                        extern_r,
+                                                                                        semi_hard_triplet, y_test,
+                                                                                        y_train_val, noisy)
 
         test_auc_list.append(test_AUC)
         extern_auc_list.append(external_AUC)
@@ -188,12 +135,13 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
 
 def optimise_super_felt_parameter(random_seed, sampling_method,
                                   search_iterations, semi_hard_triplet, sobol_iterations, x_train_val_e,
-                                  x_train_val_m, x_train_val_c, y_train_val, device, noisy):
+                                  x_train_val_m, x_train_val_c, y_train_val, device, noisy, classifier):
     evaluation_function = lambda parameterization: train_validate_hyperparameter_set(x_train_val_e,
                                                                                      x_train_val_m, x_train_val_c,
                                                                                      y_train_val, device,
                                                                                      parameterization,
-                                                                                     semi_hard_triplet, noisy
+                                                                                     semi_hard_triplet, noisy,
+                                                                                     classifier
                                                                                      )
     generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
     search_space = get_super_felt_search_space(semi_hard_triplet, False)
@@ -229,7 +177,7 @@ def compute_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_tr
 
 
 def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val,
-                                      device, hyperparameters, semi_hard_triplet, noisy):
+                                      device, hyperparameters, semi_hard_triplet, noisy, classifier):
     skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     all_validation_aurocs = []
     encoder_dropout = hyperparameters['encoder_dropout']
@@ -304,7 +252,7 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
                                               m_supervised_encoder, c_supervised_encoder, train_loader,
                                               classifier_input_dimension,
                                               classifier_dropout, lrCL, classifier_weight_decay,
-                                              x_val_e, x_val_m, x_val_c, y_val)
+                                              x_val_e, x_val_m, x_val_c, y_val, classifier)
         all_validation_aurocs.append(val_auroc)
 
         if iteration < parameter['cv_splits']:
@@ -417,9 +365,7 @@ if __name__ == '__main__':
     parser.add_argument('--search_iterations', default=200, type=int)
     parser.add_argument('--sobol_iterations', default=50, type=int)
     parser.add_argument('--deactivate_skip_bad_iterations', default=False, action='store_true')
-    parser.add_argument('--same_dimension_latent_features', default=False, action='store_true')
-    parser.add_argument('--optimise_independent', default=False, action='store_true')
-    parser.add_argument('--use_adapted_classifier', default=False, action='store_true')
+    parser.add_argument('--classifier_type', default='super_felt', choices=['adapted', 'non-linear'])
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     parser.add_argument('--noisy', default=False, action='store_true')
     parser.add_argument('--architecture', default=None, choices=['supervised-vae', 'vae', 'ae', 'supervised_ae',
@@ -432,12 +378,12 @@ if __name__ == '__main__':
             super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.search_iterations,
                        args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
                        args.deactivate_skip_bad_iterations, args.semi_hard_triplet, args.combine_latent_features,
-                       args.optimise_independent, args.same_dimension_latent_features, args.noisy,
-                       args.use_adapted_classifier, args.architecture)
+                        args.noisy,
+                       args.classifier_type, args.architecture)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.search_iterations,
                    args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
                    args.deactivate_skip_bad_iterations, args.semi_hard_triplet, args.combine_latent_features,
-                   args.optimise_independent, args.same_dimension_latent_features, args.noisy,
-                   args.use_adapted_classifier, args.architecture)
+                 args.noisy,
+                   args.classifier_type, args.architecture)

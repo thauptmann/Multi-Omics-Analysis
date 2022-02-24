@@ -9,7 +9,6 @@ from torch import optim
 from torch.utils.data import WeightedRandomSampler
 from tqdm import trange
 
-from models.super_felt_model import Classifier
 from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, \
     SemihardNegativeTripletSelector
 
@@ -182,8 +181,8 @@ def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device,
 def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
                               m_supervised_encoder, c_supervised_encoder, train_loader, classifier_input_dimension,
                               classifier_dropout, learning_rate_classifier, weight_decay_classifier,
-                              x_val_e, x_val_m, x_val_c, y_val):
-    classifier = Classifier(classifier_input_dimension, classifier_dropout).to(device)
+                              x_val_e, x_val_m, x_val_c, y_val, classifier_type):
+    classifier = classifier_type(classifier_input_dimension, classifier_dropout).to(device)
     classifier_optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate_classifier,
                                          weight_decay=weight_decay_classifier)
     train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
