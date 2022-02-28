@@ -143,9 +143,9 @@ class AdaptiveMoliWithReconstruction(nn.Module):
             self.left_encoder = nn.Identity()
             self.classifier = MOLIClassifier(input_sizes[0] + input_sizes[1] + input_sizes[2], dropout_rates[4])
 
-        self.expression_decoder = nn.Linear(input_sizes[0], output_sizes[0])
-        self.mutation_decoder = nn.Linear(input_sizes[1], output_sizes[1])
-        self.cna_decoder = nn.Linear(input_sizes[2], output_sizes[2])
+        self.expression_decoder = nn.Linear(output_sizes[0], input_sizes[0])
+        self.mutation_decoder = nn.Linear(output_sizes[1], input_sizes[1])
+        self.cna_decoder = nn.Linear(output_sizes[2], input_sizes[2])
 
     def forward(self, expression, mutation, cna):
         if self.noisy:
