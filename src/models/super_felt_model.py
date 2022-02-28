@@ -93,8 +93,7 @@ class AutoEncoder(nn.Module):
         if self.noisy:
             self.noise_layer = nn.Dropout(0.1)
 
-        self.decoder = nn.Sequential(
-            nn.Linear(output_dim, input_dim))
+        self.decoder = nn.Linear(output_dim, input_dim)
 
     def forward(self, x):
         if self.noisy:

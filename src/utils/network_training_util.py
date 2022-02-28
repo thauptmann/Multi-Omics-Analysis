@@ -15,22 +15,38 @@ from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSele
 sigmoid = torch.nn.Sigmoid()
 
 
-def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs):
+def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs, noisy, architecture):
     y_true = []
     predictions = []
+    mse = torch.nn.MSELoss()
     moli_model.train()
     for (data_e, data_m, data_c, target) in train_loader:
         if torch.mean(target) != 0. and torch.mean(target) != 1.:
             moli_optimiser.zero_grad()
             y_true.extend(target)
+            original_data_e = data_e.clone().to(device)
+            original_data_m = data_m.clone().to(device)
+            original_data_c = data_c.clone().to(device)
+
+            if noisy:
+                data_e += torch.normal(0.0, 1, data_e.shape)
+                data_m += torch.normal(0.0, 1, data_m.shape)
+                data_c += torch.normal(0.0, 1, data_c.shape)
+
             data_e = data_e.to(device)
             data_m = data_m.to(device)
             data_c = data_c.to(device)
             target = target.to(device)
             prediction = moli_model.forward(data_e, data_m, data_c)
-            if gamma > 0:
+            if gamma > 0 and architecture != 'supervised_ae':
                 loss = loss_fn(prediction, target, last_epochs)
                 prediction = sigmoid(prediction[0])
+
+            elif architecture == 'supervised_ae':
+                reconstruction_loss = mse(original_data_e, prediction[1]) + mse(original_data_m, prediction[2]) \
+                                      + mse(original_data_c, prediction[3])
+                triplet_loss = loss_fn(prediction[0], target)
+                loss = reconstruction_loss + triplet_loss
             else:
                 target = target.view(-1, 1)
                 loss = loss_fn(prediction[0], target)
@@ -250,8 +266,7 @@ def kl_loss_function(mu, log_var):
 
 
 def train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
-                     m_supervised_encoder, c_supervised_encoder,
-                     device):
+                     m_supervised_encoder, c_supervised_encoder, device):
     bce_loss_function = torch.nn.BCEWithLogitsLoss()
     for cl_epoch in range(classifier_epoch):
         classifier.train()

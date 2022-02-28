@@ -43,9 +43,12 @@ class MOLIClassifier(nn.Module):
 
 
 class AdaptiveMoli(nn.Module):
-    def __init__(self, input_sizes, output_sizes, dropout_rates, combination, depths):
+    def __init__(self, input_sizes, output_sizes, dropout_rates, combination, depths, noisy):
         super(AdaptiveMoli, self).__init__()
         self.combination = combination
+        self.noisy = noisy
+        if self.noisy:
+            self.dropout = nn.Dropout(0.2)
         if combination != 4:
             self.expression_encoder = AdaptiveEncoder(input_sizes[0], output_sizes[0], dropout_rates[0], depths[0])
             self.mutation_encoder = AdaptiveEncoder(input_sizes[1], output_sizes[1], dropout_rates[1], depths[1])
@@ -75,6 +78,10 @@ class AdaptiveMoli(nn.Module):
             self.classifier = MOLIClassifier(input_sizes[0] + input_sizes[1] + input_sizes[2], dropout_rates[4])
 
     def forward(self, expression, mutation, cna):
+        if self.noisy:
+            expression = self.dropout(expression)
+            mutation = self.dropout(mutation)
+            cna = self.dropout(cna)
         if self.combination == 0:
             left_out = self.expression_encoder(expression)
             middle_out = self.mutation_encoder(mutation)
@@ -102,9 +109,12 @@ class AdaptiveMoli(nn.Module):
 
 
 class AdaptiveMoliWithReconstruction(nn.Module):
-    def __init__(self, input_sizes, output_sizes, dropout_rates, combination, depths):
+    def __init__(self, input_sizes, output_sizes, dropout_rates, combination, depths, noisy):
         super(AdaptiveMoliWithReconstruction, self).__init__()
         self.combination = combination
+        self.noisy = noisy
+        if self.noisy:
+            self.dropout = nn.Dropout(0.2)
         if combination != 4:
             self.expression_encoder = AdaptiveEncoder(input_sizes[0], output_sizes[0], dropout_rates[0], depths[0])
             self.mutation_encoder = AdaptiveEncoder(input_sizes[1], output_sizes[1], dropout_rates[1], depths[1])
@@ -133,28 +143,53 @@ class AdaptiveMoliWithReconstruction(nn.Module):
             self.left_encoder = nn.Identity()
             self.classifier = MOLIClassifier(input_sizes[0] + input_sizes[1] + input_sizes[2], dropout_rates[4])
 
+        self.expression_decoder = nn.Linear(input_sizes[0], output_sizes[0])
+        self.mutation_decoder = nn.Linear(input_sizes[1], output_sizes[1])
+        self.cna_decoder = nn.Linear(input_sizes[2], output_sizes[2])
+
     def forward(self, expression, mutation, cna):
+        if self.noisy:
+            expression = self.dropout(expression)
+            mutation = self.dropout(mutation)
+            cna = self.dropout(cna)
         if self.combination == 0:
             left_out = self.expression_encoder(expression)
             middle_out = self.mutation_encoder(mutation)
             right_out = self.cna_encoder(cna)
+            expression_reconstruction = self.expression_decoder(left_out)
+            mutation_reconstruction = self.mutation_encoder(middle_out)
+            cna_reconstruction = self.cna_reconstruction(right_out)
         elif self.combination == 1:
             left_out = self.cna_encoder(cna)
             middle_out = self.mutation_encoder(mutation)
             right_out = self.expression_encoder(expression)
+            expression_reconstruction = self.expression_decoder(right_out)
+            mutation_reconstruction = self.mutation_encoder(middle_out)
+            cna_reconstruction = self.cna_reconstruction(left_out)
         elif self.combination == 2:
             left_out = self.cna_encoder(cna)
             middle_out = self.expression_encoder(expression)
             right_out = self.mutation_encoder(mutation)
+            expression_reconstruction = self.expression_decoder(middle_out)
+            mutation_reconstruction = self.mutation_encoder(right_out)
+            cna_reconstruction = self.cna_reconstruction(left_out)
         elif self.combination == 3:
             left_out = self.expression_encoder(expression)
             middle_out = self.mutation_encoder(mutation)
             right_out = self.cna_encoder(cna)
+            expression_reconstruction = self.expression_decoder(left_out)
+            mutation_reconstruction = self.mutation_encoder(middle_out)
+            cna_reconstruction = self.cna_reconstruction(right_out)
         else:
             left_out = self.expression_encoder(expression)
             middle_out = self.mutation_encoder(mutation)
             right_out = self.cna_encoder(cna)
+            expression_reconstruction = expression
+            mutation_reconstruction = mutation
+            cna_reconstruction = cna
+
         left_middle = torch.cat((left_out, middle_out), 1)
         left_middle_out = self.left_encoder(left_middle)
         left_middle_right = torch.cat((left_middle_out, right_out), 1)
-        return [self.classifier(left_middle_right), left_middle_right]
+        return [self.classifier(left_middle_right), left_middle_right, expression_reconstruction,
+                mutation_reconstruction, cna_reconstruction]

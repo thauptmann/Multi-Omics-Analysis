@@ -27,7 +27,8 @@ with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
             sampling_method, drug_name, extern_dataset_name, gpu_number, small_search_space,
-            deactivate_skip_bad_iterations, semi_hard_triplet, deactivate_elbow_method, architecture):
+            deactivate_skip_bad_iterations, semi_hard_triplet, deactivate_elbow_method, architecture,
+            noisy):
     device, pin_memory = create_device(gpu_number)
 
     result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', drug_name, experiment_name)
@@ -83,7 +84,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                                                                           x_train_validate_c,
                                                                           y_train_validate, device, pin_memory,
                                                                           deactivate_skip_bad_iterations,
-                                                                          semi_hard_triplet, architecture)
+                                                                          semi_hard_triplet, architecture, noisy)
         generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, parameter['random_seed'])
 
         best_parameters, values, experiment, model = optimize(
@@ -110,7 +111,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         model_final, scaler_final = train_final(best_parameters, x_train_validate_e, x_train_validate_m,
                                                 x_train_validate_c, y_train_validate, device,
-                                                pin_memory, semi_hard_triplet, architecture)
+                                                pin_memory, semi_hard_triplet, architecture, noisy)
         auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
         auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device)
 
@@ -178,10 +179,10 @@ if __name__ == '__main__':
             bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                     args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
                     args.small_search_space, args.deactivate_skip_bad_iterations, args.semi_hard_triplet,
-                    args.deactivate_elbow_method, args.architecture)
+                    args.deactivate_elbow_method, args.architecture, args.noisy)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                 args.combination, args.sampling_method, args.drug, extern_dataset, args.gpu_number,
                 args.small_search_space, args.deactivate_skip_bad_iterations, args.semi_hard_triplet,
-                args.deactivate_elbow_method, args.architecture)
+                args.deactivate_elbow_method, args.architecture, args.noisy)

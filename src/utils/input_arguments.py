@@ -16,6 +16,6 @@ def get_cmd_arguments():
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     parser.add_argument('--semi_hard_triplet', default=False, action='store_true')
     parser.add_argument('--deactivate_elbow_method', default=False, action='store_true')
-    parser.add_argument('--architecture', default=None, choices=['supervised-vae', 'vae', 'ae', 'supervised_ae',
-                                                                 'supervised_e', 'supervised_ve'])
+    parser.add_argument('--noisy', default=False, action='store_true')
+    parser.add_argument('--architecture', default=None, choices=['supervised_ae'])
     return parser.parse_args()
