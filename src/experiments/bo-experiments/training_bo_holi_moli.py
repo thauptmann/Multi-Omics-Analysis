@@ -138,7 +138,7 @@ def set_best_auroc(new_auroc):
 
 
 def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory,
-                semi_hard_triplet, architecture):
+                semi_hard_triplet, architecture, noisy):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -168,6 +168,11 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     epochs = parameterization['epochs']
     margin = parameterization['margin']
 
+    if architecture == 'supervised_ae':
+        model_architecture = AdaptiveMoliWithReconstruction
+    else:
+        model_architecture = AdaptiveMoli
+
     train_scaler_gdsc = StandardScaler()
     train_scaler_gdsc.fit(x_train_e)
     x_train_e = train_scaler_gdsc.transform(x_train_e)
@@ -183,7 +188,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     input_sizes = [ie_dim, im_dim, ic_dim]
     dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_rate_middle, dropout_rate_clf]
     output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4]
-    moli_model = AdaptiveMoli(input_sizes, output_sizes, dropout_rates, combination, depths).to(device)
+    moli_model = model_architecture(input_sizes, output_sizes, dropout_rates, combination, depths, noisy).to(device)
 
     moli_optimiser = torch.optim.Adagrad([
         {'params': moli_model.left_encoder.parameters(), 'lr': lr_middle},
@@ -205,5 +210,6 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
 
     for epoch in range(epochs):
         last_epochs = False if epoch < epochs - 2 else True
-        network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs)
+        network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs,
+                                    noisy, architecture)
     return moli_model, train_scaler_gdsc
