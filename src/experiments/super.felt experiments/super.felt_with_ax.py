@@ -18,7 +18,8 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.experiment_utils import create_generation_strategy
 from utils.searchspaces import get_super_felt_search_space
-from models.super_felt_model import SupervisedEncoder, Classifier, AdaptedClassifier, NonLinearClassifier
+from models.super_felt_model import Encoder, Classifier, AdaptedClassifier, NonLinearClassifier, VariationalAutoEncoder, \
+    AutoEncoder, SupervisedVariationalEncoder
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, create_sampler, \
     train_encoder, \
     train_classifier, train_validate_classifier, super_felt_test
@@ -32,7 +33,7 @@ best_auroc = 0
 
 def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, search_iterations, sobol_iterations,
                sampling_method, deactivate_elbow_method, semi_hard_triplet, noisy,
-               classifier_type, dimension_reduction):
+               classifier_type, architecture):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -93,7 +94,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                     semi_hard_triplet,
                                                                     sobol_iterations, x_train_val_e,
                                                                     x_train_val_m, x_train_val_c, y_train_val,
-                                                                    device, noisy, classifier)
+                                                                    device, noisy, classifier, architecture)
         external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_super_felt_metrics(x_test_e, x_test_m,
                                                                                         x_test_c,
                                                                                         x_train_val_e,
@@ -105,7 +106,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                                         extern_c,
                                                                                         extern_r,
                                                                                         semi_hard_triplet, y_test,
-                                                                                        y_train_val, noisy)
+                                                                                        y_train_val, noisy,
+                                                                                        classifier, architecture)
 
         test_auc_list.append(test_AUC)
         extern_auc_list.append(external_AUC)
@@ -135,13 +137,13 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
 
 def optimise_super_felt_parameter(random_seed, sampling_method,
                                   search_iterations, semi_hard_triplet, sobol_iterations, x_train_val_e,
-                                  x_train_val_m, x_train_val_c, y_train_val, device, noisy, classifier):
+                                  x_train_val_m, x_train_val_c, y_train_val, device, noisy, classifier, architecture):
     evaluation_function = lambda parameterization: train_validate_hyperparameter_set(x_train_val_e,
                                                                                      x_train_val_m, x_train_val_c,
                                                                                      y_train_val, device,
                                                                                      parameterization,
                                                                                      semi_hard_triplet, noisy,
-                                                                                     classifier
+                                                                                     classifier, architecture
                                                                                      )
     generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
     search_space = get_super_felt_search_space(semi_hard_triplet, False)
@@ -159,11 +161,11 @@ def optimise_super_felt_parameter(random_seed, sampling_method,
 
 def compute_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_train_val_m, x_train_val_c,
                                best_parameters, device, extern_e, extern_m, extern_c, extern_r,
-                               same_dimension_latent_features, semi_hard_triplet, y_test, y_train_val, noisy):
+                               semi_hard_triplet, y_test, y_train_val, noisy, classifier, architecture):
     # retrain best
     final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
     final_scaler_gdsc = train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_parameters,
-                                    device, semi_hard_triplet, same_dimension_latent_features)
+                                    device, semi_hard_triplet, noisy, classifier, architecture)
     # Test
     test_AUC, test_AUCPR = super_felt_test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encoder,
                                            final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
@@ -178,9 +180,17 @@ def compute_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_tr
 
 
 def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val,
-                                      device, hyperparameters, semi_hard_triplet, noisy, classifier):
+                                      device, hyperparameters, semi_hard_triplet, noisy, classifier, architecture):
     skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     all_validation_aurocs = []
+    if architecture in ('vae', 'supervised-vae'):
+        encoder = VariationalAutoEncoder
+    elif architecture in ('ae', 'supervised-ae'):
+        encoder = AutoEncoder
+    elif architecture == 'supervised-ve':
+        encoder = SupervisedVariationalEncoder
+    else:
+        encoder = Encoder
     encoder_dropout = hyperparameters['encoder_dropout']
     encoder_weight_decay = hyperparameters['encoder_weight_decay']
     classifier_dropout = hyperparameters['classifier_dropout']
@@ -195,9 +205,9 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
     OM_dim = hyperparameters['m_dimension']
     OC_dim = hyperparameters['c_dimension']
 
-    E_Supervised_Encoder_epoch = hyperparameters['e_epochs']
-    C_Supervised_Encoder_epoch = hyperparameters['m_epochs']
-    M_Supervised_Encoder_epoch = hyperparameters['c_epochs']
+    e_Encoder_epoch = hyperparameters['e_epochs']
+    c_Encoder_epoch = hyperparameters['m_epochs']
+    m_Encoder_epoch = hyperparameters['c_epochs']
     classifier_epoch = hyperparameters['classifier_epochs']
     mini_batch_size = hyperparameters['mini_batch']
     margin = hyperparameters['margin']
@@ -231,26 +241,26 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
         IM_dim = X_trainM.shape[-1]
         IC_dim = X_trainC.shape[-1]
 
-        e_supervised_encoder = SupervisedEncoder(IE_dim, OE_dim, encoder_dropout).to(device)
-        m_supervised_encoder = SupervisedEncoder(IM_dim, OM_dim, encoder_dropout).to(device)
-        c_supervised_encoder = SupervisedEncoder(IC_dim, OC_dim, encoder_dropout).to(device)
+        e_encoder = encoder(IE_dim, OE_dim, encoder_dropout, noisy).to(device)
+        m_encoder = encoder(IM_dim, OM_dim, encoder_dropout, noisy).to(device)
+        c_encoder = encoder(IC_dim, OC_dim, encoder_dropout, noisy).to(device)
 
-        E_optimizer = optim.Adagrad(e_supervised_encoder.parameters(), lr=lrE, weight_decay=encoder_weight_decay)
-        M_optimizer = optim.Adagrad(m_supervised_encoder.parameters(), lr=lrM, weight_decay=encoder_weight_decay)
-        C_optimizer = optim.Adagrad(c_supervised_encoder.parameters(), lr=lrC, weight_decay=encoder_weight_decay)
+        E_optimizer = optim.Adagrad(e_encoder.parameters(), lr=lrE, weight_decay=encoder_weight_decay)
+        M_optimizer = optim.Adagrad(m_encoder.parameters(), lr=lrM, weight_decay=encoder_weight_decay)
+        C_optimizer = optim.Adagrad(c_encoder.parameters(), lr=lrC, weight_decay=encoder_weight_decay)
 
         # train each Supervised_Encoder with triplet loss
-        train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, e_supervised_encoder,
+        train_encoder(e_Encoder_epoch, E_optimizer, triplet_selector, device, e_encoder,
                       train_loader, trip_loss_fun, semi_hard_triplet, 0, noisy)
-        train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, m_supervised_encoder,
+        train_encoder(m_Encoder_epoch, M_optimizer, triplet_selector, device, m_encoder,
                       train_loader, trip_loss_fun, semi_hard_triplet, 1, noisy)
-        train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, c_supervised_encoder,
+        train_encoder(c_Encoder_epoch, C_optimizer, triplet_selector, device, c_encoder,
                       train_loader, trip_loss_fun, semi_hard_triplet, 2, noisy)
 
         # train classifier
         classifier_input_dimension = OE_dim + OM_dim + OC_dim
-        val_auroc = train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
-                                              m_supervised_encoder, c_supervised_encoder, train_loader,
+        val_auroc = train_validate_classifier(classifier_epoch, device, e_encoder,
+                                              m_encoder, c_encoder, train_loader,
                                               classifier_input_dimension,
                                               classifier_dropout, lrCL, classifier_weight_decay,
                                               x_val_e, x_val_m, x_val_c, y_val, classifier)
@@ -286,7 +296,15 @@ def write_results_to_file(drug_name, extern_auc_list, extern_auprc_list, result_
 
 
 def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
-                device, semi_hard_triplet, noisy, classifier_type):
+                device, semi_hard_triplet, noisy, classifier_type, architecture):
+    if architecture in ('vae', 'supervised-vae'):
+        encoder = VariationalAutoEncoder
+    elif architecture in ('ae', 'supervised-ae'):
+        encoder = AutoEncoder
+    elif architecture == 'supervised-ve':
+        encoder = SupervisedVariationalEncoder
+    else:
+        encoder = Encoder
     E_dr = best_hyperparameter['encoder_dropout']
     C_dr = best_hyperparameter['classifier_dropout']
     Cwd = best_hyperparameter['classifier_weight_decay']
@@ -319,9 +337,9 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     IE_dim = x_train_val_e.shape[-1]
     IM_dim = x_train_val_m.shape[-1]
     IC_dim = x_train_val_c.shape[-1]
-    final_E_encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr).to(device)
-    final_M_encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr).to(device)
-    final_C_encoder = SupervisedEncoder(IC_dim, OC_dim, E_dr).to(device)
+    final_E_encoder = encoder(IE_dim, OE_dim, E_dr, noisy).to(device)
+    final_M_encoder = encoder(IM_dim, OM_dim, E_dr, noisy).to(device)
+    final_C_encoder = encoder(IC_dim, OC_dim, E_dr, noisy).to(device)
     E_optimizer = optim.Adagrad(final_E_encoder.parameters(), lr=lrE, weight_decay=Ewd)
     M_optimizer = optim.Adagrad(final_M_encoder.parameters(), lr=lrM, weight_decay=Ewd)
     C_optimizer = optim.Adagrad(final_C_encoder.parameters(), lr=lrC, weight_decay=Ewd)

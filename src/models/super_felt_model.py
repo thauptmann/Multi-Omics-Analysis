@@ -57,9 +57,9 @@ class OnlineTestTriplet(nn.Module):
         return triplets
 
 
-class SupervisedEncoder(nn.Module):
+class Encoder(nn.Module):
     def __init__(self, input_dim, output_dim, drop_rate, noisy=False):
-        super(SupervisedEncoder, self).__init__()
+        super(Encoder, self).__init__()
         self.model = torch.nn.Sequential(
             nn.Linear(input_dim, output_dim),
             nn.BatchNorm1d(output_dim),

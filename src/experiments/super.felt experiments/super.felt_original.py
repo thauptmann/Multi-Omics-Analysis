@@ -15,7 +15,7 @@ from tqdm import tqdm
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, feature_selection
 from utils import multi_omics_data
-from models.super_felt_model import SupervisedEncoder, OnlineTestTriplet, AdaptedClassifier, \
+from models.super_felt_model import Encoder, OnlineTestTriplet, AdaptedClassifier, \
     SupervisedVariationalEncoder, AutoEncoder, VariationalAutoEncoder, NonLinearClassifier, Classifier
 
 from utils.choose_gpu import get_free_gpu
@@ -116,7 +116,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
     elif architecture == 'supervised-ve':
         encoder = SupervisedVariationalEncoder
     else:
-        encoder = SupervisedEncoder
+        encoder = Encoder
 
     if architecture in ('vae', 'supervised-vae'):
         mse = torch.nn.MSELoss(reduction='sum')

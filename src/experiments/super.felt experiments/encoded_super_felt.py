@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.experiment_utils import create_generation_strategy
-from models.super_felt_model import SupervisedEncoder, Classifier
+from models.super_felt_model import Encoder, Classifier
 from utils.network_training_util import get_triplet_selector, train_encoder, create_sampler
 from utils.searchspaces import get_super_felt_search_space
 
@@ -171,11 +171,11 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
         IM_dim = X_trainM.shape[-1]
         IC_dim = X_trainC.shape[-1]
 
-        E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, encoder_dropout).to(device)
-        M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, encoder_dropout).to(device)
-        C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, encoder_dropout).to(device)
+        E_Supervised_Encoder = Encoder(IE_dim, OE_dim, encoder_dropout).to(device)
+        M_Supervised_Encoder = Encoder(IM_dim, OM_dim, encoder_dropout).to(device)
+        C_Supervised_Encoder = Encoder(IC_dim, OC_dim, encoder_dropout).to(device)
         OCP_dim = OE_dim + OM_dim + OC_dim
-        combiner = SupervisedEncoder(OCP_dim, combiner_dimension, combiner_dropout).to(device)
+        combiner = Encoder(OCP_dim, combiner_dimension, combiner_dropout).to(device)
 
         E_optimizer = optim.Adagrad(E_Supervised_Encoder.parameters(), lr=lrE, weight_decay=encoder_weight_decay)
         M_optimizer = optim.Adagrad(M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=encoder_weight_decay)
@@ -319,12 +319,12 @@ def encoded_train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val
     IE_dim = x_train_val_e.shape[-1]
     IM_dim = x_train_val_m.shape[-1]
     IC_dim = x_train_val_c.shape[-1]
-    final_E_Supervised_Encoder = SupervisedEncoder(IE_dim, OE_dim, E_dr).to(device)
-    final_M_Supervised_Encoder = SupervisedEncoder(IM_dim, OM_dim, E_dr).to(device)
-    final_C_Supervised_Encoder = SupervisedEncoder(IC_dim, OC_dim, E_dr).to(device)
+    final_E_Supervised_Encoder = Encoder(IE_dim, OE_dim, E_dr).to(device)
+    final_M_Supervised_Encoder = Encoder(IM_dim, OM_dim, E_dr).to(device)
+    final_C_Supervised_Encoder = Encoder(IC_dim, OC_dim, E_dr).to(device)
     OCP_dim = OE_dim + OM_dim + OC_dim
 
-    final_combiner = SupervisedEncoder(OCP_dim, combiner_dimension, combiner_dropout).to(device)
+    final_combiner = Encoder(OCP_dim, combiner_dimension, combiner_dropout).to(device)
 
     E_optimizer = optim.Adagrad(final_E_Supervised_Encoder.parameters(), lr=lrE, weight_decay=Ewd)
     M_optimizer = optim.Adagrad(final_M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=Ewd)
