@@ -161,7 +161,7 @@ def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_lo
             target = data[-1]
             if torch.mean(target) != 0. and torch.mean(target) != 1.:
                 optimizer.zero_grad()
-                original_data = single_omic_data.copy().to(device)
+                original_data = single_omic_data.clone().to(device)
                 if noisy:
                     single_omic_data += torch.normal(0.0, 1, single_omic_data.shape)
                 single_omic_data = single_omic_data.to(device)
