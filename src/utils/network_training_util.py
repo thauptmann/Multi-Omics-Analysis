@@ -71,7 +71,8 @@ class BceWithTripletsToss:
         super(BceWithTripletsToss, self).__init__()
 
     def __call__(self, predictions, target, last_epoch):
-        prediction, zt = predictions
+        prediction = predictions[0]
+        zt = predictions[1]
         if not last_epoch and self.semi_hard_triplet:
             triplets = self.triplet_selector[0].get_triplets(zt, target)
         elif last_epoch and self.semi_hard_triplet:
