@@ -239,6 +239,7 @@ def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
         encoded_val_C = c_supervised_encoder(torch.FloatTensor(x_val_c).to(device))
         test_Pred = classifier(encoded_val_E, encoded_val_M, encoded_val_C)
         test_y_pred = test_Pred.cpu()
+        test_y_pred = sigmoid(test_y_pred)
         val_auroc = roc_auc_score(y_val, test_y_pred.detach().numpy())
 
     return val_auroc
@@ -251,7 +252,7 @@ def kl_loss_function(mu, log_var):
 def train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
                      m_supervised_encoder, c_supervised_encoder,
                      device):
-    bce_loss_function = torch.nn.BCELoss()
+    bce_loss_function = torch.nn.BCEWithLogitsLoss()
     for cl_epoch in range(classifier_epoch):
         classifier.train()
         for i, (dataE, dataM, dataC, target) in enumerate(train_loader):
