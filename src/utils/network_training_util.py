@@ -110,8 +110,8 @@ def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device):
     x_test_c = torch.FloatTensor(x_test_c).to(device)
     test_y = torch.FloatTensor(test_y.astype(int))
     moli_model.eval()
-    logits, _ = moli_model.forward(x_test_e, x_test_m, x_test_c)
-    probabilities = sigmoid(logits)
+    predictions = moli_model.forward(x_test_e, x_test_m, x_test_c)
+    probabilities = sigmoid(predictions[0])
     auc_validate = roc_auc_score(test_y, probabilities.cpu().detach().numpy())
     auprc_validate = average_precision_score(test_y, probabilities.cpu().detach().numpy())
     return auc_validate, auprc_validate
