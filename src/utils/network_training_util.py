@@ -43,8 +43,8 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last
                 prediction = sigmoid(prediction[0])
 
             elif architecture == 'supervised_ae':
-                reconstruction_loss = mse(original_data_e, prediction[1]) + mse(original_data_m, prediction[2]) \
-                                      + mse(original_data_c, prediction[3])
+                reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
+                                      + mse(original_data_c, prediction[4])
                 triplet_loss = loss_fn(prediction[0], target)
                 loss = reconstruction_loss + triplet_loss
             else:
