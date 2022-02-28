@@ -27,11 +27,11 @@ class AdaptiveEncoder(nn.Module):
 
 
 class MOLIClassifier(nn.Module):
-    def __init__(self, input_size,dropout_rate):
+    def __init__(self, input_size, dropout_rate):
         super(MOLIClassifier, self).__init__()
         self.module_list = nn.ModuleList(torch.nn.Sequential(
+            nn.Dropout(dropout_rate),
             nn.Linear(input_size, 1),
-            nn.Dropout(dropout_rate)
         )
         )
 
