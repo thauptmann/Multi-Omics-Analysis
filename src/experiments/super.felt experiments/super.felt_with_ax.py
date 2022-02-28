@@ -366,8 +366,8 @@ if __name__ == '__main__':
     parser.add_argument('--classifier_type', default='super_felt', choices=['adapted', 'non-linear'])
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     parser.add_argument('--noisy', default=False, action='store_true')
-    parser.add_argument('--dimension_reduction', default=None, choices=['supervised-vae', 'vae', 'ae', 'supervised_ae',
-                                                                        'supervised_e', 'supervised_ve'])
+    parser.add_argument('--architecture', default=None, choices=['supervised-vae', 'vae', 'ae', 'supervised_ae',
+                                                                 'supervised_e', 'supervised_ve'])
 
     args = parser.parse_args()
 
@@ -375,9 +375,9 @@ if __name__ == '__main__':
         for drug, extern_dataset in parameter['drugs'].items():
             super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.search_iterations,
                        args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
-                       args.semi_hard_triplet, args.noisy, args.classifier_type, args.dimension_reduction)
+                       args.semi_hard_triplet, args.noisy, args.classifier_type, args.architecture)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.search_iterations,
                    args.sobol_iterations, args.sampling_method, args.deactivate_elbow_method,
-                   args.semi_hard_triplet, args.noisy, args.classifier_type, args.dimension_reduction)
+                   args.semi_hard_triplet, args.noisy, args.classifier_type, args.architecture)

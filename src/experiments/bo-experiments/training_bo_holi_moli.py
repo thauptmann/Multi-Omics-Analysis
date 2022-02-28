@@ -19,7 +19,7 @@ def reset_best_auroc():
 
 
 def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, deactivate_skip_bad_iterations,
-                       semi_hard_triplet):
+                       semi_hard_triplet, architecture):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
@@ -132,7 +132,7 @@ def set_best_auroc(new_auroc):
 
 
 def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory,
-                semi_hard_triplet):
+                semi_hard_triplet, architecture):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']
