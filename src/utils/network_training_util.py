@@ -314,9 +314,6 @@ def super_felt_test(x_test_e, x_test_m, x_test_c, y_test, device, final_c_superv
         encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))
         encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))
         encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))
-    encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))
-    encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))
-    encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))
     test_Pred = final_classifier(encoded_test_E, encoded_test_M, encoded_test_C)
     test_y_true = y_test
     test_y_pred = test_Pred.cpu().detach().numpy()
