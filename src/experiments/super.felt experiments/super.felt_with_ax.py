@@ -386,8 +386,8 @@ if __name__ == '__main__':
     parser.add_argument('--classifier_type', default='super_felt', choices=['adapted', 'non-linear'])
     parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
     parser.add_argument('--noisy', default=False, action='store_true')
-    parser.add_argument('--architecture', default=None, choices=['supervised-vae', 'vae', 'ae', 'supervised_ae',
-                                                                 'supervised_e', 'supervised_ve'])
+    parser.add_argument('--architecture', default=None, choices=['supervised-vae', 'vae', 'ae', 'supervised-ae',
+                                                                 'supervised-e', 'supervised-ve'])
 
     args = parser.parse_args()
 

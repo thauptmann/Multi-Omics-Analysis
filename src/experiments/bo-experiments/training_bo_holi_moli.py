@@ -49,7 +49,7 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
     epochs = parameterization['epochs']
     margin = parameterization['margin']
 
-    if architecture == 'supervised_ae':
+    if architecture == 'supervised-ae':
         model_architecture = AdaptiveMoliWithReconstruction
     else:
         model_architecture = AdaptiveMoli
@@ -168,7 +168,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     epochs = parameterization['epochs']
     margin = parameterization['margin']
 
-    if architecture == 'supervised_ae':
+    if architecture == 'supervised-ae':
         model_architecture = AdaptiveMoliWithReconstruction
     else:
         model_architecture = AdaptiveMoli
