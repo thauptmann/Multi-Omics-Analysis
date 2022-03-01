@@ -304,8 +304,16 @@ def train_classifier(classifier, classifier_epoch, train_loader, classifier_opti
 
 
 def super_felt_test(x_test_e, x_test_m, x_test_c, y_test, device, final_c_supervised_encoder, final_classifier,
-                    final_e_supervised_encoder, final_m_supervised_encoder, final_scaler_gdsc):
+                    final_e_supervised_encoder, final_m_supervised_encoder, final_scaler_gdsc, architecture):
     x_test_e = torch.FloatTensor(final_scaler_gdsc.transform(x_test_e))
+    if architecture in ('supervised-vae', 'vae', 'ae', 'supervised-ae', 'supervised-ve'):
+        encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))[0]
+        encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))[0]
+        encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))[0]
+    else:
+        encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))
+        encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))
+        encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))
     encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))
     encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))
     encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))

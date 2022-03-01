@@ -171,13 +171,13 @@ def compute_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_tr
     # Test
     test_AUC, test_AUCPR = super_felt_test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encoder,
                                            final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
-                                           final_scaler_gdsc)
+                                           final_scaler_gdsc, architecture)
     # Extern
     external_AUC, external_AUCPR = super_felt_test(extern_e, extern_m, extern_c, extern_r, device,
                                                    final_C_Supervised_Encoder,
                                                    final_Classifier, final_E_Supervised_Encoder,
                                                    final_M_Supervised_Encoder,
-                                                   final_scaler_gdsc)
+                                                   final_scaler_gdsc, architecture)
     return external_AUC, external_AUCPR, test_AUC, test_AUCPR
 
 
