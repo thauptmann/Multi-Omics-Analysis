@@ -109,7 +109,7 @@ def train_combiner(integration_epoch, combiner_optimiser, combiner, train_loader
 
 def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, device,
                                       hyperparameters, semi_hard_triplet, deactivate_skip_bad_iterations,
-                                      same_dimension_latent_features, combine_latent_features):
+                                      same_dimension_latent_features, architecture):
     bce_loss_function = torch.nn.BCELoss()
     skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     encoder_dropout = hyperparameters['encoder_dropout']
@@ -188,11 +188,11 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
 
         # train each Supervised_Encoder with triplet loss
         train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, E_Supervised_Encoder,
-                      trainLoader, trip_loss_fun, semi_hard_triplet, 0)
+                      trainLoader, trip_loss_fun, semi_hard_triplet, architecture, 0)
         train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, M_Supervised_Encoder,
-                      trainLoader, trip_loss_fun, semi_hard_triplet, 1)
+                      trainLoader, trip_loss_fun, semi_hard_triplet, architecture ,1)
         train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, C_Supervised_Encoder,
-                      trainLoader, trip_loss_fun, semi_hard_triplet, 2)
+                      trainLoader, trip_loss_fun, semi_hard_triplet, architecture, 2)
 
         train_combiner(combiner_epoch, combiner_optimizer, combiner, trainLoader,
                        E_Supervised_Encoder, M_Supervised_Encoder, C_Supervised_Encoder, triplet_selector,
@@ -275,7 +275,7 @@ def encoded_test(x_test_e, x_test_m, x_test_c, y_test, device, final_c_supervise
 
 
 def encoded_train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
-                        device, semi_hard_triplet, same_dimension_latent_features):
+                        device, semi_hard_triplet, same_dimension_latent_features, architecture):
     bce_loss_function = torch.nn.BCELoss()
     E_dr = best_hyperparameter['encoder_dropout']
     C_dr = best_hyperparameter['classifier_dropout']
@@ -338,13 +338,13 @@ def encoded_train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val
     # train each Supervised_Encoder with triplet loss
     train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, final_E_Supervised_Encoder,
                   train_loader,
-                  trip_loss_fun, semi_hard_triplet, 0)
+                  trip_loss_fun, semi_hard_triplet, architecture, 0)
     train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, final_M_Supervised_Encoder,
                   train_loader,
-                  trip_loss_fun, semi_hard_triplet, 1)
+                  trip_loss_fun, semi_hard_triplet, architecture, 1)
     train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, final_C_Supervised_Encoder,
                   train_loader,
-                  trip_loss_fun, semi_hard_triplet, 2)
+                  trip_loss_fun, semi_hard_triplet, architecture, 2)
 
     train_combiner(combiner_epoch, combiner_optimizer, final_combiner, train_loader,
                    final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, triplet_selector,

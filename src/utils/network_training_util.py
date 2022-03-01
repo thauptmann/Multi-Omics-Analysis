@@ -245,12 +245,12 @@ def generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target, trip
 def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
                               m_supervised_encoder, c_supervised_encoder, train_loader, classifier_input_dimension,
                               classifier_dropout, learning_rate_classifier, weight_decay_classifier,
-                              x_val_e, x_val_m, x_val_c, y_val, classifier_type):
+                              x_val_e, x_val_m, x_val_c, y_val, classifier_type, architecture):
     classifier = classifier_type(classifier_input_dimension, classifier_dropout).to(device)
     classifier_optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate_classifier,
                                          weight_decay=weight_decay_classifier)
     train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
-                     m_supervised_encoder, c_supervised_encoder, device)
+                     m_supervised_encoder, c_supervised_encoder, architecture, device)
 
     with torch.no_grad():
         classifier.eval()
@@ -273,7 +273,7 @@ def kl_loss_function(mu, log_var):
 
 
 def train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
-                     m_supervised_encoder, c_supervised_encoder, device):
+                     m_supervised_encoder, c_supervised_encoder, architecture, device):
     bce_loss_function = torch.nn.BCEWithLogitsLoss()
     for cl_epoch in range(classifier_epoch):
         classifier.train()
@@ -283,9 +283,14 @@ def train_classifier(classifier, classifier_epoch, train_loader, classifier_opti
             dataM = dataM.to(device)
             dataC = dataC.to(device)
             target = target.to(device)
-            encoded_e = e_supervised_encoder(dataE)
-            encoded_m = m_supervised_encoder(dataM)
-            encoded_c = c_supervised_encoder(dataC)
+            if architecture in ('supervised-vae', 'vae', 'ae', 'supervised-ae', 'supervised-ve'):
+                encoded_e = e_supervised_encoder(dataE)[0]
+                encoded_m = m_supervised_encoder(dataM)[0]
+                encoded_c = c_supervised_encoder(dataC)[0]
+            else:
+                encoded_e = e_supervised_encoder(dataE)
+                encoded_m = m_supervised_encoder(dataM)
+                encoded_c = c_supervised_encoder(dataC)
             Pred = classifier(encoded_e, encoded_m, encoded_c)
             cl_loss = bce_loss_function(Pred, target.view(-1, 1))
             cl_loss.backward()

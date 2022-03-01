@@ -265,7 +265,7 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
                                               m_encoder, c_encoder, train_loader,
                                               classifier_input_dimension,
                                               classifier_dropout, lrCL, classifier_weight_decay,
-                                              x_val_e, x_val_m, x_val_c, y_val, classifier)
+                                              x_val_e, x_val_m, x_val_c, y_val, architecture, classifier)
         all_validation_aurocs.append(val_auroc)
 
         if iteration < parameter['cv_splits']:
@@ -363,8 +363,7 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
 
     # train classifier
     train_classifier(final_classifier, classifier_epoch, train_loader, classifier_optimizer, final_E_encoder,
-                     final_M_encoder, final_C_encoder,
-                     device)
+                     final_M_encoder, final_C_encoder, architecture, device)
     return final_E_encoder, final_M_encoder, final_C_encoder, final_classifier, final_scaler
 
 
