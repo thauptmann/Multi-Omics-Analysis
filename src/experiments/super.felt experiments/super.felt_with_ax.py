@@ -253,11 +253,11 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
 
         # train each Supervised_Encoder with triplet loss
         train_encoder(e_Encoder_epoch, E_optimizer, triplet_selector, device, e_encoder,
-                      train_loader, trip_loss_fun, semi_hard_triplet, 0, noisy)
+                      train_loader, trip_loss_fun, semi_hard_triplet, 0, architecture, noisy)
         train_encoder(m_Encoder_epoch, M_optimizer, triplet_selector, device, m_encoder,
-                      train_loader, trip_loss_fun, semi_hard_triplet, 1, noisy)
+                      train_loader, trip_loss_fun, semi_hard_triplet, 1, architecture, noisy)
         train_encoder(c_Encoder_epoch, C_optimizer, triplet_selector, device, c_encoder,
-                      train_loader, trip_loss_fun, semi_hard_triplet, 2, noisy)
+                      train_loader, trip_loss_fun, semi_hard_triplet, 2, architecture, noisy)
 
         # train classifier
         classifier_input_dimension = OE_dim + OM_dim + OC_dim
@@ -353,13 +353,13 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     # train each Supervised_Encoder with triplet loss
     train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, final_E_encoder,
                   train_loader,
-                  trip_loss_fun, semi_hard_triplet, 0, noisy)
+                  trip_loss_fun, semi_hard_triplet, 0, architecture, noisy)
     train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, final_M_encoder,
                   train_loader,
-                  trip_loss_fun, semi_hard_triplet, 1, noisy)
+                  trip_loss_fun, semi_hard_triplet, 1, architecture, noisy)
     train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, final_C_encoder,
                   train_loader,
-                  trip_loss_fun, semi_hard_triplet, 2, noisy)
+                  trip_loss_fun, semi_hard_triplet, 2, architecture, noisy)
 
     # train classifier
     train_classifier(final_classifier, classifier_epoch, train_loader, classifier_optimizer, final_E_encoder,
