@@ -265,7 +265,7 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
                                               m_encoder, c_encoder, train_loader,
                                               classifier_input_dimension,
                                               classifier_dropout, lrCL, classifier_weight_decay,
-                                              x_val_e, x_val_m, x_val_c, y_val, architecture, classifier)
+                                              x_val_e, x_val_m, x_val_c, y_val, classifier, architecture)
         all_validation_aurocs.append(val_auroc)
 
         if iteration < parameter['cv_splits']:
