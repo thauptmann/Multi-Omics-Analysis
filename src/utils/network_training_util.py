@@ -257,9 +257,14 @@ def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
         """
             inner validation
         """
-        encoded_val_E = e_supervised_encoder(x_val_e)
-        encoded_val_M = m_supervised_encoder(torch.FloatTensor(x_val_m).to(device))
-        encoded_val_C = c_supervised_encoder(torch.FloatTensor(x_val_c).to(device))
+        if architecture in ('supervised-vae', 'vae', 'ae', 'supervised-ae', 'supervised-ve'):
+            encoded_val_E = e_supervised_encoder(x_val_e)[0]
+            encoded_val_M = m_supervised_encoder(torch.FloatTensor(x_val_m).to(device))[0]
+            encoded_val_C = c_supervised_encoder(torch.FloatTensor(x_val_c).to(device))[0]
+        else:
+            encoded_val_E = e_supervised_encoder(x_val_e)
+            encoded_val_M = m_supervised_encoder(torch.FloatTensor(x_val_m).to(device))
+            encoded_val_C = c_supervised_encoder(torch.FloatTensor(x_val_c).to(device))
         test_Pred = classifier(encoded_val_E, encoded_val_M, encoded_val_C)
         test_y_pred = test_Pred.cpu()
         test_y_pred = sigmoid(test_y_pred)
