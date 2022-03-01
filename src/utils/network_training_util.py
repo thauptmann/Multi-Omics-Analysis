@@ -38,25 +38,24 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last
             data_c = data_c.to(device)
             target = target.to(device)
             prediction = moli_model.forward(data_e, data_m, data_c)
-            if gamma > 0 and architecture != 'supervised-ae':
-                loss = loss_fn(prediction, target, last_epochs)
-                prediction = sigmoid(prediction[0])
-            elif gamma > 0 and architecture == 'supervised-ae':
-                reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
-                                      + mse(original_data_c, prediction[4])
-                triplet_loss = loss_fn(prediction, target, last_epochs)
-                loss = reconstruction_loss + triplet_loss
-                prediction = sigmoid(prediction[0])
-            elif architecture == 'supervised-ae':
-                reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
-                                      + mse(original_data_c, prediction[4])
-                triplet_loss = loss_fn(prediction[0], target)
-                loss = reconstruction_loss + triplet_loss
-                prediction = sigmoid(prediction[0])
+            if gamma > 0:
+                if architecture != 'supervised-ae':
+                    loss = loss_fn(prediction, target, last_epochs)
+                else:
+                    reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
+                                          + mse(original_data_c, prediction[4])
+                    triplet_loss = loss_fn(prediction, target, last_epochs)
+                    loss = reconstruction_loss + triplet_loss
             else:
-                target = target.view(-1, 1)
-                loss = loss_fn(prediction[0], target)
-                prediction = sigmoid(prediction[0])
+                if architecture != 'supervised-ae':
+                    loss = loss_fn(prediction[0], target)
+                else:
+                    reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
+                                      + mse(original_data_c, prediction[4])
+                    triplet_loss = loss_fn(prediction[0], target)
+                    loss = reconstruction_loss + triplet_loss
+            prediction = sigmoid(prediction[0])
+
             predictions.extend(prediction.cpu().detach())
             loss.backward()
             moli_optimiser.step()
