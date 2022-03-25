@@ -16,4 +16,6 @@ def get_cmd_arguments():
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     parser.add_argument('--semi_hard_triplet', default=False, action='store_true')
     parser.add_argument('--deactivate_elbow_method', default=False, action='store_true')
+    parser.add_argument('--deactivate_triplet_loss', default=False, action='store_true')
+
     return parser.parse_args()

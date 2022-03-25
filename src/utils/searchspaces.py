@@ -34,7 +34,7 @@ def get_classifier_search_space():
     ]
 
 
-def create_holi_moli_search_space(combination, small_search_space, semi_hard_triplet):
+def create_holi_moli_search_space(combination, small_search_space, semi_hard_triplet, deactivate_triplet_loss):
     batch_size_choices = parameter['batch_size_hard_triplets_choices'] if semi_hard_triplet \
         else parameter['all_triplet_batch_size_choices']
     if combination is None:
@@ -43,8 +43,12 @@ def create_holi_moli_search_space(combination, small_search_space, semi_hard_tri
     else:
         combination_parameter = {'name': 'combination', 'value': combination, 'type': 'fixed', "value_type": "int"}
 
-    gamma = {'name': 'gamma', "values": parameter['gamma_choices'], "value_type": "float", 'type': 'choice'}
-    margin = {'name': 'margin', "values": parameter['margin_choices'], "value_type": "float", 'type': 'choice'}
+    if not deactivate_triplet_loss:
+        gamma = {'name': 'gamma', "values": parameter['gamma_choices'], "value_type": "float", 'type': 'choice'}
+        margin = {'name': 'margin', "values": parameter['margin_choices'], "value_type": "float", 'type': 'choice'}
+    else:
+        gamma = {'name': 'gamma', "value": 0, "value_type": "int", 'type': 'fixed'}
+        margin = {'name': 'margin', "value": 0, "value_type": "int", 'type': 'fixed'}
 
     if combination is None and not small_search_space:
         search_space = [
@@ -132,7 +136,7 @@ def create_holi_moli_search_space(combination, small_search_space, semi_hard_tri
     return search_space
 
 
-def get_super_felt_search_space(semi_hard_triplet, same_dimension_latent_features, combine_latent_features):
+def get_super_felt_search_space(semi_hard_triplet, same_dimension_latent_features):
     batch_size_choices = parameter['batch_size_hard_triplets_choices'] if semi_hard_triplet \
         else parameter['all_triplet_batch_size_choices']
     search_space = [{'name': 'encoder_dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice',
@@ -175,17 +179,4 @@ def get_super_felt_search_space(semi_hard_triplet, same_dimension_latent_feature
                       ]
     search_space.extend(dimensions)
 
-    if combine_latent_features:
-        combiner_features = [
-            {'name': 'combiner_dropout', 'values': parameter['drop_rate_choices'], 'type': 'choice',
-             'value_type': 'float'},
-            {'name': 'combiner_weight_decay', 'values': parameter['weight_decay_choices'], 'type': 'choice',
-             'value_type': 'float'},
-            {'name': 'learning_rate_combiner', 'values': parameter['learning_rate_choices'], 'type': 'choice',
-             'value_type': 'float'},
-            {'name': 'combiner_epoch', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
-             'type': 'range', 'value_type': 'int'},
-            {'name': 'combiner_dimension', 'values': parameter['dim_choice'], 'type': 'choice', 'value_type': 'int'}
-        ]
-        search_space.extend(combiner_features)
     return search_space
