@@ -27,7 +27,8 @@ with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, combination,
             sampling_method, drug_name, extern_dataset_name, gpu_number, small_search_space,
-            deactivate_skip_bad_iterations, semi_hard_triplet, deactivate_elbow_method):
+            deactivate_skip_bad_iterations, semi_hard_triplet, deactivate_elbow_method,
+            deactivate_triplet_loss):
     device, pin_memory = create_device(gpu_number)
 
     result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', drug_name, experiment_name)
@@ -47,7 +48,8 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_drug_data_with_elbow(data_path, drug_name, extern_dataset_name)
 
-    moli_search_space = create_holi_moli_search_space(combination, small_search_space, semi_hard_triplet)
+    moli_search_space = create_holi_moli_search_space(combination, small_search_space, semi_hard_triplet,
+                                                      deactivate_triplet_loss)
 
     torch.manual_seed(parameter['random_seed'])
     np.random.seed(parameter['random_seed'])
@@ -178,10 +180,10 @@ if __name__ == '__main__':
             bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                     args.combination, args.sampling_method, drug, extern_dataset, args.gpu_number,
                     args.small_search_space, args.deactivate_skip_bad_iterations, args.semi_hard_triplet,
-                    args.deactivate_elbow_method)
+                    args.deactivate_elbow_method, args.deactivate_triplet_loss)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                 args.combination, args.sampling_method, args.drug, extern_dataset, args.gpu_number,
                 args.small_search_space, args.deactivate_skip_bad_iterations, args.semi_hard_triplet,
-                args.deactivate_elbow_method)
+                args.deactivate_elbow_method, args.deactivate_triplet_loss)
