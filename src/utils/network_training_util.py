@@ -9,33 +9,53 @@ from torch import optim
 from torch.utils.data import WeightedRandomSampler
 from tqdm import trange
 
-from models.super_felt_model import Classifier
 from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, \
     SemihardNegativeTripletSelector
 
 sigmoid = torch.nn.Sigmoid()
 
 
-def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs):
+def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs, noisy, architecture):
     y_true = []
     predictions = []
+    mse = torch.nn.MSELoss()
     moli_model.train()
     for (data_e, data_m, data_c, target) in train_loader:
         if torch.mean(target) != 0. and torch.mean(target) != 1.:
             moli_optimiser.zero_grad()
             y_true.extend(target)
+            original_data_e = data_e.clone().to(device)
+            original_data_m = data_m.clone().to(device)
+            original_data_c = data_c.clone().to(device)
+
+            if noisy:
+                data_e += torch.normal(0.0, 1, data_e.shape)
+                data_m += torch.normal(0.0, 1, data_m.shape)
+                data_c += torch.normal(0.0, 1, data_c.shape)
+
             data_e = data_e.to(device)
             data_m = data_m.to(device)
             data_c = data_c.to(device)
             target = target.to(device)
             prediction = moli_model.forward(data_e, data_m, data_c)
             if gamma > 0:
-                loss = loss_fn(prediction, target, last_epochs)
-                prediction = sigmoid(prediction[0])
+                if architecture != 'supervised-ae':
+                    loss = loss_fn(prediction, target, last_epochs)
+                else:
+                    reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
+                                          + mse(original_data_c, prediction[4])
+                    triplet_loss = loss_fn(prediction, target, last_epochs)
+                    loss = reconstruction_loss + triplet_loss
             else:
-                target = target.view(-1, 1)
-                loss = loss_fn(prediction[0], target)
-                prediction = sigmoid(prediction[0])
+                if architecture != 'supervised-ae':
+                    loss = loss_fn(prediction[0], target)
+                else:
+                    reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
+                                      + mse(original_data_c, prediction[4])
+                    triplet_loss = loss_fn(torch.squeeze(prediction[0]), target)
+                    loss = reconstruction_loss + triplet_loss
+            prediction = sigmoid(prediction[0])
+
             predictions.extend(prediction.cpu().detach())
             loss.backward()
             moli_optimiser.step()
@@ -55,7 +75,8 @@ class BceWithTripletsToss:
         super(BceWithTripletsToss, self).__init__()
 
     def __call__(self, predictions, target, last_epoch):
-        prediction, zt = predictions
+        prediction = predictions[0]
+        zt = predictions[1]
         if not last_epoch and self.semi_hard_triplet:
             triplets = self.triplet_selector[0].get_triplets(zt, target)
         elif last_epoch and self.semi_hard_triplet:
@@ -93,8 +114,8 @@ def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device):
     x_test_c = torch.FloatTensor(x_test_c).to(device)
     test_y = torch.FloatTensor(test_y.astype(int))
     moli_model.eval()
-    logits, _ = moli_model.forward(x_test_e, x_test_m, x_test_c)
-    probabilities = sigmoid(logits)
+    predictions = moli_model.forward(x_test_e, x_test_m, x_test_c)
+    probabilities = sigmoid(predictions[0])
     auc_validate = roc_auc_score(test_y, probabilities.cpu().detach().numpy())
     auprc_validate = average_precision_score(test_y, probabilities.cpu().detach().numpy())
     return auc_validate, auprc_validate
@@ -148,64 +169,116 @@ def create_sampler(y_train):
     return sampler
 
 
-def train_encoder(supervised_encoder_epoch, optimizer, triplet_selector, device, supervised_encoder, train_loader,
-                  trip_loss_fun, semi_hard_triplet, omic_number, independent=False):
-    supervised_encoder.train()
-    for epoch in trange(supervised_encoder_epoch):
-        last_epochs = False if epoch < supervised_encoder_epoch - 2 else True
+def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_loader, trip_loss_fun,
+                  semi_hard_triplet, omic_number, architecture, noisy=False):
+    if architecture in ('vae', 'supervised-vae'):
+        mse = torch.nn.MSELoss(reduction='sum')
+    else:
+        mse = torch.nn.MSELoss()
+    encoder.train()
+    for epoch in trange(epochs):
+        last_epochs = False if epoch < epochs - 2 else True
         for data in train_loader:
-            if independent:
-                x = data[0]
-            else:
-                x = data[omic_number]
+            single_omic_data = data[omic_number]
             target = data[-1]
             if torch.mean(target) != 0. and torch.mean(target) != 1.:
                 optimizer.zero_grad()
-                x = x.to(device)
-                encoded_data = supervised_encoder(x)
-                if not last_epochs and semi_hard_triplet:
-                    triplets = triplet_selector[0].get_triplets(encoded_data, target)
-                elif last_epochs and semi_hard_triplet:
-                    triplets = triplet_selector[1].get_triplets(encoded_data, target)
+                original_data = single_omic_data.clone().to(device)
+                if noisy:
+                    single_omic_data += torch.normal(0.0, 1, single_omic_data.shape)
+                single_omic_data = single_omic_data.to(device)
+                if architecture == 'ae':
+                    encoded_data, reconstruction = encoder(single_omic_data)
+                    loss = mse(reconstruction, original_data)
+                elif architecture == 'vae':
+                    encoded_data, reconstruction, mu, log_var = encoder(single_omic_data)
+                    loss = mse(reconstruction, original_data) + kl_loss_function(mu, log_var)
+                elif architecture == 'supervised-ae':
+                    encoded_data, reconstruction = encoder(single_omic_data)
+                    triplets = generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target,
+                                                 triplet_selector)
+                    E_triplets_loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
+                                                    encoded_data[triplets[:, 1], :],
+                                                    encoded_data[triplets[:, 2], :])
+                    E_reconstruction_loss = mse(reconstruction, original_data)
+                    loss = E_triplets_loss + E_reconstruction_loss
+                elif architecture == 'supervised-vae':
+                    encoded_data, reconstruction, mu, log_var = encoder(single_omic_data)
+                    triplets = generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target,
+                                                 triplet_selector)
+                    E_triplets_loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
+                                                    encoded_data[triplets[:, 1], :],
+                                                    encoded_data[triplets[:, 2], :])
+                    E_reconstruction_loss = mse(reconstruction, original_data)
+                    loss = E_triplets_loss + E_reconstruction_loss + kl_loss_function(mu, log_var)
+                elif architecture == 'supervised-ve':
+                    encoded_data, mu, log_var = encoder(single_omic_data)
+                    triplets = generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target,
+                                                 triplet_selector)
+                    loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
+                                         encoded_data[triplets[:, 1], :],
+                                         encoded_data[triplets[:, 2], :]) + \
+                           kl_loss_function(mu, log_var)
                 else:
-                    triplets = triplet_selector.get_triplets(encoded_data, target)
-                loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
-                                     encoded_data[triplets[:, 1], :],
-                                     encoded_data[triplets[:, 2], :])
+                    encoded_data = encoder(single_omic_data)
+                    triplets = generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target,
+                                                 triplet_selector)
+                    loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
+                                         encoded_data[triplets[:, 1], :],
+                                         encoded_data[triplets[:, 2], :])
                 loss.backward()
                 optimizer.step()
-    supervised_encoder.eval()
+    encoder.eval()
+
+
+def generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target, triplet_selector):
+    if not last_epochs and semi_hard_triplet:
+        triplets = triplet_selector[0].get_triplets(encoded_data, target)
+    elif last_epochs and semi_hard_triplet:
+        triplets = triplet_selector[1].get_triplets(encoded_data, target)
+    else:
+        triplets = triplet_selector.get_triplets(encoded_data, target)
+    return triplets
 
 
 def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
                               m_supervised_encoder, c_supervised_encoder, train_loader, classifier_input_dimension,
                               classifier_dropout, learning_rate_classifier, weight_decay_classifier,
-                              x_val_e, x_val_m, x_val_c, y_val):
-    classifier = Classifier(classifier_input_dimension, classifier_dropout).to(device)
+                              x_val_e, x_val_m, x_val_c, y_val, classifier_type, architecture):
+    classifier = classifier_type(classifier_input_dimension, classifier_dropout).to(device)
     classifier_optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate_classifier,
                                          weight_decay=weight_decay_classifier)
     train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
-                     m_supervised_encoder, c_supervised_encoder, device)
+                     m_supervised_encoder, c_supervised_encoder, architecture, device)
 
     with torch.no_grad():
         classifier.eval()
         """
             inner validation
         """
-        encoded_val_E = e_supervised_encoder(x_val_e)
-        encoded_val_M = m_supervised_encoder(torch.FloatTensor(x_val_m).to(device))
-        encoded_val_C = c_supervised_encoder(torch.FloatTensor(x_val_c).to(device))
+        if architecture in ('supervised-vae', 'vae', 'ae', 'supervised-ae', 'supervised-ve'):
+            encoded_val_E = e_supervised_encoder(x_val_e)[0]
+            encoded_val_M = m_supervised_encoder(torch.FloatTensor(x_val_m).to(device))[0]
+            encoded_val_C = c_supervised_encoder(torch.FloatTensor(x_val_c).to(device))[0]
+        else:
+            encoded_val_E = e_supervised_encoder(x_val_e)
+            encoded_val_M = m_supervised_encoder(torch.FloatTensor(x_val_m).to(device))
+            encoded_val_C = c_supervised_encoder(torch.FloatTensor(x_val_c).to(device))
         test_Pred = classifier(encoded_val_E, encoded_val_M, encoded_val_C)
         test_y_pred = test_Pred.cpu()
+        test_y_pred = sigmoid(test_y_pred)
         val_auroc = roc_auc_score(y_val, test_y_pred.detach().numpy())
 
     return val_auroc
 
 
+def kl_loss_function(mu, log_var):
+    return -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+
+
 def train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
-                     m_supervised_encoder, c_supervised_encoder,
-                     device):
-    bce_loss_function = torch.nn.BCELoss()
+                     m_supervised_encoder, c_supervised_encoder, architecture, device):
+    bce_loss_function = torch.nn.BCEWithLogitsLoss()
     for cl_epoch in range(classifier_epoch):
         classifier.train()
         for i, (dataE, dataM, dataC, target) in enumerate(train_loader):
@@ -214,9 +287,14 @@ def train_classifier(classifier, classifier_epoch, train_loader, classifier_opti
             dataM = dataM.to(device)
             dataC = dataC.to(device)
             target = target.to(device)
-            encoded_e = e_supervised_encoder(dataE)
-            encoded_m = m_supervised_encoder(dataM)
-            encoded_c = c_supervised_encoder(dataC)
+            if architecture in ('supervised-vae', 'vae', 'ae', 'supervised-ae', 'supervised-ve'):
+                encoded_e = e_supervised_encoder(dataE)[0]
+                encoded_m = m_supervised_encoder(dataM)[0]
+                encoded_c = c_supervised_encoder(dataC)[0]
+            else:
+                encoded_e = e_supervised_encoder(dataE)
+                encoded_m = m_supervised_encoder(dataM)
+                encoded_c = c_supervised_encoder(dataC)
             Pred = classifier(encoded_e, encoded_m, encoded_c)
             cl_loss = bce_loss_function(Pred, target.view(-1, 1))
             cl_loss.backward()
@@ -225,11 +303,16 @@ def train_classifier(classifier, classifier_epoch, train_loader, classifier_opti
 
 
 def super_felt_test(x_test_e, x_test_m, x_test_c, y_test, device, final_c_supervised_encoder, final_classifier,
-                    final_e_supervised_encoder, final_m_supervised_encoder, final_scaler_gdsc):
+                    final_e_supervised_encoder, final_m_supervised_encoder, final_scaler_gdsc, architecture):
     x_test_e = torch.FloatTensor(final_scaler_gdsc.transform(x_test_e))
-    encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))
-    encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))
-    encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))
+    if architecture in ('supervised-vae', 'vae', 'ae', 'supervised-ae', 'supervised-ve'):
+        encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))[0]
+        encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))[0]
+        encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))[0]
+    else:
+        encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))
+        encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))
+        encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))
     test_Pred = final_classifier(encoded_test_E, encoded_test_M, encoded_test_C)
     test_y_true = y_test
     test_y_pred = test_Pred.cpu().detach().numpy()

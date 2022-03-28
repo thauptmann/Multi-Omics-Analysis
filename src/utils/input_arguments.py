@@ -18,4 +18,6 @@ def get_cmd_arguments():
     parser.add_argument('--deactivate_elbow_method', default=False, action='store_true')
     parser.add_argument('--deactivate_triplet_loss', default=False, action='store_true')
 
+    parser.add_argument('--noisy', default=False, action='store_true')
+    parser.add_argument('--architecture', default=None, choices=['supervised-ae'])
     return parser.parse_args()
