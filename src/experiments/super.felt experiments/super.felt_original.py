@@ -640,10 +640,10 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
         fold_save_path = result_path / str(fold_number)
         fold_save_path.mkdir(exist_ok=True)
 
-        save_visualisation(fold_save_path, e_encoded, test, 'drug_response_e')
-        save_visualisation(fold_save_path, m_encoded, test, 'drug_response_m')
-        save_visualisation(fold_save_path, c_encoded, test, 'drug_response_c')
-        save_visualisation(fold_save_path, all_encoded, test, 'drug_response_concat')
+        save_visualisation(fold_save_path, e_encoded.cpu(), test, 'drug_response_e')
+        save_visualisation(fold_save_path, m_encoded.cpu(), test, 'drug_response_m')
+        save_visualisation(fold_save_path, c_encoded.cpu(), test, 'drug_response_c')
+        save_visualisation(fold_save_path, all_encoded.cpu(), test, 'drug_response_concat')
         print(fold_number)
         fold_number += 1
 
