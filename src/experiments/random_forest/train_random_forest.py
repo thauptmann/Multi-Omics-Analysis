@@ -10,7 +10,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, average_precision_score
 
 from utils.searchspaces import create_random_forest_search_space
 best_auroc = -1
@@ -38,7 +38,9 @@ def train_validate_hyperparameter_set(x_train_val_concat, y_train_val, parameter
     skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     all_validation_aurocs = []
     max_depth = parameterization['max_depth']
-    n_estimator = parameterization['n_estimator']
+    if max_depth == 0:
+        max_depth = None
+    n_estimators = parameterization['n_estimators']
     min_samples_split = parameterization['min_samples_split']
     min_samples_leaf = parameterization['min_samples_leaf']
 
@@ -53,11 +55,11 @@ def train_validate_hyperparameter_set(x_train_val_concat, y_train_val, parameter
         X_trainE = scalerGDSC.fit_transform(X_train_concat)
         x_val_e = scalerGDSC.transform(x_val_concat)
 
-        random_forest = RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimator,
+        random_forest = RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimators,
                                                min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split)
         random_forest.fit(X_trainE, Y_train)
         predictions = random_forest.predict(x_val_e)
-        val_auroc = roc_auc_score(predictions, y_val)
+        val_auroc = roc_auc_score(y_val, predictions)
         all_validation_aurocs.append(val_auroc)
 
         if iteration < parameter['cv_splits']:
@@ -100,7 +102,31 @@ def optimise_random_forest_parameter(search_iterations, x_train_val_concat, y_tr
 
 def compute_random_forest_metrics(x_test_concat, x_train_val_concat, best_parameters, extern_concat,
                                   extern_r, y_test, y_train_val):
-    pass
+    # retrain best
+    max_depth = best_parameters['max_depth']
+    n_estimator = best_parameters['n_estimator']
+    min_samples_split = best_parameters['min_samples_split']
+    min_samples_leaf = best_parameters['min_samples_leaf']
+
+    final_scaler = StandardScaler()
+    x_train_val_concat = final_scaler.fit_transform(x_train_val_concat)
+    x_test_concat = final_scaler.fit_transform(x_test_concat)
+    extern_concat = final_scaler.fit_transform(extern_concat)
+
+    random_forest = RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimator,
+                                           min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split)
+    random_forest.fit(x_train_val_concat, y_train_val)
+
+    # Test
+    test_Pred = random_forest.predict(x_test_concat)
+    test_AUC = roc_auc_score(y_test, test_Pred)
+    test_AUCPR = average_precision_score(y_test, test_Pred)
+
+    # Extern
+    extern_Pred = random_forest.predict(extern_concat)
+    extern_AUC = roc_auc_score(extern_r, extern_Pred)
+    extern_AUCPR = average_precision_score(extern_r, extern_Pred)
+    return extern_AUC, extern_AUCPR, test_AUC, test_AUCPR
 
 
 

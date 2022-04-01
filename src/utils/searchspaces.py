@@ -126,10 +126,10 @@ def create_super_felt_search_space():
 
 
 def create_random_forest_search_space():
-    search_space = {
+    search_space = [
         {'name': 'max_depth', 'values': parameter['max_depth'], 'type': 'choice', 'value_type': 'int'},
         {'name': 'n_estimators', 'values': parameter['n_estimators'], 'type': 'choice', 'value_type': 'int'},
         {'name': 'min_samples_split', 'values': parameter['min_samples_split'], 'type': 'choice', 'value_type': 'int'},
         {'name': 'min_samples_leaf', 'values': parameter['min_samples_leaf'], 'type': 'choice', 'value_type': 'int'}
-    }
+    ]
     return search_space

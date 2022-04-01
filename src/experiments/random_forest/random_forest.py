@@ -29,7 +29,7 @@ def random_forest(experiment_name, drug_name, extern_dataset_name, search_iterat
     torch.cuda.manual_seed_all(random_seed)
 
     data_path = Path('..', '..', '..', 'data')
-    result_path = Path('..', '..', '..', 'results', 'super.felt', drug_name, experiment_name)
+    result_path = Path('..', '..', '..', 'results', 'random_forest', drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
     result_file = open(result_path / 'results.txt', 'w')
     gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
@@ -43,8 +43,8 @@ def random_forest(experiment_name, drug_name, extern_dataset_name, search_iterat
     extern_auprc_list = []
     start_time = time.time()
 
-    gdsc_concat = pd.concat([gdsc_e, gdsc_m, gdsc_c], axis=1)
-    extern_concat = pd.concat([extern_e, extern_m, extern_c], axis=1)
+    gdsc_concat = np.concatenate([gdsc_e, gdsc_m, gdsc_c], axis=1)
+    extern_concat = np.concatenate([extern_e, extern_m, extern_c], axis=1)
 
     skf_outer = StratifiedKFold(n_splits=parameter['cv_splits'], random_state=random_seed, shuffle=True)
     iteration = 0
@@ -60,7 +60,9 @@ def random_forest(experiment_name, drug_name, extern_dataset_name, search_iterat
                                                                        y_train_val)
         external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_random_forest_metrics(x_test_concat,
                                                                                            x_train_val_concat,
-                                                                                           best_parameters, extern_concat,
+                                                                                           best_parameters,
+                                                                                           extern_concat,
+                                                                                           extern_r,
                                                                                            y_test, y_train_val)
 
         test_auc_list.append(test_AUC)

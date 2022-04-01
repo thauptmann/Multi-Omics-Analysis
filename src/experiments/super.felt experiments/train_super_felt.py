@@ -209,8 +209,7 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
     sampler = create_sampler(y_train_val)
     final_scaler = StandardScaler()
-    final_scaler.fit(x_train_val_e)
-    x_train_val_e = final_scaler.transform(x_train_val_e)
+    x_train_val_e = final_scaler.fit_transform(x_train_val_e)
     trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(x_train_val_e), torch.FloatTensor(x_train_val_m),
                                                   torch.FloatTensor(x_train_val_c),
                                                   torch.FloatTensor(y_train_val.astype(int)))
