@@ -16,7 +16,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, feature_selection
 from utils import multi_omics_data
 from models.super_felt_model import Encoder, OnlineTestTriplet, AdaptedClassifier, \
-    SupervisedVariationalEncoder, AutoEncoder, VariationalAutoEncoder, NonLinearClassifier, Classifier
+    SupervisedVariationalEncoder, AutoEncoder, VariationalAutoEncoder, Classifier
 
 from utils.choose_gpu import get_free_gpu
 
@@ -78,13 +78,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
     np.random.seed(random_seed)
     torch.cuda.manual_seed_all(random_seed)
 
-    triplet_selector = get_triplet_selector(marg, semi_hard_triplet)
+    triplet_selector = get_triplet_selector(marg)
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=marg, p=2)
 
     if classifier_type == 'adapted':
         classifier = AdaptedClassifier
-    elif classifier_type == 'non-linear':
-        classifier = NonLinearClassifier
     else:
         classifier = Classifier
 
