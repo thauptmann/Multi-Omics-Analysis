@@ -63,7 +63,6 @@ def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, d
         x_train_m = x_m[train_index]
         x_train_c = x_c[train_index]
         y_train = y[train_index]
-
         x_validate_e = x_e[validate_index]
         x_validate_m = x_m[validate_index]
         x_validate_c = x_c[validate_index]

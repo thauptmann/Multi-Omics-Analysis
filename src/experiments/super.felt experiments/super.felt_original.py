@@ -4,6 +4,8 @@ from pathlib import Path
 
 import sklearn.preprocessing as sk
 import yaml
+from matplotlib import pyplot as plt
+from sklearn.manifold import TSNE
 from sklearn.metrics import roc_auc_score, average_precision_score
 from torch import optim
 import numpy as np
@@ -11,13 +13,13 @@ import torch
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import WeightedRandomSampler
 from tqdm import tqdm
+import seaborn as sns
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.network_training_util import calculate_mean_and_std_auc, get_triplet_selector, feature_selection
 from utils import multi_omics_data
 from models.super_felt_model import Encoder, OnlineTestTriplet, AdaptedClassifier, \
     SupervisedVariationalEncoder, AutoEncoder, VariationalAutoEncoder, NonLinearClassifier, Classifier
-
 from utils.choose_gpu import get_free_gpu
 
 drugs = {
@@ -44,13 +46,14 @@ sigmoid = torch.nn.Sigmoid()
 
 hyperparameters_set_list = [
     {'E_dr': 0.1, 'C_dr': 0.1, 'Cwd': 0.0, 'Ewd': 0.0},
-    {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.01},
-    {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.05},
-    {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.01, 'Ewd': 0.01},
-    {'E_dr': 0.5, 'C_dr': 0.7, 'Cwd': 0.15, 'Ewd': 0.1},
-    {'E_dr': 0.3, 'C_dr': 0.5, 'Cwd': 0.01, 'Ewd': 0.01},
-    {'E_dr': 0.4, 'C_dr': 0.4, 'Cwd': 0.01, 'Ewd': 0.01},
-    {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.1, 'Ewd': 0.1}]
+   # {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.01},
+  #  {'E_dr': 0.3, 'C_dr': 0.3, 'Cwd': 0.01, 'Ewd': 0.05},
+   # {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.01, 'Ewd': 0.01},
+   # {'E_dr': 0.5, 'C_dr': 0.7, 'Cwd': 0.15, 'Ewd': 0.1},
+  #  {'E_dr': 0.3, 'C_dr': 0.5, 'Cwd': 0.01, 'Ewd': 0.01},
+   # {'E_dr': 0.4, 'C_dr': 0.4, 'Cwd': 0.01, 'Ewd': 0.01},
+   # {'E_dr': 0.5, 'C_dr': 0.5, 'Cwd': 0.1, 'Ewd': 0.1}
+    ]
 
 E_Supervised_Encoder_epoch = 10
 C_Supervised_Encoder_epoch = 5
@@ -65,7 +68,7 @@ def kl_loss_function(mu, log_var):
 
 
 def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, noisy, architecture, classifier_type,
-               semi_hard_triplet):
+               all_latent):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -77,7 +80,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     torch.cuda.manual_seed_all(random_seed)
-
+    semi_hard_triplet = False
     triplet_selector = get_triplet_selector(marg, semi_hard_triplet)
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=marg, p=2)
 
@@ -125,9 +128,11 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
         mse = torch.nn.MSELoss()
         BCE_loss_fun = torch.nn.BCEWithLogitsLoss()
     cv_splits = 5
+    fold_number = 0
     skf_outer = StratifiedKFold(n_splits=cv_splits, random_state=random_seed, shuffle=True)
     for train_index_outer, test_index in tqdm(skf_outer.split(GDSCE, GDSCR), total=skf_outer.get_n_splits(),
                                               desc=" Outer k-fold"):
+
         X_train_valE = GDSCE.to_numpy()[train_index_outer]
         X_testE = GDSCE.to_numpy()[test_index]
         X_train_valM = GDSCM.to_numpy()[train_index_outer]
@@ -164,8 +169,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                 sampler = WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight),
                                                 replacement=True)
                 scalerGDSC = sk.StandardScaler()
-                scalerGDSC.fit(X_trainE)
-                X_trainE = scalerGDSC.transform(X_trainE)
+                X_trainE = scalerGDSC.fit_transform(X_trainE)
                 X_valE = torch.FloatTensor(scalerGDSC.transform(X_valE)).to(device)
                 trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(X_trainE), torch.FloatTensor(X_trainM),
                                                               torch.FloatTensor(X_trainC),
@@ -395,7 +399,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                         test_Pred = sigmoid(test_Pred)
                         # print(test_Pred)
                         val_AUC = roc_auc_score(Y_val, test_Pred.cpu().detach().numpy())
-                print(f'validation auroc: {val_AUC}')
 
                 all_validation_aurocs.append(val_AUC)
 
@@ -618,6 +621,32 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
 
         final_C_Supervised_Encoder.eval()
 
+        X_testE = torch.FloatTensor(final_scalerGDSC.transform(X_testE))
+        if not all_latent:
+            with torch.no_grad():
+                e_encoded = final_E_Supervised_Encoder(torch.FloatTensor(X_testE))
+                m_encoded = final_M_Supervised_Encoder(torch.FloatTensor(X_testM))
+                c_encoded = final_C_Supervised_Encoder(torch.FloatTensor(X_testC))
+                test = Y_test
+            all_encoded = torch.cat((e_encoded, m_encoded, c_encoded), 1)
+        else:
+            with torch.no_grad():
+                e_encoded = final_E_Supervised_Encoder(torch.FloatTensor(GDSCE.to_numpy()))
+                m_encoded = final_M_Supervised_Encoder(torch.FloatTensor(GDSCM.to_numpy()))
+                c_encoded = final_C_Supervised_Encoder(torch.FloatTensor(GDSCC.to_numpy()))
+                test = GDSCR
+            all_encoded = torch.cat((e_encoded, m_encoded, c_encoded), 1)
+
+        fold_save_path = result_path / str(fold_number)
+        fold_save_path.mkdir(exist_ok=True)
+
+        save_visualisation(fold_save_path, e_encoded, test, 'drug_response_e')
+        save_visualisation(fold_save_path, m_encoded, test, 'drug_response_m')
+        save_visualisation(fold_save_path, c_encoded, test, 'drug_response_c')
+        save_visualisation(fold_save_path, all_encoded, test, 'drug_response_concat')
+        print(fold_number)
+        fold_number += 1
+
         # train classifier
         for cl_epoch in range(Classifier_epoch):
             final_Clas.train()
@@ -642,7 +671,6 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
             final_Clas.eval()
 
         # Test
-        X_testE = torch.FloatTensor(final_scalerGDSC.transform(X_testE))
         encoded_test_E = final_E_Supervised_Encoder.encode(torch.FloatTensor(X_testE).to(device))
         encoded_test_M = final_M_Supervised_Encoder.encode(torch.FloatTensor(X_testM).to(device))
         encoded_test_C = final_C_Supervised_Encoder.encode(torch.FloatTensor(X_testC).to(device))
@@ -694,6 +722,20 @@ def generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target, trip
     return triplets
 
 
+def save_visualisation(save_path, data, targets, target_name):
+    data_embedded = TSNE(n_components=2, learning_rate='auto', init='random').fit_transform(data)
+    create_plots(save_path, targets, data_embedded, target_name)
+    plt.clf()
+
+
+def create_plots(save_path, targets, tsne_embedded, target_name):
+    sns.set_theme()
+    scatter_plot = sns.scatterplot(x=tsne_embedded[:, 0], y=tsne_embedded[:, 1],
+                                   palette='colorblind', legend=False, s=25, hue=targets)
+    plt.legend(['No Response', 'Response'])
+    scatter_plot.get_figure().savefig(save_path / f'tsne_scatter_plot_{target_name}.pdf')
+
+
 with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
     parameter = yaml.safe_load(stream)
 
@@ -707,15 +749,15 @@ if __name__ == '__main__':
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     parser.add_argument('--classifier_type', default='super_felt', choices=['adapted', 'non-linear'])
-    parser.add_argument('--semi_hard_triplet', default=False, action='store_true')
+    parser.add_argument('--all_latent', default=False, action='store_true')
 
     args = parser.parse_args()
 
     if args.drug == 'all':
         for drug, extern_dataset in drugs.items():
             super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.noisy, args.architecture,
-                       args.classifier_type, args.semi_hard_triplet)
+                       args.classifier_type, args.all_latent)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.noisy, args.architecture,
-                   args.classifier_type, args.semi_hard_triplet)
+                   args.classifier_type, args.all_latent)
