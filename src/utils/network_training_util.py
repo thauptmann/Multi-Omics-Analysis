@@ -131,9 +131,8 @@ def create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, p
     return loader
 
 
-def get_triplet_selector(margin, semi_hard_triplet):
-    return [SemihardNegativeTripletSelector(margin), HardestNegativeTripletSelector(margin)] if semi_hard_triplet \
-        else AllTripletSelector()
+def get_triplet_selector(margin):
+    return  AllTripletSelector()
 
 
 def get_loss_fn(margin, gamma, triplet_selector, semi_hard_triplet):
@@ -170,7 +169,7 @@ def create_sampler(y_train):
 
 
 def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_loader, trip_loss_fun,
-                  semi_hard_triplet, omic_number, architecture, noisy=False):
+                  omic_number, architecture, noisy=False):
     if architecture in ('vae', 'supervised-vae'):
         mse = torch.nn.MSELoss(reduction='sum')
     else:
@@ -195,8 +194,7 @@ def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_lo
                     loss = mse(reconstruction, original_data) + kl_loss_function(mu, log_var)
                 elif architecture == 'supervised-ae':
                     encoded_data, reconstruction = encoder(single_omic_data)
-                    triplets = generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target,
-                                                 triplet_selector)
+                    triplets = triplet_selector.get_triplets(encoded_data, target)
                     E_triplets_loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
                                                     encoded_data[triplets[:, 1], :],
                                                     encoded_data[triplets[:, 2], :])
@@ -204,8 +202,7 @@ def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_lo
                     loss = E_triplets_loss + E_reconstruction_loss
                 elif architecture == 'supervised-vae':
                     encoded_data, reconstruction, mu, log_var = encoder(single_omic_data)
-                    triplets = generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target,
-                                                 triplet_selector)
+                    triplets = triplet_selector.get_triplets(encoded_data, target)
                     E_triplets_loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
                                                     encoded_data[triplets[:, 1], :],
                                                     encoded_data[triplets[:, 2], :])
@@ -213,16 +210,14 @@ def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_lo
                     loss = E_triplets_loss + E_reconstruction_loss + kl_loss_function(mu, log_var)
                 elif architecture == 'supervised-ve':
                     encoded_data, mu, log_var = encoder(single_omic_data)
-                    triplets = generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target,
-                                                 triplet_selector)
+                    triplets = triplet_selector.get_triplets(encoded_data, target)
                     loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
                                          encoded_data[triplets[:, 1], :],
                                          encoded_data[triplets[:, 2], :]) + \
                            kl_loss_function(mu, log_var)
                 else:
                     encoded_data = encoder(single_omic_data)
-                    triplets = generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target,
-                                                 triplet_selector)
+                    triplets = triplet_selector.get_triplets(encoded_data, target)
                     loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
                                          encoded_data[triplets[:, 1], :],
                                          encoded_data[triplets[:, 2], :])
@@ -231,14 +226,8 @@ def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_lo
     encoder.eval()
 
 
-def generate_triplets(encoded_data, last_epochs, semi_hard_triplet, target, triplet_selector):
-    if not last_epochs and semi_hard_triplet:
-        triplets = triplet_selector[0].get_triplets(encoded_data, target)
-    elif last_epochs and semi_hard_triplet:
-        triplets = triplet_selector[1].get_triplets(encoded_data, target)
-    else:
+def generate_triplets(encoded_data, last_epochs,  target, triplet_selector):
         triplets = triplet_selector.get_triplets(encoded_data, target)
-    return triplets
 
 
 def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,

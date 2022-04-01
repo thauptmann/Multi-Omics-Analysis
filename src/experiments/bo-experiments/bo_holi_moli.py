@@ -16,7 +16,7 @@ from utils.experiment_utils import create_generation_strategy
 from utils.input_arguments import get_cmd_arguments
 from utils.searchspaces import create_holi_moli_search_space
 from utils.choose_gpu import get_free_gpu
-from training_bo_holi_moli import train_final, train_and_validate, reset_best_auroc
+from training_bo_holi_moli import train_final, optimise_hyperparameter, reset_best_auroc
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc, test
@@ -48,8 +48,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_drug_data_with_elbow(data_path, drug_name, extern_dataset_name)
 
-    moli_search_space = create_holi_moli_search_space(combination, small_search_space, semi_hard_triplet,
-                                                      deactivate_triplet_loss)
+    moli_search_space = create_holi_moli_search_space(combination)
 
     torch.manual_seed(parameter['random_seed'])
     np.random.seed(parameter['random_seed'])
@@ -80,12 +79,12 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         y_test = gdsc_r[test_index]
 
         reset_best_auroc()
-        evaluation_function = lambda parameterization: train_and_validate(parameterization,
-                                                                          x_train_validate_e, x_train_validate_m,
-                                                                          x_train_validate_c,
-                                                                          y_train_validate, device, pin_memory,
-                                                                          deactivate_skip_bad_iterations,
-                                                                          semi_hard_triplet, architecture, noisy)
+        evaluation_function = lambda parameterization: optimise_hyperparameter(parameterization,
+                                                                               x_train_validate_e, x_train_validate_m,
+                                                                               x_train_validate_c,
+                                                                               y_train_validate, device, pin_memory,
+                                                                               deactivate_skip_bad_iterations,
+                                                                               semi_hard_triplet, architecture, noisy)
         generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, parameter['random_seed'])
 
         best_parameters, values, experiment, model = optimize(

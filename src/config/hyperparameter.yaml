@@ -48,11 +48,6 @@ all_triplet_batch_size_choices:
     - 16
     - 32
 
-batch_size_hard_triplets_choices:
-    - 32
-    - 64
-    - 128
-
 epoch_lower: 2
 epoch_upper: 20
 cv_splits: 5
@@ -65,3 +60,36 @@ drugs:
     Erlotinib: PDX
     Cetuximab: PDX
     Paclitaxel: PDX
+
+max_depth:
+    -10
+    -20
+    -30
+    -40
+    -50
+    -75
+    -100
+    -null
+
+n_estimators:
+    -100
+    -250
+    -500
+    -800
+    -1500
+    -2500
+    -5000
+
+min_samples_split:
+    -2
+    -5
+    -10
+    -15
+    -20
+
+min_samples_leaf:
+    -1
+    -2
+    -5
+    -10
+    -15

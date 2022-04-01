@@ -16,23 +16,6 @@ class Classifier(nn.Module):
         return output
 
 
-class NonLinearClassifier(nn.Module):
-    def __init__(self, input_dim, drop_rate):
-        super(NonLinearClassifier, self).__init__()
-        half_input_dim = int(0.5 * input_dim)
-        self.model = torch.nn.Sequential(
-            nn.Dropout(drop_rate),
-            nn.Linear(input_dim, half_input_dim),
-            nn.ReLU(),
-            nn.Dropout(drop_rate),
-            nn.Linear(half_input_dim, 1)
-        )
-
-    def forward(self, encoded_e, encoded_m, encoded_c):
-        integrated_test_omics = torch.cat((encoded_e, encoded_m, encoded_c), 1)
-        return self.model(integrated_test_omics)
-
-
 class AdaptedClassifier(nn.Module):
     def __init__(self, input_dim, drop_rate):
         super(AdaptedClassifier, self).__init__()

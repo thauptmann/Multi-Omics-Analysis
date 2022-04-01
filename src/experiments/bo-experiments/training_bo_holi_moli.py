@@ -18,8 +18,8 @@ def reset_best_auroc():
     best_auroc = 0
 
 
-def train_and_validate(parameterization, x_e, x_m, x_c, y, device, pin_memory, deactivate_skip_bad_iterations,
-                       semi_hard_triplet, architecture, noisy):
+def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory, deactivate_skip_bad_iterations,
+                            semi_hard_triplet, architecture, noisy):
     combination = parameterization['combination']
     mini_batch = parameterization['mini_batch']
     h_dim1 = parameterization['h_dim1']

@@ -7,12 +7,12 @@ import yaml
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
 
+
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils import multi_omics_data
-from utils.network_training_util import test, calculate_mean_and_std_auc, feature_selection
+from utils.network_training_util import test, calculate_mean_and_std_auc
 
 from utils.choose_gpu import get_free_gpu
-from training_bo_holi_moli import train_final
 
 with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
     parameter = yaml.safe_load(stream)
@@ -38,16 +38,16 @@ def rerun_final_architecture(method_name, experiment_name, gpu_number, drug_name
         pin_memory = False
 
     if experiment_name is None:
-        result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', drug_name, method_name)
+        result_path = Path('', '../..', '..', 'results', 'bayesian_optimisation', drug_name, method_name)
     else:
-        result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', drug_name, experiment_name)
+        result_path = Path('', '../..', '..', 'results', 'bayesian_optimisation', drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
 
     result_file = open(result_path / 'rerun_results.txt', 'w')
     result_file.write(f"Start for {drug_name}\n")
     print(f"Start for {drug_name}")
 
-    data_path = Path('..', '..', '..', 'data')
+    data_path = Path('', '../..', '..', 'data')
     if deactivate_elbow_method:
         gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
             = multi_omics_data.load_drug_data(data_path, drug_name, extern_dataset_name)
@@ -114,7 +114,7 @@ if __name__ == '__main__':
 
     p = Path('../results')
     logfile_name = 'results.txt'
-    cv_result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation')
+    cv_result_path = Path('', '../..', '..', 'results', 'bayesian_optimisation')
 
     drug_paths = [x for x in cv_result_path.iterdir()]
     for drug_path in drug_paths:
