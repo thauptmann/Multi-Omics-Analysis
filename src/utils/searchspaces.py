@@ -133,3 +133,7 @@ def create_random_forest_search_space():
         {'name': 'min_samples_leaf', 'values': parameter['min_samples_leaf'], 'type': 'choice', 'value_type': 'int'}
     ]
     return search_space
+
+
+def create_momi_search_space():
+    pass
