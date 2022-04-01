@@ -624,16 +624,16 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
         X_testE = torch.FloatTensor(final_scalerGDSC.transform(X_testE))
         if not all_latent:
             with torch.no_grad():
-                e_encoded = final_E_Supervised_Encoder(torch.FloatTensor(X_testE).to(device))
-                m_encoded = final_M_Supervised_Encoder(torch.FloatTensor(X_testM).to(device))
-                c_encoded = final_C_Supervised_Encoder(torch.FloatTensor(X_testC).to(device))
+                e_encoded = final_E_Supervised_Encoder.encode(torch.FloatTensor(X_testE).to(device))
+                m_encoded = final_M_Supervised_Encoder.encode(torch.FloatTensor(X_testM).to(device))
+                c_encoded = final_C_Supervised_Encoder.encode(torch.FloatTensor(X_testC).to(device))
                 test = Y_test
             all_encoded = torch.cat((e_encoded, m_encoded, c_encoded), 1)
         else:
             with torch.no_grad():
-                e_encoded = final_E_Supervised_Encoder(torch.FloatTensor(final_scalerGDSC.transform(GDSCE.to_numpy())).to(device))
-                m_encoded = final_M_Supervised_Encoder(torch.FloatTensor(GDSCM.to_numpy()).to(device))
-                c_encoded = final_C_Supervised_Encoder(torch.FloatTensor(GDSCC.to_numpy()).to(device))
+                e_encoded = final_E_Supervised_Encoder.encode(torch.FloatTensor(final_scalerGDSC.transform(GDSCE.to_numpy())).to(device))
+                m_encoded = final_M_Supervised_Encoder.encode(torch.FloatTensor(GDSCM.to_numpy()).to(device))
+                c_encoded = final_C_Supervised_Encoder.encode(torch.FloatTensor(GDSCC.to_numpy()).to(device))
                 test = GDSCR
             all_encoded = torch.cat((e_encoded, m_encoded, c_encoded), 1)
 
