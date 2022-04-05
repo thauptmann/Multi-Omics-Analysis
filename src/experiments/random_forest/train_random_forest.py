@@ -122,7 +122,7 @@ def compute_random_forest_metrics(x_test_concat, x_train_val_concat, best_parame
     random_forest.fit(x_train_val_concat, y_train_val)
 
     # Test
-    test_Pred = random_forest.predict_proba(x_test_concat)
+    test_Pred = random_forest.predict_proba(x_test_concat)[:, 1]
     test_AUC = roc_auc_score(y_test, test_Pred)
     test_AUCPR = average_precision_score(y_test, test_Pred)
 
