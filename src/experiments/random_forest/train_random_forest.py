@@ -11,6 +11,8 @@ from tqdm import tqdm
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score, average_precision_score
 
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+
 from utils.searchspaces import create_random_forest_search_space
 best_auroc = -1
 with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:

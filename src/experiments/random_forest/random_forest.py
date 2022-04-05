@@ -2,7 +2,6 @@ import argparse
 import sys
 import time
 
-import pandas as pd
 import yaml
 import torch
 from pathlib import Path
@@ -97,7 +96,6 @@ if __name__ == '__main__':
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     parser.add_argument('--search_iterations', default=200, type=int)
-    parser.add_argument('--sobol_iterations', default=50, type=int)
 
     args = parser.parse_args()
 
