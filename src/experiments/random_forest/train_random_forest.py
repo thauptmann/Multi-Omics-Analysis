@@ -61,7 +61,7 @@ def train_validate_hyperparameter_set(x_train_val_concat, y_train_val, parameter
                                                min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split,
                                                n_jobs=-1)
         random_forest.fit(X_train_concat, Y_train)
-        predictions = random_forest.predict_proba(x_val_concat)
+        predictions = random_forest.predict_proba(x_val_concat)[:, 1]
         val_auroc = roc_auc_score(y_val, predictions)
         all_validation_aurocs.append(val_auroc)
 

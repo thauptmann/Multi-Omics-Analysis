@@ -81,7 +81,7 @@ def random_forest(experiment_name, drug_name, extern_dataset_name, search_iterat
     end_time = time.time()
     result_file.write(f'\tMinutes needed: {round((end_time - start_time) / 60)}')
     write_results_to_file(drug_name, extern_auc_list, extern_auprc_list, result_file, test_auc_list, test_auprc_list)
-    save_auroc_with_variance_plots(objectives_list, result_path, 'final', sobol_iterations)
+    save_auroc_with_variance_plots(objectives_list, result_path, 'final', search_iterations)
     positive_extern = np.count_nonzero(extern_r == 1)
     negative_extern = np.count_nonzero(extern_r == 0)
     no_skill_prediction_auprc = positive_extern / (positive_extern + negative_extern)
