@@ -58,7 +58,8 @@ def train_validate_hyperparameter_set(x_train_val_concat, y_train_val, parameter
         x_val_e = scalerGDSC.transform(x_val_concat)
 
         random_forest = RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimators,
-                                               min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split)
+                                               min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split,
+                                               n_jobs=-1)
         random_forest.fit(X_trainE, Y_train)
         predictions = random_forest.predict(x_val_e)
         val_auroc = roc_auc_score(y_val, predictions)
@@ -116,7 +117,8 @@ def compute_random_forest_metrics(x_test_concat, x_train_val_concat, best_parame
     extern_concat = final_scaler.fit_transform(extern_concat)
 
     random_forest = RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimator,
-                                           min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split)
+                                           min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split,
+                                           n_jobs=-1)
     random_forest.fit(x_train_val_concat, y_train_val)
 
     # Test
