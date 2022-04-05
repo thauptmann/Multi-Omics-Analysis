@@ -3,8 +3,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 from ax import Models, optimize
-from ax.modelbridge.generation_node import GenerationStep
-from ax.modelbridge.generation_strategy import GenerationStrategy
+from ax.modelbridge.generation_strategy import GenerationStrategy, GenerationStep
 from scipy.stats import sem
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
