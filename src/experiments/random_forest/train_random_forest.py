@@ -107,7 +107,7 @@ def compute_random_forest_metrics(x_test_concat, x_train_val_concat, best_parame
                                   extern_r, y_test, y_train_val):
     # retrain best
     max_depth = best_parameters['max_depth']
-    n_estimator = best_parameters['n_estimator']
+    n_estimators = best_parameters['n_estimators']
     min_samples_split = best_parameters['min_samples_split']
     min_samples_leaf = best_parameters['min_samples_leaf']
 
@@ -116,7 +116,7 @@ def compute_random_forest_metrics(x_test_concat, x_train_val_concat, best_parame
     x_test_concat = final_scaler.fit_transform(x_test_concat)
     extern_concat = final_scaler.fit_transform(extern_concat)
 
-    random_forest = RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimator,
+    random_forest = RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimators,
                                            min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split,
                                            n_jobs=-1)
     random_forest.fit(x_train_val_concat, y_train_val)
