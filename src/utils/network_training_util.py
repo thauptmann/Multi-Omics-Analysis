@@ -76,7 +76,7 @@ class BceWithTripletsToss:
         prediction = torch.squeeze(predictions[0])
         zt = predictions[1]
         triplets = self.triplet_selector.get_triplets(zt, target)
-        target = target.view(-1, 1)
+        target = torch.squeeze(target.view(-1, 1))
         loss = self.gamma * self.trip_criterion(zt[triplets[:, 0], :], zt[triplets[:, 1], :],
                                                 zt[triplets[:, 2], :]) + self.bce_with_logits(prediction, target)
         return loss
