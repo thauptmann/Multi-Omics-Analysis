@@ -72,7 +72,7 @@ class BceWithTripletsToss:
         self.bce_with_logits = torch.nn.BCEWithLogitsLoss()
         super(BceWithTripletsToss, self).__init__()
 
-    def __call__(self, predictions, target, last_epoch):
+    def __call__(self, predictions, target):
         prediction = predictions[0]
         zt = predictions[1]
         triplets = self.triplet_selector.get_triplets(zt, target)
