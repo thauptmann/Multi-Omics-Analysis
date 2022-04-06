@@ -12,9 +12,6 @@ def create_holi_moli_search_space(combination):
     else:
         combination_parameter = {'name': 'combination', 'value': combination, 'type': 'fixed', "value_type": "int"}
 
-    gamma = {'name': 'gamma', "values": parameter['gamma_choices'], "value_type": "float", 'type': 'choice'}
-    margin = {'name': 'margin', "values": parameter['margin_choices'], "value_type": "float", 'type': 'choice'}
-
     if combination is None:
         search_space = [
             {'name': 'mini_batch', 'values': parameter['all_triplet_batch_size_choices'], 'value_type': 'int',
@@ -45,8 +42,8 @@ def create_holi_moli_search_space(combination):
              'type': 'choice'},
             {'name': 'weight_decay', "values": parameter['weight_decay_choices'], 'log_scale': True,
              "value_type": "float", 'type': 'choice'},
-            gamma,
-            margin,
+            {'name': 'gamma', "values": parameter['gamma_choices'], "value_type": "float", 'type': 'choice'},
+            {'name': 'margin', "values": parameter['margin_choices'], "value_type": "float", 'type': 'choice'},
             {'name': 'epochs', "bounds": [parameter['epoch_lower'], parameter['epoch_upper']],
              "value_type": "int", 'type': 'range'},
             combination_parameter
@@ -77,8 +74,10 @@ def create_holi_moli_search_space(combination):
                          'type': 'choice'},
                         {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'log_scale': True,
                          "value_type": "float", 'type': 'choice'},
-                        gamma,
-                        margin,
+                        {'name': 'gamma', "values": parameter['gamma_choices'], "value_type": "float",
+                         'type': 'choice'},
+                        {'name': 'margin', "values": parameter['margin_choices'], "value_type": "float",
+                         'type': 'choice'},
                         {'name': 'epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
                          "value_type": "int", 'type': 'range'},
                         combination_parameter
@@ -125,15 +124,23 @@ def create_super_felt_search_space():
     return search_space
 
 
-def create_random_forest_search_space():
-    search_space = [
-        {'name': 'max_depth', 'values': parameter['max_depth'], 'type': 'choice', 'value_type': 'int'},
-        {'name': 'n_estimators', 'values': parameter['n_estimators'], 'type': 'choice', 'value_type': 'int'},
-        {'name': 'min_samples_split', 'values': parameter['min_samples_split'], 'type': 'choice', 'value_type': 'int'},
-        {'name': 'min_samples_leaf', 'values': parameter['min_samples_leaf'], 'type': 'choice', 'value_type': 'int'}
-    ]
-    return search_space
-
-
 def create_momi_search_space():
     pass
+
+
+def create_early_integration_search_space():
+    search_space = [{'name': 'mini_batch', 'values': parameter['all_triplet_batch_size_choices'], 'type': 'choice',
+                     'value_type': 'int'},
+                    {'name': "h_dim", 'values': parameter['dim_choice'], "value_type": "int", 'type': 'choice'},
+                    {'name': "lr", 'values': parameter['learning_rate_choices'], "value_type": "float",
+                     'log_scale': True, 'type': 'choice'},
+                    {'name': "dropout_rate", 'values': parameter['drop_rate_choices'], "value_type": "float",
+                     'type': 'choice'},
+                    {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'log_scale': True,
+                     "value_type": "float", 'type': 'choice'},
+                    {'name': 'gamma', "values": parameter['gamma_choices'], "value_type": "float", 'type': 'choice'},
+                    {'name': 'margin', "values": parameter['margin_choices'], "value_type": "float", 'type': 'choice'},
+                    {'name': 'epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
+                     "value_type": "int", 'type': 'range'},
+                    ]
+    return search_space

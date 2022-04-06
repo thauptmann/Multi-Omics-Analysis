@@ -188,9 +188,21 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                 M_optimizer = optim.Adagrad(M_Supervised_Encoder.parameters(), lr=lrM, weight_decay=Ewd)
                 C_optimizer = optim.Adagrad(C_Supervised_Encoder.parameters(), lr=lrC, weight_decay=Ewd)
 
-                train_Clas = classifier(OE_dim + OM_dim + OC_dim, C_dr)
-                train_Clas.to(device)
-                Cl_optimizer = optim.Adagrad(train_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
+                e_m_c_Clas = classifier(OE_dim + OM_dim + OC_dim, C_dr).to(device)
+                e_classifier = classifier(OE_dim, C_dr).to(device)
+                m_classifier = classifier(OM_dim, C_dr).to(device)
+                c_classifier = classifier(OC_dim, C_dr).to(device)
+                e_m_Clas = classifier(OE_dim + OM_dim, C_dr).to(device)
+                m_c_Clas = classifier(OM_dim + OC_dim, C_dr).to(device)
+                e_c_Clas = classifier(OE_dim + OC_dim, C_dr).to(device)
+
+                Cl_optimizer_e_m_c = optim.Adagrad(e_m_c_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
+                Cl_optimizer_e = optim.Adagrad(e_classifier.parameters(), lr=lrCL, weight_decay=Cwd)
+                Cl_optimizer_m = optim.Adagrad(m_classifier.parameters(), lr=lrCL, weight_decay=Cwd)
+                Cl_optimizer_c = optim.Adagrad(c_classifier.parameters(), lr=lrCL, weight_decay=Cwd)
+                Cl_optimizer_e_m = optim.Adagrad(e_m_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
+                Cl_optimizer_m_c = optim.Adagrad(m_c_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
+                Cl_optimizer_e_c = optim.Adagrad(e_c_Clas.parameters(), lr=lrCL, weight_decay=Cwd)
 
                 # train each Supervised_Encoder with triplet loss
                 for epoch in range(E_Supervised_Encoder_epoch):
@@ -281,7 +293,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                                                 encoded_M[triplets[:, 1], :],
                                                                 encoded_M[triplets[:, 2], :])
                                 M_reconstruction_loss = BCE_loss_fun(reconstruction, originalM)
-                                M_loss = M_triplets_loss + M_reconstruction_loss  + kl_loss_function(mu, log_var)
+                                M_loss = M_triplets_loss + M_reconstruction_loss + kl_loss_function(mu, log_var)
                             elif architecture == 'supervised-ve':
                                 encoded_M, mu, log_var = M_Supervised_Encoder(dataM)
                                 triplets = generate_triplets(encoded_M, last_epochs, semi_hard_triplet, target,
@@ -359,10 +371,16 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                 C_Supervised_Encoder.eval()
 
                 # train classifier
+                empty_tensor = torch.FloatTensor().to(device)
                 for cl_epoch in range(Classifier_epoch):
-                    train_Clas.train()
+                    e_m_c_Clas.train()
+                    e_classifier.train()
+                    m_classifier.train()
+                    c_classifier.train()
+                    e_m_Clas.train()
+                    m_c_Clas.train()
+                    e_c_Clas.train()
                     for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
-                        Cl_optimizer.zero_grad()
                         if torch.mean(target) != 0. and torch.mean(target) != 1.:
                             dataE = dataE.to(device)
                             dataM = dataM.to(device)
@@ -372,30 +390,157 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                             encoded_M = M_Supervised_Encoder.encode(dataM)
                             encoded_C = C_Supervised_Encoder.encode(dataC)
 
-                            Pred = train_Clas(encoded_E, encoded_M, encoded_C)
+                            Cl_optimizer_e_m_c.zero_grad()
+                            Pred_e_m_c = e_m_c_Clas(encoded_E.clone(), encoded_M.clone(), encoded_C.clone())
+                            cl_loss_e_m_c = BCE_loss_fun(Pred_e_m_c, target.view(-1, 1))
+                            cl_loss_e_m_c.backward()
+                            Cl_optimizer_e_m_c.step()
+                    for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
+                        if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                            dataE = dataE.to(device)
+                            dataM = dataM.to(device)
+                            dataC = dataC.to(device)
+                            target = target.to(device)
+                            encoded_E = E_Supervised_Encoder.encode(dataE)
+                            Cl_optimizer_e.zero_grad()
+                            Pred_e = e_classifier(encoded_E.clone(), empty_tensor.clone(), empty_tensor.clone())
+                            cl_loss_e = BCE_loss_fun(Pred_e, target.view(-1, 1).clone())
+                            cl_loss_e.backward()
+                            Cl_optimizer_e.step()
 
-                            cl_loss = BCE_loss_fun(Pred, target.view(-1, 1))
+                    for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
+                        if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                            dataE = dataE.to(device)
+                            dataM = dataM.to(device)
+                            dataC = dataC.to(device)
+                            target = target.to(device)
+                            encoded_M = M_Supervised_Encoder.encode(dataM)
+                            Cl_optimizer_m.zero_grad()
+                            Pred_m = m_classifier(empty_tensor.clone(), encoded_M.clone(), empty_tensor.clone())
+                            cl_loss_m = BCE_loss_fun(Pred_m, target.view(-1, 1).clone())
+                            cl_loss_m.backward()
+                            Cl_optimizer_m.step()
 
-                            cl_loss.backward()
-                            Cl_optimizer.step()
+                    for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
+                        if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                            dataE = dataE.to(device)
+                            dataM = dataM.to(device)
+                            dataC = dataC.to(device)
+                            target = target.to(device)
+                            encoded_C = C_Supervised_Encoder.encode(dataC)
+                            Cl_optimizer_c.zero_grad()
+                            Pred_c = c_classifier(empty_tensor.clone(), empty_tensor.clone(), encoded_C.clone())
+                            cl_loss_c = BCE_loss_fun(Pred_c, target.view(-1, 1).clone())
+                            cl_loss_c.backward()
+                            Cl_optimizer_c.step()
 
-                    with torch.no_grad():
-                        train_Clas.eval()
-                        """
-                            inner validation
-                        """
-                        encoded_val_E = E_Supervised_Encoder.encode(X_valE)
-                        encoded_val_M = M_Supervised_Encoder.encode(torch.FloatTensor(X_valM).to(device))
-                        encoded_val_C = C_Supervised_Encoder.encode(torch.FloatTensor(X_valC).to(device))
+                    for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
+                        if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                            dataE = dataE.to(device)
+                            dataM = dataM.to(device)
+                            target = target.to(device)
+                            encoded_E = E_Supervised_Encoder.encode(dataE)
+                            encoded_M = M_Supervised_Encoder.encode(dataM)
+                            Cl_optimizer_e_c.zero_grad()
+                            Pred_e_m = e_m_Clas(encoded_E.clone(), encoded_M.clone(), empty_tensor.clone())
+                            cl_loss_e_m = BCE_loss_fun(Pred_e_m, target.view(-1, 1).clone())
+                            cl_loss_e_m.backward()
+                            Cl_optimizer_e_c.step()
 
-                        # print(encoded_val_C)
-                        test_Pred = train_Clas(encoded_val_E, encoded_val_M, encoded_val_C)
-                        test_Pred = sigmoid(test_Pred)
-                        # print(test_Pred)
-                        val_AUC = roc_auc_score(Y_val, test_Pred.cpu().detach().numpy())
-                print(f'validation auroc: {val_AUC}')
+                    for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
+                        if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                            dataM = dataM.to(device)
+                            dataC = dataC.to(device)
+                            target = target.to(device)
+                            encoded_M = M_Supervised_Encoder.encode(dataM)
+                            encoded_C = C_Supervised_Encoder.encode(dataC)
+                            Cl_optimizer_e_m.zero_grad()
+                            Pred_m_c = m_c_Clas(empty_tensor.clone(), encoded_M.clone(), encoded_C.clone())
+                            cl_loss_m_c = BCE_loss_fun(Pred_m_c, target.view(-1, 1).clone())
+                            cl_loss_m_c.backward()
+                            Cl_optimizer_e_m.step()
 
-                all_validation_aurocs.append(val_AUC)
+                    for i, (dataE, dataM, dataC, target) in enumerate(trainLoader):
+                        if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                            dataE = dataE.to(device)
+                            dataM = dataM.to(device)
+                            dataC = dataC.to(device)
+                            target = target.to(device)
+                            encoded_E = E_Supervised_Encoder.encode(dataE)
+                            encoded_C = C_Supervised_Encoder.encode(dataC)
+                            Cl_optimizer_m_c.zero_grad()
+                            Pred_e_c = e_c_Clas(encoded_E.clone(), empty_tensor.clone(), encoded_C.clone())
+                            cl_loss_e_c = BCE_loss_fun(Pred_e_c, target.view(-1, 1).clone())
+                            cl_loss_e_c.backward()
+                            Cl_optimizer_m_c.step()
+
+                with torch.no_grad():
+                    e_m_c_Clas.eval()
+                    e_classifier.eval()
+                    m_classifier.eval()
+                    c_classifier.eval()
+                    e_m_Clas.eval()
+                    m_c_Clas.eval()
+                    e_c_Clas.eval()
+                    """
+                        inner validation
+                    """
+                    encoded_val_E = E_Supervised_Encoder.encode(X_valE)
+                    encoded_val_M = M_Supervised_Encoder.encode(torch.FloatTensor(X_valM).to(device))
+                    encoded_val_C = C_Supervised_Encoder.encode(torch.FloatTensor(X_valC).to(device))
+
+                    test_Pred_e_m_c = e_m_c_Clas(encoded_val_E, encoded_val_M, encoded_val_C)
+                    test_Pred_e_m_c_sigmoid = sigmoid(test_Pred_e_m_c)
+                    val_AUC_e_m_c = roc_auc_score(Y_val, test_Pred_e_m_c_sigmoid.cpu().detach().numpy())
+
+                    test_Pred_e = e_classifier(encoded_val_E, empty_tensor, empty_tensor)
+                    test_Pred_e_sigmoid = sigmoid(test_Pred_e)
+                    val_AUC_e = roc_auc_score(Y_val, test_Pred_e_sigmoid.cpu().detach().numpy())
+
+                    test_Pred_m = m_classifier(empty_tensor, encoded_val_M, empty_tensor)
+                    test_Pred_m_sigmoid = sigmoid(test_Pred_m)
+                    val_AUC_m = roc_auc_score(Y_val, test_Pred_m_sigmoid.cpu().detach().numpy())
+
+                    test_Pred_c = c_classifier(empty_tensor, empty_tensor, encoded_val_C)
+                    test_Pred_c_sigmoid = sigmoid(test_Pred_c)
+                    val_AUC_c = roc_auc_score(Y_val, test_Pred_c_sigmoid.cpu().detach().numpy())
+
+                    test_Pred_e_m = e_m_Clas(encoded_val_E, encoded_val_M, empty_tensor)
+                    test_Pred_e_m_sigmoid = sigmoid(test_Pred_e_m)
+                    val_AUC_e_m = roc_auc_score(Y_val, test_Pred_e_m_sigmoid.cpu().detach().numpy())
+
+                    test_Pred_m_c = m_c_Clas(empty_tensor, encoded_val_M, encoded_val_C)
+                    test_Pred_m_c_sigmoid = sigmoid(test_Pred_m_c)
+                    val_AUC_m_c = roc_auc_score(Y_val, test_Pred_m_c_sigmoid.cpu().detach().numpy())
+
+                    test_Pred_e_c = e_c_Clas(encoded_val_E, empty_tensor, encoded_val_C)
+                    test_Pred_e_c_sigmoid = sigmoid(test_Pred_e_c)
+                    val_AUC_e_c = roc_auc_score(Y_val, test_Pred_e_c_sigmoid.cpu().detach().numpy())
+
+                    auroc_list = (val_AUC_e_m_c, val_AUC_e, val_AUC_m, val_AUC_c, val_AUC_e_m,
+                                  val_AUC_m_c,  val_AUC_e_c)
+                    preds_list = (test_Pred_e_m_c, test_Pred_e, test_Pred_m, test_Pred_c,
+                                  test_Pred_e_m, test_Pred_m_c, test_Pred_e_c)
+                    result_list = list()
+
+                    for auroc, preds in zip(auroc_list, preds_list):
+                        if auroc > 0.5:
+                            result_list.append(preds)
+                    mean_pred = torch.mean(torch.stack(result_list), dim=0)
+                    mean_pred_sigmoid = sigmoid(mean_pred)
+                    val_AUC_combined = roc_auc_score(Y_val, mean_pred_sigmoid)
+
+                print(f'val_AUC_e_m_c auroc: {val_AUC_e_m_c}')
+                print(f'val_AUC_e auroc: {val_AUC_e}')
+                print(f'val_AUC_m auroc: {val_AUC_m}')
+                print(f'val_AUC_c auroc: {val_AUC_c}')
+                print(f'val_AUC_e_m auroc: {val_AUC_e_m}')
+                print(f'val_AUC_m_c auroc: {val_AUC_m_c}')
+                print(f'val_AUC_e_c auroc: {val_AUC_e_c}')
+
+                print(f'combined validation auroc: {val_AUC_combined}')
+
+                all_validation_aurocs.append(val_AUC_combined)
 
             val_AUC = np.mean(all_validation_aurocs)
             if val_AUC > best_auroc:
@@ -593,7 +738,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, nois
                                                         encoded_C[triplets[:, 1], :],
                                                         encoded_C[triplets[:, 2], :])
                         C_reconstruction_loss = BCE_loss_fun(reconstruction, originalC)
-                        C_loss = C_triplets_loss + C_reconstruction_loss  + kl_loss_function(mu, log_var)
+                        C_loss = C_triplets_loss + C_reconstruction_loss + kl_loss_function(mu, log_var)
                     elif architecture == 'supervised-ve':
                         encoded_C, mu, log_var = final_C_Supervised_Encoder(dataC)
                         triplets = generate_triplets(encoded_C, last_epochs, semi_hard_triplet, target,

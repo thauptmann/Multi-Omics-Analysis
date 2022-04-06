@@ -9,8 +9,7 @@ from torch import optim
 from torch.utils.data import WeightedRandomSampler
 from tqdm import trange
 
-from siamese_triplet.utils import AllTripletSelector, HardestNegativeTripletSelector, \
-    SemihardNegativeTripletSelector
+from siamese_triplet.utils import AllTripletSelector
 
 sigmoid = torch.nn.Sigmoid()
 
@@ -66,23 +65,17 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last
 
 
 class BceWithTripletsToss:
-    def __init__(self, gamma, triplet_selector, trip_criterion, semi_hard_triplet):
+    def __init__(self, gamma, triplet_selector, trip_criterion):
         self.gamma = gamma
         self.trip_criterion = trip_criterion
         self.triplet_selector = triplet_selector
         self.bce_with_logits = torch.nn.BCEWithLogitsLoss()
-        self.semi_hard_triplet = semi_hard_triplet
         super(BceWithTripletsToss, self).__init__()
 
     def __call__(self, predictions, target, last_epoch):
         prediction = predictions[0]
         zt = predictions[1]
-        if not last_epoch and self.semi_hard_triplet:
-            triplets = self.triplet_selector[0].get_triplets(zt, target)
-        elif last_epoch and self.semi_hard_triplet:
-            triplets = self.triplet_selector[1].get_triplets(zt, target)
-        else:
-            triplets = self.triplet_selector.get_triplets(zt, target)
+        triplets = self.triplet_selector.get_triplets(zt, target)
         target = target.view(-1, 1)
         loss = self.gamma * self.trip_criterion(zt[triplets[:, 0], :], zt[triplets[:, 1], :],
                                                 zt[triplets[:, 2], :]) + self.bce_with_logits(prediction, target)
@@ -131,14 +124,14 @@ def create_data_loader(x_test_e, x_test_m, x_test_c, test_y, train_batch_size, p
     return loader
 
 
-def get_triplet_selector(margin):
-    return  AllTripletSelector()
+def get_triplet_selector():
+    return AllTripletSelector()
 
 
-def get_loss_fn(margin, gamma, triplet_selector, semi_hard_triplet):
+def get_loss_fn(margin, gamma, triplet_selector):
     if triplet_selector is not None and gamma > 0:
         trip_criterion = torch.nn.TripletMarginLoss(margin=margin, p=2)
-        return BceWithTripletsToss(gamma, triplet_selector, trip_criterion, semi_hard_triplet)
+        return BceWithTripletsToss(gamma, triplet_selector, trip_criterion)
     else:
         return torch.nn.BCEWithLogitsLoss()
 
