@@ -73,7 +73,7 @@ class BceWithTripletsToss:
         super(BceWithTripletsToss, self).__init__()
 
     def __call__(self, predictions, target):
-        prediction = predictions[0]
+        prediction = torch.squeeze(predictions[0])
         zt = predictions[1]
         triplets = self.triplet_selector.get_triplets(zt, target)
         target = target.view(-1, 1)
