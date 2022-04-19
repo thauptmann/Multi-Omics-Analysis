@@ -10,7 +10,7 @@ def save_auroc_plots(all_aucs, path, iteration, model_transitions=None):
     file_names = ('all', 'best')
     for y, name in zip((all_aucs, best_aucs), file_names):
         ax = sns.lineplot(x=x, y=y)
-        ax.set(xlabel='Auroc', ylabel='Iteration', title="Model performance vs. # of iterations")
+        ax.set(xlabel='Iteration', ylabel='Auroc', title="Model performance vs. # of iterations")
         if model_transitions is not None and model_transitions > 0:
             ax.vlines(x=model_transitions, ymin=min(y), ymax=max(y), linestyles='dashed')
         ax.get_figure().savefig(str(path / f'{name}_multi-omics_iteration_{iteration}.svg'))
@@ -27,7 +27,7 @@ def save_auroc_with_variance_plots(aucs_list, path, iteration, model_transitions
 
     # best
     ax = sns.lineplot(x=x, y=best_aucs)
-    ax.set(xlabel='Auroc', ylabel='Iteration', title="Model performance vs. # of iterations")
+    ax.set(xlabel='Iteration', ylabel='Auroc', title="Model performance vs. # of iterations")
     if model_transitions is not None and model_transitions > 0:
         ax.vlines(x=model_transitions, ymin=min(best_aucs), ymax=max(best_aucs), linestyles='dashed')
     ax.get_figure().savefig(str(path / f'best_multi-omics_iteration_{iteration}.svg'))
@@ -36,7 +36,7 @@ def save_auroc_with_variance_plots(aucs_list, path, iteration, model_transitions
     # all
     upper_and_lower = np.concatenate([y_upper, y_lower])
     ax = sns.lineplot(x=x, y=mean_aucs)
-    ax.set(xlabel='Auroc', ylabel='Iteration', title="Model performance vs. # of iterations")
+    ax.set(xlabel='Iteration', ylabel='Auroc', title="Model performance vs. # of iterations")
     ax.fill_between(x, y_lower, y_upper, alpha=0.2)
 
     if model_transitions is not None and model_transitions > 0:
