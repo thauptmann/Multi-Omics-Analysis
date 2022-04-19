@@ -144,3 +144,32 @@ def create_early_integration_search_space():
                      "value_type": "int", 'type': 'range'},
                     ]
     return search_space
+
+
+def create_stacking_search_space():
+    search_space = [{'name': 'mini_batch', 'values': parameter['all_triplet_batch_size_choices'], 'type': 'choice',
+                     'value_type': 'int'},
+                    {'name': "h_dim_e_encode", 'values': parameter['dim_choice'],
+                     "value_type": "int", 'type': 'choice'},
+                    {'name': "h_dim_m_encode", 'values': parameter['dim_choice'],
+                     "value_type": "int", 'type': 'choice'},
+                    {'name': "h_dim_c_encode", 'values': parameter['dim_choice'],
+                     "value_type": "int", 'type': 'choice'},
+                    {'name': "lr", 'values': parameter['learning_rate_choices'], "value_type": "float",
+                     'log_scale': True, 'type': 'choice'},
+                    {'name': "dropout_e", 'values': parameter['drop_rate_choices'], "value_type": "float",
+                     'type': 'choice'},
+                    {'name': "dropout_m", 'values': parameter['drop_rate_choices'], "value_type": "float",
+                     'type': 'choice'},
+                    {'name': "dropout_c", 'values': parameter['drop_rate_choices'], "value_type": "float",
+                     'type': 'choice'},
+                    {'name': "dropout_clf", 'values': parameter['drop_rate_choices'], "value_type": "float",
+                     'type': 'choice'},
+                    {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'log_scale': True,
+                     "value_type": "float", 'type': 'choice'},
+                    {'name': 'gamma', "values": parameter['gamma_choices'], "value_type": "float", 'type': 'choice'},
+                    {'name': 'margin', "values": parameter['margin_choices'], "value_type": "float", 'type': 'choice'},
+                    {'name': 'epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
+                     "value_type": "int", 'type': 'range'},
+                    ]
+    return search_space

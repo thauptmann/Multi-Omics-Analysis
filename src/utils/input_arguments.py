@@ -20,6 +20,7 @@ def get_cmd_arguments():
 
     parser.add_argument('--noisy', default=False, action='store_true')
     parser.add_argument('--use_reconstruction_loss', default=False, action='store_true')
+    parser.add_argument('--stack_sigmoid', default=False, action='store_true')
 
     parser.add_argument('--architecture', default=None, choices=['supervised-ae'])
     return parser.parse_args()

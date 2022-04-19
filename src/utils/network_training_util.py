@@ -39,15 +39,15 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last
             prediction = moli_model.forward(data_e, data_m, data_c)
             if gamma > 0:
                 if architecture != 'supervised-ae':
-                    loss = loss_fn(prediction, target, last_epochs)
+                    loss = loss_fn(prediction, target)
                 else:
                     reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
                                           + mse(original_data_c, prediction[4])
-                    triplet_loss = loss_fn(prediction, target, last_epochs)
+                    triplet_loss = loss_fn(prediction, target)
                     loss = reconstruction_loss + triplet_loss
             else:
                 if architecture != 'supervised-ae':
-                    loss = loss_fn(prediction[0], target)
+                    loss = loss_fn(torch.squeeze(prediction[0]), target)
                 else:
                     reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
                                       + mse(original_data_c, prediction[4])
