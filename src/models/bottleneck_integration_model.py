@@ -24,10 +24,10 @@ class Mobi(nn.Module):
         self.m_encoder = Encoder(input_sizes[1], encoding_sizes[1], dropout[1])
         self.c_encoder = Encoder(input_sizes[2], encoding_sizes[2], dropout[2])
 
-        self.e_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[0] + bottleneck_size, 1))
-        self.m_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[1] + bottleneck_size, 1))
-        self.c_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[2] + bottleneck_size, 1))
-        self.bottleneck_classifier = torch.nn.Sequential(nn.Linear(bottleneck_size, 1))
+        self.e_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[0] + bottleneck_size, 1), nn.Sigmoid())
+        self.m_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[1] + bottleneck_size, 1), nn.Sigmoid())
+        self.c_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[2] + bottleneck_size, 1), nn.Sigmoid())
+        self.bottleneck_classifier = torch.nn.Sequential(nn.Linear(bottleneck_size, 1), nn.Sigmoid())
 
         self.bottleneck_layer = nn.Linear(sum(encoding_sizes), bottleneck_size)
         self.stacking_layer = nn.Linear(4, 1)
