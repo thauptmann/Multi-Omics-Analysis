@@ -40,8 +40,6 @@ class Mobi(nn.Module):
         classified_e = self.e_classifier(torch.concat((encoded_e, bottleneck_features), dim=1))
         classified_m = self.m_classifier(torch.concat((encoded_m, bottleneck_features), dim=1))
         classified_c = self.c_classifier(torch.concat((encoded_c, bottleneck_features), dim=1))
-        classified_bottleneck = self.bottleneck_classifier(bottleneck_features)
 
-        stacked_logits = torch.mean(torch.concat((classified_e, classified_m, classified_c,
-                                                  classified_bottleneck), dim=1), dim=1)
+        stacked_logits = torch.mean(torch.concat((classified_e, classified_m, classified_c), dim=1), dim=1)
         return [stacked_logits, torch.concat((encoded_e, encoded_m, encoded_c), dim=1)]
