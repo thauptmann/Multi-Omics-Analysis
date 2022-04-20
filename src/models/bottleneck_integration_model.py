@@ -24,13 +24,12 @@ class Mobi(nn.Module):
         self.m_encoder = Encoder(input_sizes[1], encoding_sizes[1], dropout[1])
         self.c_encoder = Encoder(input_sizes[2], encoding_sizes[2], dropout[2])
 
-        self.e_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[0] + bottleneck_size, 1), nn.Sigmoid())
-        self.m_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[1] + bottleneck_size, 1), nn.Sigmoid())
-        self.c_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[2] + bottleneck_size, 1), nn.Sigmoid())
-        self.bottleneck_classifier = torch.nn.Sequential(nn.Linear(bottleneck_size, 1), nn.Sigmoid())
+        self.e_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[0] + bottleneck_size, 1))
+        self.m_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[1] + bottleneck_size, 1))
+        self.c_classifier = torch.nn.Sequential(nn.Linear(encoding_sizes[2] + bottleneck_size, 1))
+        self.bottleneck_classifier = torch.nn.Sequential(nn.Linear(bottleneck_size, 1))
 
         self.bottleneck_layer = nn.Linear(sum(encoding_sizes), bottleneck_size)
-        self.stacking_layer = nn.Linear(4, 1)
 
     def forward(self, expression, mutation, cna):
         encoded_e = self.e_encoder(expression)
@@ -43,6 +42,6 @@ class Mobi(nn.Module):
         classified_c = self.c_classifier(torch.concat((encoded_c, bottleneck_features), dim=1))
         classified_bottleneck = self.bottleneck_classifier(bottleneck_features)
 
-        stacked_logits = self.stacking_layer(torch.concat((classified_e, classified_m, classified_c,
-                                                           classified_bottleneck), dim=1))
+        stacked_logits = torch.mean(torch.concat((classified_e, classified_m, classified_c,
+                                                  classified_bottleneck), dim=1), dim=1)
         return [stacked_logits, torch.concat((encoded_e, encoded_m, encoded_c), dim=1)]
