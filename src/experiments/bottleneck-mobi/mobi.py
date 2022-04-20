@@ -14,9 +14,9 @@ from sklearn.model_selection import StratifiedKFold
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.experiment_utils import create_generation_strategy
 from utils.input_arguments import get_cmd_arguments
-from utils.searchspaces import create_momi_search_space
+from utils.searchspaces import create_bottleneck_search_space
 from utils.choose_gpu import get_free_gpu
-from training_momi import train_final, optimise_hyperparameter, reset_best_auroc
+from training_mobi import train_final, optimise_hyperparameter, reset_best_auroc
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc, test
@@ -26,10 +26,10 @@ with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
 
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name,
-            sampling_method, drug_name, extern_dataset_name, gpu_number, architecture):
+            sampling_method, drug_name, extern_dataset_name, gpu_number):
     device, pin_memory = create_device(gpu_number)
 
-    result_path = Path('..', '..', '..', 'results', 'bayesian_optimisation', drug_name, experiment_name)
+    result_path = Path('..', '..', '..', 'results', 'mobi', drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
 
     file_mode = 'a' if load_checkpoint else 'w'
@@ -42,7 +42,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
         = multi_omics_data.load_drug_data_with_elbow(data_path, drug_name, extern_dataset_name)
 
-    moli_search_space = create_momi_search_space()
+    moli_search_space = create_bottleneck_search_space()
 
     torch.manual_seed(parameter['random_seed'])
     np.random.seed(parameter['random_seed'])
@@ -76,13 +76,12 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         evaluation_function = lambda parameterization: optimise_hyperparameter(parameterization,
                                                                                x_train_validate_e, x_train_validate_m,
                                                                                x_train_validate_c,
-                                                                               y_train_validate, device, pin_memory,
-                                                                               architecture)
+                                                                               y_train_validate, device, pin_memory)
         generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, parameter['random_seed'])
 
         best_parameters, values, experiment, model = optimize(
             total_trials=search_iterations,
-            experiment_name='Holi-Moli',
+            experiment_name='Mobi',
             objective_name='auroc',
             parameters=moli_search_space,
             evaluation_function=evaluation_function,
@@ -103,8 +102,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         result_file.write(f'\t\t{str(best_parameters) = }\n')
 
         model_final, scaler_final = train_final(best_parameters, x_train_validate_e, x_train_validate_m,
-                                                x_train_validate_c, y_train_validate, device,
-                                                pin_memory,  architecture)
+                                                x_train_validate_c, y_train_validate, device, pin_memory)
         auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
         auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device)
 
@@ -170,9 +168,8 @@ if __name__ == '__main__':
     if args.drug == 'all':
         for drug, extern_dataset in parameter['drugs'].items():
             bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-                    args.sampling_method, drug, extern_dataset, args.gpu_number, args.architecture)
+                    args.sampling_method, drug, extern_dataset, args.gpu_number)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-                args.sampling_method, args.drug, extern_dataset, args.gpu_number,
-                args.architecture)
+                args.sampling_method, args.drug, extern_dataset, args.gpu_number)
