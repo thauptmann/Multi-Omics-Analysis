@@ -4,7 +4,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
-from models.stacking_model import StackingSigmoidModel, StackingFeaturesModel
+from models.stacking_model import StackingSigmoidModel, StackingSigmoidModelWithReconstruction
 from utils import network_training_util
 from utils.network_training_util import get_triplet_selector, get_loss_fn, create_data_loader, create_sampler
 from scipy.stats import sem
@@ -18,7 +18,7 @@ def reset_best_auroc():
     best_auroc = 0
 
 
-def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory, stack_sigmoid):
+def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory, stack_sigmoid, architecture):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -32,10 +32,10 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
     margin = parameterization['margin']
-    if stack_sigmoid:
-        model_architecture = StackingSigmoidModel
+    if architecture == 'supervised-ae':
+        model = StackingSigmoidModelWithReconstruction
     else:
-        model_architecture = StackingFeaturesModel
+        model = StackingSigmoidModel
 
     aucs_validate = []
     iteration = 1
@@ -72,14 +72,14 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         encoding_sizes = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
         input_sizes = [ie_dim, im_dim, ic_dim]
         dropout_rates = [dropout_e, dropout_m, dropout_c, dropout_clf]
-        moli_model = model_architecture(input_sizes, encoding_sizes, dropout_rates).to(device)
+        moli_model = model(input_sizes, encoding_sizes, dropout_rates).to(device)
 
         moli_optimiser = torch.optim.Adagrad(moli_model.parameters(),  lr=lr, weight_decay=weight_decay)
 
         for epoch in trange(epochs, desc='Epoch'):
             last_epochs = False if epoch < epochs - 2 else True
             network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs,
-                                        False, None)
+                                        False, architecture)
 
         # validate
         auc_validate, _ = network_training_util.test(moli_model, scaler_gdsc, x_validate_e, x_validate_m, x_validate_c,
@@ -113,7 +113,8 @@ def set_best_auroc(new_auroc):
         best_auroc = new_auroc
 
 
-def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory, stack_sigmoid):
+def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory, stack_sigmoid,
+                architecture):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -127,10 +128,10 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
     margin = parameterization['margin']
-    if stack_sigmoid:
-        model_architecture = StackingSigmoidModel
+    if architecture == 'supervised-ae':
+        model = StackingSigmoidModelWithReconstruction
     else:
-        model_architecture = StackingFeaturesModel
+        model = StackingSigmoidModel
 
     train_scaler_gdsc = StandardScaler()
     train_scaler_gdsc.fit(x_train_e)
@@ -147,7 +148,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     input_sizes = [ie_dim, im_dim, ic_dim]
     dropout_rates = [dropout_e, dropout_m, dropout_c, dropout_clf]
 
-    moli_model = model_architecture(input_sizes, encoding_sizes, dropout_rates).to(device)
+    moli_model = model(input_sizes, encoding_sizes, dropout_rates).to(device)
 
     moli_optimiser = torch.optim.Adagrad(moli_model.parameters(), lr=lr, weight_decay=weight_decay)
 

@@ -26,7 +26,7 @@ with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
 
 
 def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, sampling_method, drug_name,
-            extern_dataset_name, gpu_number, stack_sigmoid):
+            extern_dataset_name, gpu_number, stack_sigmoid, architecture):
     device, pin_memory = create_device(gpu_number)
 
     result_path = Path('..', '..', '..', 'results', 'stacking', drug_name, experiment_name)
@@ -77,7 +77,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                                                                                x_train_validate_e, x_train_validate_m,
                                                                                x_train_validate_c,
                                                                                y_train_validate, device, pin_memory,
-                                                                               stack_sigmoid)
+                                                                               stack_sigmoid, architecture)
         generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, parameter['random_seed'])
 
         best_parameters, values, experiment, model = optimize(
@@ -104,7 +104,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         model_final, scaler_final = train_final(best_parameters, x_train_validate_e, x_train_validate_m,
                                                 x_train_validate_c, y_train_validate, device,
-                                                pin_memory, stack_sigmoid)
+                                                pin_memory, stack_sigmoid, architecture)
         auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
         auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device)
 
@@ -170,9 +170,9 @@ if __name__ == '__main__':
     if args.drug == 'all':
         for drug, extern_dataset in parameter['drugs'].items():
             bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-                    args.sampling_method, drug, extern_dataset, args.gpu_number, args.stack_sigmoid)
+                    args.sampling_method, drug, extern_dataset, args.gpu_number, args.stack_sigmoid, args.architecture)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
                 args.sampling_method, args.drug, extern_dataset, args.gpu_number,
-                args.stack_sigmoid)
+                args.stack_sigmoid, args.architecture)

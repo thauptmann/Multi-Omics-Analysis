@@ -4,7 +4,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
-from models.bottleneck_integration_model import Mobi
+from models.bottleneck_integration_model import Mobi, MobiWithReconstruction
 from utils import network_training_util
 from utils.network_training_util import get_triplet_selector, get_loss_fn, create_data_loader, create_sampler
 from scipy.stats import sem
@@ -18,7 +18,7 @@ def reset_best_auroc():
     best_auroc = 0
 
 
-def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory):
+def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory, architecture):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -35,6 +35,11 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
     margin = parameterization['margin']
+
+    if architecture == 'supervised-ae':
+        model = MobiWithReconstruction
+    else:
+        model = Mobi
 
     aucs_validate = []
     iteration = 1
@@ -71,7 +76,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         input_sizes = [ie_dim, im_dim, ic_dim]
         dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_bottleneck]
         output_sizes = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
-        moli_model = Mobi(input_sizes, output_sizes, h_dim_bottleneck, dropout_rates).to(device)
+        moli_model = model(input_sizes, output_sizes, h_dim_bottleneck, dropout_rates).to(device)
 
         moli_optimiser = torch.optim.Adagrad(moli_model.parameters(), lr= lr, weight_decay=weight_decay)
 
@@ -112,7 +117,7 @@ def set_best_auroc(new_auroc):
         best_auroc = new_auroc
 
 
-def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory):
+def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory, architecture):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -130,6 +135,11 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     epochs = parameterization['epochs']
     margin = parameterization['margin']
 
+    if architecture == 'supervised-ae':
+        model = MobiWithReconstruction
+    else:
+        model = Mobi
+
     train_scaler_gdsc = StandardScaler()
     train_scaler_gdsc.fit(x_train_e)
     x_train_e = train_scaler_gdsc.transform(x_train_e)
@@ -144,7 +154,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     input_sizes = [ie_dim, im_dim, ic_dim]
     dropout_rates = [dropout_rate_e, dropout_rate_m, dropout_rate_c, dropout_bottleneck]
     output_sizes = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
-    moli_model = Mobi(input_sizes, output_sizes, h_dim_bottleneck, dropout_rates).to(device)
+    moli_model = model(input_sizes, output_sizes, h_dim_bottleneck, dropout_rates).to(device)
 
     moli_optimiser = torch.optim.Adagrad(moli_model.parameters(), lr=lr, weight_decay=weight_decay)
 
