@@ -83,8 +83,8 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         _, im_dim = x_train_m.shape
         _, ic_dim = x_train_c.shape
 
-        triplet_selector = get_triplet_selector(margin, semi_hard_triplet)
-        loss_fn = get_loss_fn(margin, gamma, triplet_selector, semi_hard_triplet)
+        triplet_selector = get_triplet_selector()
+        loss_fn = get_loss_fn(margin, gamma, triplet_selector)
 
         depths = [depth_1, depth_2, depth_3, depth_4]
         input_sizes = [ie_dim, im_dim, ic_dim]

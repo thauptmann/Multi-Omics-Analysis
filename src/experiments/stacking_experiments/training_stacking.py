@@ -23,7 +23,10 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
     h_dim_c_encode = parameterization['h_dim_c_encode']
-    lr = parameterization['lr']
+    lr_e = parameterization['lr_e']
+    lr_m = parameterization['lr_m']
+    lr_c = parameterization['lr_c']
+    lr_clf = parameterization['lr_clf']
     dropout_e = parameterization['dropout_e']
     dropout_m = parameterization['dropout_m']
     dropout_c = parameterization['dropout_c']
@@ -74,8 +77,11 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         dropout_rates = [dropout_e, dropout_m, dropout_c, dropout_clf]
         moli_model = model(input_sizes, encoding_sizes, dropout_rates).to(device)
 
-        moli_optimiser = torch.optim.Adagrad(moli_model.parameters(),  lr=lr, weight_decay=weight_decay)
-
+        moli_optimiser = torch.optim.Adagrad([
+            {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
+            {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
+            {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c}], lr=lr_clf,
+            weight_decay=weight_decay)
         for epoch in trange(epochs, desc='Epoch'):
             last_epochs = False if epoch < epochs - 2 else True
             network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs,
@@ -119,7 +125,10 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
     h_dim_c_encode = parameterization['h_dim_c_encode']
-    lr = parameterization['lr']
+    lr_e = parameterization['lr_e']
+    lr_m = parameterization['lr_m']
+    lr_c = parameterization['lr_c']
+    lr_clf = parameterization['lr_clf']
     dropout_e = parameterization['dropout_e']
     dropout_m = parameterization['dropout_m']
     dropout_c = parameterization['dropout_c']
@@ -150,7 +159,11 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
 
     moli_model = model(input_sizes, encoding_sizes, dropout_rates).to(device)
 
-    moli_optimiser = torch.optim.Adagrad(moli_model.parameters(), lr=lr, weight_decay=weight_decay)
+    moli_optimiser = torch.optim.Adagrad([
+        {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
+        {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
+        {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c}], lr=lr_clf,
+        weight_decay=weight_decay)
 
     class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
     weight = 1. / class_sample_count
