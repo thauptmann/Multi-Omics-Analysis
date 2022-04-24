@@ -68,9 +68,9 @@ class StackingSigmoidModel(nn.Module):
 class StackingSigmoidModelWithReconstruction(nn.Module):
     def __init__(self, input_sizes, encoding_sizes, dropout):
         super(StackingSigmoidModelWithReconstruction, self).__init__()
-        self.e_encoder = Encoder(input_sizes[0], encoding_sizes[0], dropout[0])
-        self.m_encoder = Encoder(input_sizes[1], encoding_sizes[1], dropout[1])
-        self.c_encoder = Encoder(input_sizes[2], encoding_sizes[2], dropout[2])
+        self.expression_encoder = Encoder(input_sizes[0], encoding_sizes[0], dropout[0])
+        self.mutation_encoder = Encoder(input_sizes[1], encoding_sizes[1], dropout[1])
+        self.cna_encoder = Encoder(input_sizes[2], encoding_sizes[2], dropout[2])
 
         e_encoding_size = encoding_sizes[0]
         m_encoding_size = encoding_sizes[1]
@@ -96,9 +96,9 @@ class StackingSigmoidModelWithReconstruction(nn.Module):
         self.cna_decoder = nn.Linear(encoding_sizes[2], input_sizes[2])
 
     def forward(self, expression, mutation, cna):
-        encoded_e = self.e_encoder(expression)
-        encoded_m = self.m_encoder(mutation)
-        encoded_c = self.c_encoder(cna)
+        encoded_e = self.expression_encoder(expression)
+        encoded_m = self.mutation_encoder(mutation)
+        encoded_c = self.cna_encoder(cna)
 
         classified_e = self.e_classify(encoded_e)
         classified_m = self.m_classify(encoded_m)
