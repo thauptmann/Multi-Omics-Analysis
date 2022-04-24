@@ -18,7 +18,8 @@ def reset_best_auroc():
     best_auroc = 0
 
 
-def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory, stack_sigmoid, architecture):
+def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory, stack_sigmoid, architecture,
+                            less_stacking):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -75,7 +76,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         encoding_sizes = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
         input_sizes = [ie_dim, im_dim, ic_dim]
         dropout_rates = [dropout_e, dropout_m, dropout_c, dropout_clf]
-        moli_model = model(input_sizes, encoding_sizes, dropout_rates).to(device)
+        moli_model = model(input_sizes, encoding_sizes, dropout_rates, less_stacking).to(device)
 
         moli_optimiser = torch.optim.Adagrad([
             {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
@@ -120,7 +121,7 @@ def set_best_auroc(new_auroc):
 
 
 def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory, stack_sigmoid,
-                architecture):
+                architecture, less_stacking):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -157,7 +158,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     input_sizes = [ie_dim, im_dim, ic_dim]
     dropout_rates = [dropout_e, dropout_m, dropout_c, dropout_clf]
 
-    moli_model = model(input_sizes, encoding_sizes, dropout_rates).to(device)
+    moli_model = model(input_sizes, encoding_sizes, dropout_rates, less_stacking).to(device)
 
     moli_optimiser = torch.optim.Adagrad([
         {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
