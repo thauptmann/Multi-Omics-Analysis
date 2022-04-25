@@ -10,7 +10,7 @@ from sklearn.model_selection import StratifiedKFold
 from torch import optim
 from tqdm import tqdm
 
-from models.super_felt_model import SupervisedVariationalEncoder, VariationalAutoEncoder, AutoEncoder, Encoder
+from models.super_felt_model import AutoEncoder, Encoder
 from siamese_triplet.utils import AllTripletSelector
 from utils.experiment_utils import create_generation_strategy
 from utils.network_training_util import train_encoder, get_triplet_selector, train_classifier, create_sampler, \
@@ -74,12 +74,8 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
                                       device, hyperparameters, classifier, architecture):
     skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     all_validation_aurocs = []
-    if architecture in ('vae', 'supervised-vae'):
-        encoder = VariationalAutoEncoder
-    elif architecture in ('ae', 'supervised-ae'):
+    if architecture in ('ae', 'supervised-ae'):
         encoder = AutoEncoder
-    elif architecture == 'supervised-ve':
-        encoder = SupervisedVariationalEncoder
     else:
         encoder = Encoder
     encoder_dropout = hyperparameters['encoder_dropout']
@@ -179,12 +175,8 @@ def check_best_auroc(best_reachable_auroc):
 
 def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
                 device,   classifier_type, architecture):
-    if architecture in ('vae', 'supervised-vae'):
-        encoder = VariationalAutoEncoder
-    elif architecture in ('ae', 'supervised-ae'):
+    if architecture in ('ae', 'supervised-ae'):
         encoder = AutoEncoder
-    elif architecture == 'supervised-ve':
-        encoder = SupervisedVariationalEncoder
     else:
         encoder = Encoder
     E_dr = best_hyperparameter['encoder_dropout']

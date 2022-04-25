@@ -169,7 +169,6 @@ def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_lo
         mse = torch.nn.MSELoss()
     encoder.train()
     for epoch in trange(epochs):
-        last_epochs = False if epoch < epochs - 2 else True
         for data in train_loader:
             single_omic_data = data[omic_number]
             target = data[-1]
@@ -182,9 +181,6 @@ def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_lo
                 if architecture == 'ae':
                     encoded_data, reconstruction = encoder(single_omic_data)
                     loss = mse(reconstruction, original_data)
-                elif architecture == 'vae':
-                    encoded_data, reconstruction, mu, log_var = encoder(single_omic_data)
-                    loss = mse(reconstruction, original_data) + kl_loss_function(mu, log_var)
                 elif architecture == 'supervised-ae':
                     encoded_data, reconstruction = encoder(single_omic_data)
                     triplets = triplet_selector.get_triplets(encoded_data, target)
@@ -193,21 +189,6 @@ def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_lo
                                                     encoded_data[triplets[:, 2], :])
                     E_reconstruction_loss = mse(reconstruction, original_data)
                     loss = E_triplets_loss + E_reconstruction_loss
-                elif architecture == 'supervised-vae':
-                    encoded_data, reconstruction, mu, log_var = encoder(single_omic_data)
-                    triplets = triplet_selector.get_triplets(encoded_data, target)
-                    E_triplets_loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
-                                                    encoded_data[triplets[:, 1], :],
-                                                    encoded_data[triplets[:, 2], :])
-                    E_reconstruction_loss = mse(reconstruction, original_data)
-                    loss = E_triplets_loss + E_reconstruction_loss + kl_loss_function(mu, log_var)
-                elif architecture == 'supervised-ve':
-                    encoded_data, mu, log_var = encoder(single_omic_data)
-                    triplets = triplet_selector.get_triplets(encoded_data, target)
-                    loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
-                                         encoded_data[triplets[:, 1], :],
-                                         encoded_data[triplets[:, 2], :]) + \
-                           kl_loss_function(mu, log_var)
                 else:
                     encoded_data = encoder(single_omic_data)
                     triplets = triplet_selector.get_triplets(encoded_data, target)
@@ -217,10 +198,6 @@ def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_lo
                 loss.backward()
                 optimizer.step()
     encoder.eval()
-
-
-def generate_triplets(encoded_data, last_epochs,  target, triplet_selector):
-        triplets = triplet_selector.get_triplets(encoded_data, target)
 
 
 def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
@@ -252,10 +229,6 @@ def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
         val_auroc = roc_auc_score(y_val, test_y_pred.detach().numpy())
 
     return val_auroc
-
-
-def kl_loss_function(mu, log_var):
-    return -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
 
 def train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
