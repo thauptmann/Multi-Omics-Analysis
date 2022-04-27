@@ -25,16 +25,15 @@ with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
     parameter = yaml.safe_load(stream)
 
 
-def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_name, sampling_method, drug_name,
-            extern_dataset_name, gpu_number, stack_sigmoid, architecture, less_stacking):
+def stacking(search_iterations, experiment_name, drug_name,
+             extern_dataset_name, gpu_number, use_reconstruction, stacking_type, deactivate_triplet_loss):
     device, pin_memory = create_device(gpu_number)
 
     result_path = Path('..', '..', '..', 'results', 'stacking', drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
 
-    file_mode = 'a' if load_checkpoint else 'w'
-    result_file = open(result_path / 'results.txt', file_mode)
-    log_file = open(result_path / 'logs.txt', file_mode)
+    result_file = open(result_path / 'results.txt', 'w')
+    log_file = open(result_path / 'logs.txt', 'w')
     checkpoint_path = result_path / 'checkpoint.json'
     log_file.write(f"Start for {drug_name}\n")
 
@@ -42,7 +41,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
         = multi_omics_data.load_drug_data_with_elbow(data_path, drug_name, extern_dataset_name)
 
-    moli_search_space = create_stacking_search_space()
+    stacking_search_space = create_stacking_search_space(deactivate_triplet_loss)
 
     torch.manual_seed(parameter['random_seed'])
     np.random.seed(parameter['random_seed'])
@@ -55,10 +54,9 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
     objectives_list = []
     now = datetime.now()
     result_file.write(f'Start experiment at {now}\n')
-    log_file.write(f'Using {sampling_method}')
+    log_file.write(f'Using sobol')
     skf = StratifiedKFold(n_splits=parameter['cv_splits'], random_state=parameter['random_seed'], shuffle=True)
     iteration = 0
-    sobol_iterations = search_iterations if sampling_method == 'sobol' else sobol_iterations
 
     start_time = time.time()
     for train_index, test_index in tqdm(skf.split(gdsc_e, gdsc_r), total=skf.get_n_splits(), desc="Outer k-fold"):
@@ -77,15 +75,15 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
                                                                                x_train_validate_e, x_train_validate_m,
                                                                                x_train_validate_c,
                                                                                y_train_validate, device, pin_memory,
-                                                                               stack_sigmoid, architecture,
-                                                                               less_stacking)
-        generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, parameter['random_seed'])
+                                                                               use_reconstruction,
+                                                                               stacking_type)
+        generation_strategy = create_generation_strategy()
 
         best_parameters, values, experiment, model = optimize(
             total_trials=search_iterations,
             experiment_name='Integration-Stacking',
             objective_name='auroc',
-            parameters=moli_search_space,
+            parameters=stacking_search_space,
             evaluation_function=evaluation_function,
             minimize=False,
             generation_strategy=generation_strategy
@@ -97,7 +95,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         save_experiment(experiment, str(checkpoint_path))
         pickle.dump(objectives, open(result_path / 'objectives', "wb"))
         pickle.dump(best_parameters, open(result_path / 'best_parameters', "wb"))
-        save_auroc_plots(objectives, result_path, iteration, sobol_iterations)
+        save_auroc_plots(objectives, result_path, iteration, search_iterations)
 
         iteration += 1
 
@@ -105,7 +103,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
 
         model_final, scaler_final = train_final(best_parameters, x_train_validate_e, x_train_validate_m,
                                                 x_train_validate_c, y_train_validate, device,
-                                                pin_memory, stack_sigmoid, architecture, less_stacking)
+                                                pin_memory, stacking_type, use_reconstruction)
         auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
         auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device)
 
@@ -128,7 +126,7 @@ def bo_moli(search_iterations, sobol_iterations, load_checkpoint, experiment_nam
         'extern auprc': extern_auprc_list
     }
     calculate_mean_and_std_auc(result_dict, result_file, drug_name)
-    save_auroc_with_variance_plots(objectives_list, result_path, 'final', sobol_iterations)
+    save_auroc_with_variance_plots(objectives_list, result_path, 'final', search_iterations)
     positive_extern = np.count_nonzero(extern_r == 1)
     negative_extern = np.count_nonzero(extern_r == 0)
     no_skill_prediction_auprc = positive_extern / (positive_extern + negative_extern)
@@ -170,11 +168,10 @@ if __name__ == '__main__':
     args = get_cmd_arguments()
     if args.drug == 'all':
         for drug, extern_dataset in parameter['drugs'].items():
-            bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-                    args.sampling_method, drug, extern_dataset, args.gpu_number, args.stack_sigmoid, args.architecture,
-                    args.less_stacking)
+            stacking(args.search_iterations, args.experiment_name,
+                     drug, extern_dataset, args.gpu_number, args.use_reconstruction, args.stacking_type,
+                     args.deactivate_triplet_loss)
     else:
         extern_dataset = parameter['drugs'][args.drug]
-        bo_moli(args.search_iterations, args.sobol_iterations, args.load_checkpoint, args.experiment_name,
-                args.sampling_method, args.drug, extern_dataset, args.gpu_number,
-                args.stack_sigmoid, args.architecture, args.less_stacking)
+        stacking(args.search_iterations, args.experiment_name, args.drug, extern_dataset, args.gpu_number,
+                 args.use_reconstruction, args.stacking_type, args.deactivate_triplet_loss)

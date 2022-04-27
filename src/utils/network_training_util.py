@@ -14,31 +14,26 @@ from siamese_triplet.utils import AllTripletSelector
 sigmoid = torch.nn.Sigmoid()
 
 
-def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs, noisy, architecture):
+def train(train_loader, model, optimiser, loss_fn, device, gamma, use_reconstruction):
     y_true = []
     predictions = []
     mse = torch.nn.MSELoss()
-    moli_model.train()
+    model.train()
     for (data_e, data_m, data_c, target) in train_loader:
         if torch.mean(target) != 0. and torch.mean(target) != 1.:
-            moli_optimiser.zero_grad()
+            optimiser.zero_grad()
             y_true.extend(target)
             original_data_e = data_e.clone().to(device)
             original_data_m = data_m.clone().to(device)
             original_data_c = data_c.clone().to(device)
 
-            if noisy:
-                data_e += torch.normal(0.0, 1, data_e.shape)
-                data_m += torch.normal(0.0, 1, data_m.shape)
-                data_c += torch.normal(0.0, 1, data_c.shape)
-
             data_e = data_e.to(device)
             data_m = data_m.to(device)
             data_c = data_c.to(device)
             target = target.to(device)
-            prediction = moli_model.forward(data_e, data_m, data_c)
+            prediction = model.forward(data_e, data_m, data_c)
             if gamma > 0:
-                if architecture != 'supervised-ae':
+                if use_reconstruction:
                     loss = loss_fn(prediction, target)
                 else:
                     reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
@@ -46,7 +41,7 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last
                     triplet_loss = loss_fn(prediction, target)
                     loss = reconstruction_loss + triplet_loss
             else:
-                if architecture != 'supervised-ae':
+                if use_reconstruction:
                     loss = loss_fn(torch.squeeze(prediction[0]), target)
                 else:
                     reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
@@ -57,7 +52,7 @@ def train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last
 
             predictions.extend(prediction.cpu().detach())
             loss.backward()
-            moli_optimiser.step()
+            optimiser.step()
     y_true = torch.FloatTensor(y_true)
     predictions = torch.FloatTensor(predictions)
     auroc = roc_auc_score(y_true, predictions)

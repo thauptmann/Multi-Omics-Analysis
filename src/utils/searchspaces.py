@@ -142,7 +142,11 @@ def create_early_integration_search_space():
     return search_space
 
 
-def create_stacking_search_space():
+def create_stacking_search_space(deactivate_triplet_loss):
+    if deactivate_triplet_loss:
+        gamma = {'name': 'gamma', "value": 0, "value_type": "int", 'type': 'fixed'}
+    else:
+        gamma = {'name': 'gamma', "values": parameter['gamma_choices'], "value_type": "float", 'type': 'choice'}
     search_space = [{'name': 'mini_batch', 'values': parameter['all_triplet_batch_size_choices'], 'type': 'choice',
                      'value_type': 'int'},
                     {'name': "h_dim_e_encode", 'values': parameter['dim_choice'],
@@ -169,7 +173,7 @@ def create_stacking_search_space():
                      'type': 'choice'},
                     {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'log_scale': True,
                      "value_type": "float", 'type': 'choice'},
-                    {'name': 'gamma', "values": parameter['gamma_choices'], "value_type": "float", 'type': 'choice'},
+                    gamma,
                     {'name': 'margin', "values": parameter['margin_choices'], "value_type": "float", 'type': 'choice'},
                     {'name': 'epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
                      "value_type": "int", 'type': 'range'},

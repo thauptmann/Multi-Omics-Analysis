@@ -18,8 +18,8 @@ def reset_best_auroc():
     best_auroc = 0
 
 
-def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory, stack_sigmoid, architecture,
-                            less_stacking):
+def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory, use_reconstruction,
+                            stacking_type):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -36,10 +36,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
     margin = parameterization['margin']
-    if architecture == 'supervised-ae':
-        model = StackingSigmoidModelWithReconstruction
-    else:
-        model = StackingSigmoidModel
+    model = StackingSigmoidModel
 
     aucs_validate = []
     iteration = 1
@@ -76,21 +73,21 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         encoding_sizes = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
         input_sizes = [ie_dim, im_dim, ic_dim]
         dropout_rates = [dropout_e, dropout_m, dropout_c, dropout_clf]
-        moli_model = model(input_sizes, encoding_sizes, dropout_rates, less_stacking).to(device)
+        stacking_model = StackingSigmoidModel(input_sizes, encoding_sizes, dropout_rates, stacking_type,
+                                              use_reconstruction).to(device)
 
         moli_optimiser = torch.optim.Adagrad([
-            {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
-            {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
-            {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c}], lr=lr_clf,
+            {'params': stacking_model.expression_encoder.parameters(), 'lr': lr_e},
+            {'params': stacking_model.mutation_encoder.parameters(), 'lr': lr_m},
+            {'params': stacking_model.cna_encoder.parameters(), 'lr': lr_c}], lr=lr_clf,
             weight_decay=weight_decay)
-        for epoch in trange(epochs, desc='Epoch'):
-            last_epochs = False if epoch < epochs - 2 else True
-            network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs,
-                                        False, architecture)
+        for _ in trange(epochs, desc='Epoch'):
+            network_training_util.train(train_loader, stacking_model, moli_optimiser, loss_fn, device, gamma,
+                                         use_reconstruction)
 
         # validate
-        auc_validate, _ = network_training_util.test(moli_model, scaler_gdsc, x_validate_e, x_validate_m, x_validate_c,
-                                                     y_validate,  device)
+        auc_validate, _ = network_training_util.test(stacking_model, scaler_gdsc, x_validate_e, x_validate_m,
+                                                     x_validate_c, y_validate, device)
         aucs_validate.append(auc_validate)
 
         if iteration < cv_splits_inner:
@@ -120,8 +117,8 @@ def set_best_auroc(new_auroc):
         best_auroc = new_auroc
 
 
-def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory, stack_sigmoid,
-                architecture, less_stacking):
+def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory,
+                stacking_type, use_reconstruction):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -138,10 +135,6 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
     margin = parameterization['margin']
-    if architecture == 'supervised-ae':
-        model = StackingSigmoidModelWithReconstruction
-    else:
-        model = StackingSigmoidModel
 
     train_scaler_gdsc = StandardScaler()
     train_scaler_gdsc.fit(x_train_e)
@@ -158,12 +151,13 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     input_sizes = [ie_dim, im_dim, ic_dim]
     dropout_rates = [dropout_e, dropout_m, dropout_c, dropout_clf]
 
-    moli_model = model(input_sizes, encoding_sizes, dropout_rates, less_stacking).to(device)
+    stacking_model = StackingSigmoidModel(input_sizes, encoding_sizes, dropout_rates, stacking_type,
+                                          use_reconstruction).to(device)
 
-    moli_optimiser = torch.optim.Adagrad([
-        {'params': moli_model.expression_encoder.parameters(), 'lr': lr_e},
-        {'params': moli_model.mutation_encoder.parameters(), 'lr': lr_m},
-        {'params': moli_model.cna_encoder.parameters(), 'lr': lr_c}], lr=lr_clf,
+    optimiser = torch.optim.Adagrad([
+        {'params': stacking_model.expression_encoder.parameters(), 'lr': lr_e},
+        {'params': stacking_model.mutation_encoder.parameters(), 'lr': lr_m},
+        {'params': stacking_model.cna_encoder.parameters(), 'lr': lr_c}], lr=lr_clf,
         weight_decay=weight_decay)
 
     class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
@@ -178,7 +172,5 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
                                       torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
 
     for epoch in range(epochs):
-        last_epochs = False if epoch < epochs - 2 else True
-        network_training_util.train(train_loader, moli_model, moli_optimiser, loss_fn, device, gamma, last_epochs,
-                                    False, None)
-    return moli_model, train_scaler_gdsc
+        network_training_util.train(train_loader, stacking_model, optimiser, loss_fn, device, gamma, use_reconstruction)
+    return stacking_model, train_scaler_gdsc
