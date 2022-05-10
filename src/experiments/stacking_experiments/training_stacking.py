@@ -4,7 +4,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
-from models.stacking_model import StackingSigmoidModel, StackingSigmoidModelWithReconstruction
+from models.stacking_model import StackingModel
 from utils import network_training_util
 from utils.network_training_util import get_triplet_selector, get_loss_fn, create_data_loader, create_sampler
 from scipy.stats import sem
@@ -36,7 +36,6 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
     margin = parameterization['margin']
-    model = StackingSigmoidModel
 
     aucs_validate = []
     iteration = 1
@@ -54,8 +53,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         y_validate = y[validate_index]
 
         scaler_gdsc = StandardScaler()
-        scaler_gdsc.fit(x_train_e)
-        x_train_e = scaler_gdsc.transform(x_train_e)
+        x_train_e = scaler_gdsc.fit_transform(x_train_e)
 
         # Initialisation
         sampler = create_sampler(y_train)
@@ -73,8 +71,8 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         encoding_sizes = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
         input_sizes = [ie_dim, im_dim, ic_dim]
         dropout_rates = [dropout_e, dropout_m, dropout_c, dropout_clf]
-        stacking_model = StackingSigmoidModel(input_sizes, encoding_sizes, dropout_rates, stacking_type,
-                                              use_reconstruction).to(device)
+        stacking_model = StackingModel(input_sizes, encoding_sizes, dropout_rates, stacking_type,
+                                       use_reconstruction).to(device)
 
         moli_optimiser = torch.optim.Adagrad([
             {'params': stacking_model.expression_encoder.parameters(), 'lr': lr_e},
@@ -83,7 +81,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
             weight_decay=weight_decay)
         for _ in trange(epochs, desc='Epoch'):
             network_training_util.train(train_loader, stacking_model, moli_optimiser, loss_fn, device, gamma,
-                                         use_reconstruction)
+                                        use_reconstruction)
 
         # validate
         auc_validate, _ = network_training_util.test(stacking_model, scaler_gdsc, x_validate_e, x_validate_m,
@@ -137,8 +135,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     margin = parameterization['margin']
 
     train_scaler_gdsc = StandardScaler()
-    train_scaler_gdsc.fit(x_train_e)
-    x_train_e = train_scaler_gdsc.transform(x_train_e)
+    x_train_e = train_scaler_gdsc.fit_transform(x_train_e)
 
     n_sample_e, ie_dim = x_train_e.shape
     _, im_dim = x_train_m.shape
@@ -151,8 +148,8 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     input_sizes = [ie_dim, im_dim, ic_dim]
     dropout_rates = [dropout_e, dropout_m, dropout_c, dropout_clf]
 
-    stacking_model = StackingSigmoidModel(input_sizes, encoding_sizes, dropout_rates, stacking_type,
-                                          use_reconstruction).to(device)
+    stacking_model = StackingModel(input_sizes, encoding_sizes, dropout_rates, stacking_type,
+                                   use_reconstruction).to(device)
 
     optimiser = torch.optim.Adagrad([
         {'params': stacking_model.expression_encoder.parameters(), 'lr': lr_e},

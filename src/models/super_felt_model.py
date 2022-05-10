@@ -16,19 +16,6 @@ class Classifier(nn.Module):
         return output
 
 
-class AdaptedClassifier(nn.Module):
-    def __init__(self, input_dim, drop_rate):
-        super(AdaptedClassifier, self).__init__()
-        self.model = torch.nn.Sequential(
-            nn.Dropout(drop_rate),
-            nn.Linear(input_dim, 1)
-        )
-
-    def forward(self, encoded_e, encoded_m, encoded_c):
-        integrated_test_omics = torch.cat((encoded_e, encoded_m, encoded_c), 1)
-        return self.model(integrated_test_omics)
-
-
 class OnlineTestTriplet(nn.Module):
     def __init__(self, margin, triplet_selector):
         super(OnlineTestTriplet, self).__init__()
@@ -41,7 +28,7 @@ class OnlineTestTriplet(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate, noisy=False):
+    def __init__(self, input_dim, output_dim, drop_rate):
         super(Encoder, self).__init__()
         self.model = torch.nn.Sequential(
             nn.Linear(input_dim, output_dim),
@@ -49,9 +36,6 @@ class Encoder(nn.Module):
             nn.ReLU(),
             nn.Dropout(drop_rate),
         )
-        self.noisy = noisy
-        if self.noisy:
-            self.noise_layer = nn.Dropout(0.1)
 
     def forward(self, x):
         if self.noisy:
@@ -64,7 +48,7 @@ class Encoder(nn.Module):
 
 
 class AutoEncoder(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate, noisy=False):
+    def __init__(self, input_dim, output_dim, drop_rate):
         super(AutoEncoder, self).__init__()
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, output_dim),
@@ -72,15 +56,10 @@ class AutoEncoder(nn.Module):
             nn.ReLU(),
             nn.Dropout(drop_rate),
         )
-        self.noisy = noisy
-        if self.noisy:
-            self.noise_layer = nn.Dropout(0.1)
 
         self.decoder = nn.Linear(output_dim, input_dim)
 
     def forward(self, x):
-        if self.noisy:
-            x = self.noise_layer(x)
         latent = self.encoder(x)
         reconstruction = self.decoder(latent)
         return latent, reconstruction

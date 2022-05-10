@@ -181,7 +181,7 @@ def create_stacking_search_space(deactivate_triplet_loss):
     return search_space
 
 
-def create_bottleneck_search_space():
+def create_stacking_splitted_search_space():
     search_space = [{'name': 'mini_batch', 'values': parameter['all_triplet_batch_size_choices'], 'type': 'choice',
                      'value_type': 'int'},
                     {'name': "h_dim_e_encode", 'values': parameter['dim_choice'],
@@ -189,8 +189,6 @@ def create_bottleneck_search_space():
                     {'name': "h_dim_m_encode", 'values': parameter['dim_choice'],
                      "value_type": "int", 'type': 'choice'},
                     {'name': "h_dim_c_encode", 'values': parameter['dim_choice'],
-                     "value_type": "int", 'type': 'choice'},
-                    {'name': "h_dim_bottleneck", 'values': parameter['dim_choice'],
                      "value_type": "int", 'type': 'choice'},
                     {'name': "lr_e", 'values': parameter['learning_rate_choices'], "value_type": "float",
                      'log_scale': True, 'type': 'choice'},
@@ -206,13 +204,18 @@ def create_bottleneck_search_space():
                      'type': 'choice'},
                     {'name': "dropout_c", 'values': parameter['drop_rate_choices'], "value_type": "float",
                      'type': 'choice'},
-                    {'name': "dropout_bottleneck", 'values': parameter['drop_rate_choices'], "value_type": "float",
+                    {'name': "dropout_clf", 'values': parameter['drop_rate_choices'], "value_type": "float",
                      'type': 'choice'},
                     {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'log_scale': True,
                      "value_type": "float", 'type': 'choice'},
-                    {'name': 'gamma', "values": parameter['gamma_choices'], "value_type": "float", 'type': 'choice'},
                     {'name': 'margin', "values": parameter['margin_choices'], "value_type": "float", 'type': 'choice'},
-                    {'name': 'epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
+                    {'name': 'epochs_e', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
                      "value_type": "int", 'type': 'range'},
+                    {'name': 'epochs_m', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
+                     "value_type": "int", 'type': 'range'},
+                    {'name': 'epochs_c', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
+                     "value_type": "int", 'type': 'range'},
+                    {'name': 'epochs_clf', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
+                     "value_type": "int", 'type': 'range'}
                     ]
     return search_space

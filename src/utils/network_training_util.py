@@ -8,6 +8,7 @@ import pandas as pd
 from torch import optim
 from torch.utils.data import WeightedRandomSampler
 from tqdm import trange
+from models.super_felt_model import Classifier
 
 from siamese_triplet.utils import AllTripletSelector
 
@@ -45,7 +46,7 @@ def train(train_loader, model, optimiser, loss_fn, device, gamma, use_reconstruc
                     loss = loss_fn(torch.squeeze(prediction[0]), target)
                 else:
                     reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
-                                      + mse(original_data_c, prediction[4])
+                                          + mse(original_data_c, prediction[4])
                     triplet_loss = loss_fn(torch.squeeze(prediction[0]), target)
                     loss = reconstruction_loss + triplet_loss
             prediction = sigmoid(prediction[0])
@@ -157,26 +158,18 @@ def create_sampler(y_train):
 
 
 def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_loader, trip_loss_fun,
-                  omic_number, architecture, noisy=False):
-    if architecture in ('vae', 'supervised-vae'):
-        mse = torch.nn.MSELoss(reduction='sum')
-    else:
-        mse = torch.nn.MSELoss()
+                  omic_number, architecture):
+    mse = torch.nn.MSELoss()
     encoder.train()
-    for epoch in trange(epochs):
+    for _ in trange(epochs):
         for data in train_loader:
             single_omic_data = data[omic_number]
             target = data[-1]
             if torch.mean(target) != 0. and torch.mean(target) != 1.:
                 optimizer.zero_grad()
                 original_data = single_omic_data.clone().to(device)
-                if noisy:
-                    single_omic_data += torch.normal(0.0, 1, single_omic_data.shape)
                 single_omic_data = single_omic_data.to(device)
-                if architecture == 'ae':
-                    encoded_data, reconstruction = encoder(single_omic_data)
-                    loss = mse(reconstruction, original_data)
-                elif architecture == 'supervised-ae':
+                if architecture == 'supervised-ae':
                     encoded_data, reconstruction = encoder(single_omic_data)
                     triplets = triplet_selector.get_triplets(encoded_data, target)
                     E_triplets_loss = trip_loss_fun(encoded_data[triplets[:, 0], :],
@@ -196,12 +189,9 @@ def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_lo
 
 
 def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
-                              m_supervised_encoder, c_supervised_encoder, train_loader, classifier_input_dimension,
-                              classifier_dropout, learning_rate_classifier, weight_decay_classifier,
-                              x_val_e, x_val_m, x_val_c, y_val, classifier_type, architecture):
-    classifier = classifier_type(classifier_input_dimension, classifier_dropout).to(device)
-    classifier_optimizer = optim.Adagrad(classifier.parameters(), lr=learning_rate_classifier,
-                                         weight_decay=weight_decay_classifier)
+                              m_supervised_encoder, c_supervised_encoder, train_loader,
+                              classifier_optimizer,
+                              x_val_e, x_val_m, x_val_c, y_val, classifier, architecture):
     train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
                      m_supervised_encoder, c_supervised_encoder, architecture, device)
 
@@ -210,7 +200,7 @@ def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
         """
             inner validation
         """
-        if architecture in ('supervised-vae', 'vae', 'ae', 'supervised-ae', 'supervised-ve'):
+        if architecture == 'supervised-ae':
             encoded_val_E = e_supervised_encoder(x_val_e)[0]
             encoded_val_M = m_supervised_encoder(torch.FloatTensor(x_val_m).to(device))[0]
             encoded_val_C = c_supervised_encoder(torch.FloatTensor(x_val_c).to(device))[0]
@@ -237,7 +227,7 @@ def train_classifier(classifier, classifier_epoch, train_loader, classifier_opti
             dataM = dataM.to(device)
             dataC = dataC.to(device)
             target = target.to(device)
-            if architecture in ('supervised-vae', 'vae', 'ae', 'supervised-ae', 'supervised-ve'):
+            if architecture == 'supervised-ae':
                 encoded_e = e_supervised_encoder(dataE)[0]
                 encoded_m = m_supervised_encoder(dataM)[0]
                 encoded_c = c_supervised_encoder(dataC)[0]
@@ -245,8 +235,8 @@ def train_classifier(classifier, classifier_epoch, train_loader, classifier_opti
                 encoded_e = e_supervised_encoder(dataE)
                 encoded_m = m_supervised_encoder(dataM)
                 encoded_c = c_supervised_encoder(dataC)
-            Pred = classifier(encoded_e, encoded_m, encoded_c)
-            cl_loss = bce_loss_function(Pred, target.view(-1, 1))
+            predictions = classifier(encoded_e, encoded_m, encoded_c)
+            cl_loss = bce_loss_function(predictions, target.view(-1, 1))
             cl_loss.backward()
             classifier_optimizer.step()
     classifier.eval()
@@ -255,7 +245,7 @@ def train_classifier(classifier, classifier_epoch, train_loader, classifier_opti
 def super_felt_test(x_test_e, x_test_m, x_test_c, y_test, device, final_c_supervised_encoder, final_classifier,
                     final_e_supervised_encoder, final_m_supervised_encoder, final_scaler_gdsc, architecture):
     x_test_e = torch.FloatTensor(final_scaler_gdsc.transform(x_test_e))
-    if architecture in ('supervised-vae', 'vae', 'ae', 'supervised-ae', 'supervised-ve'):
+    if architecture == 'supervised-ae':
         encoded_test_E = final_e_supervised_encoder(torch.FloatTensor(x_test_e).to(device))[0]
         encoded_test_M = final_m_supervised_encoder(torch.FloatTensor(x_test_m).to(device))[0]
         encoded_test_C = final_c_supervised_encoder(torch.FloatTensor(x_test_c).to(device))[0]

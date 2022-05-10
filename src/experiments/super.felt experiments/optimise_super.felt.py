@@ -12,7 +12,7 @@ from tqdm import tqdm
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.experiment_utils import write_results_to_file
-from models.super_felt_model import Classifier, AdaptedClassifier
+from models.super_felt_model import Classifier
 from utils import multi_omics_data
 from utils.choose_gpu import get_free_gpu
 from train_super_felt import optimise_super_felt_parameter, compute_super_felt_metrics
@@ -22,8 +22,7 @@ with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
 best_auroc = 0
 
 
-def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, search_iterations, sobol_iterations,
-               sampling_method, classifier_type, architecture):
+def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, search_iterations, architecture):
     if torch.cuda.is_available():
         if gpu_number is None:
             free_gpu_id = get_free_gpu()
@@ -37,7 +36,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
     np.random.seed(random_seed)
     torch.cuda.manual_seed_all(random_seed)
 
-    sobol_iterations = search_iterations if sampling_method == 'sobol' else sobol_iterations
+    sobol_iterations = search_iterations
 
     data_path = Path('..', '..', '..', 'data')
     result_path = Path('..', '..', '..', 'results', 'super.felt', drug_name, experiment_name)
@@ -46,10 +45,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
     gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
         = multi_omics_data.load_drug_data_with_elbow(data_path, drug_name, extern_dataset_name)
 
-    if classifier_type == 'adapted':
-        classifier = AdaptedClassifier
-    else:
-        classifier = Classifier
+    classifier = Classifier
 
     test_auc_list = []
     extern_auc_list = []
@@ -73,10 +69,8 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         x_test_c = gdsc_c[test_index]
         y_train_val = gdsc_r[train_index_outer]
         y_test = gdsc_r[test_index]
-        best_parameters, experiment = optimise_super_felt_parameter(random_seed,
-                                                                    sampling_method, search_iterations,
-
-                                                                    sobol_iterations, x_train_val_e,
+        best_parameters, experiment = optimise_super_felt_parameter(search_iterations,
+                                                                    x_train_val_e,
                                                                     x_train_val_m, x_train_val_c, y_train_val,
                                                                     device, classifier, architecture)
         external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_super_felt_metrics(x_test_e, x_test_m,
@@ -126,21 +120,15 @@ if __name__ == '__main__':
     parser.add_argument('--drug', default='all', choices=['Gemcitabine_tcga', 'Gemcitabine_pdx', 'Cisplatin',
                                                           'Docetaxel', 'Erlotinib', 'Cetuximab', 'Paclitaxel'])
     parser.add_argument('--search_iterations', default=200, type=int)
-    parser.add_argument('--sobol_iterations', default=50, type=int)
-    parser.add_argument('--classifier_type', default='super_felt', choices=['adapted'])
-    parser.add_argument('--sampling_method', default='gp', choices=['gp', 'sobol', 'saasbo'])
-    parser.add_argument('--architecture', default=None, choices=['supervised-vae', 'vae', 'ae', 'supervised-ae',
-                                                                 'supervised-e', 'supervised-ve'])
+    parser.add_argument('--architecture', default=None, choices=['supervised-ae', 'supervised-e'])
 
     args = parser.parse_args()
 
     if args.drug == 'all':
         for drug, extern_dataset in parameter['drugs'].items():
             super_felt(args.experiment_name, drug, extern_dataset, args.gpu_number, args.search_iterations,
-                       args.sobol_iterations, args.sampling_method,
-                       args.classifier_type, args.architecture)
+                        args.architecture)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         super_felt(args.experiment_name, args.drug, extern_dataset, args.gpu_number, args.search_iterations,
-                   args.sobol_iterations, args.sampling_method,
-                   args.classifier_type, args.architecture)
+                    args.architecture)

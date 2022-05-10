@@ -10,10 +10,10 @@ from sklearn.model_selection import StratifiedKFold
 from torch import optim
 from tqdm import tqdm
 
-from models.super_felt_model import AutoEncoder, Encoder
+from models.super_felt_model import AutoEncoder, Encoder, Classifier
 from siamese_triplet.utils import AllTripletSelector
 from utils.experiment_utils import create_generation_strategy
-from utils.network_training_util import train_encoder, get_triplet_selector, train_classifier, create_sampler, \
+from utils.network_training_util import train_encoder, train_classifier, create_sampler, \
     super_felt_test, train_validate_classifier
 from utils.searchspaces import create_super_felt_search_space
 
@@ -27,16 +27,14 @@ def reset_best_auroc():
     best_auroc = 0
 
 
-def optimise_super_felt_parameter(random_seed, sampling_method,
-                                  search_iterations, sobol_iterations, x_train_val_e,
-                                  x_train_val_m, x_train_val_c, y_train_val, device,  classifier, architecture):
+def optimise_super_felt_parameter(search_iterations, x_train_val_e,
+                                  x_train_val_m, x_train_val_c, y_train_val, device, classifier, architecture):
     evaluation_function = lambda parameterization: train_validate_hyperparameter_set(x_train_val_e,
                                                                                      x_train_val_m, x_train_val_c,
                                                                                      y_train_val, device,
                                                                                      parameterization,
-                                                                                     classifier, architecture
-                                                                                     )
-    generation_strategy = create_generation_strategy(sampling_method, sobol_iterations, random_seed)
+                                                                                     classifier, architecture)
+    generation_strategy = create_generation_strategy()
     search_space = create_super_felt_search_space()
     best_parameters, values, experiment, model = optimize(
         total_trials=search_iterations,
@@ -52,7 +50,7 @@ def optimise_super_felt_parameter(random_seed, sampling_method,
 
 def compute_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_train_val_m, x_train_val_c,
                                best_parameters, device, extern_e, extern_m, extern_c, extern_r,
-                                y_test, y_train_val, classifier, architecture):
+                               y_test, y_train_val, classifier, architecture):
     # retrain best
     final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
     final_scaler_gdsc = train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_parameters,
@@ -74,7 +72,7 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
                                       device, hyperparameters, classifier, architecture):
     skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     all_validation_aurocs = []
-    if architecture in ('ae', 'supervised-ae'):
+    if architecture == 'supervised-ae':
         encoder = AutoEncoder
     else:
         encoder = Encoder
@@ -114,8 +112,7 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
         y_val = y_train_val[validate_index]
         sampler = create_sampler(Y_train)
         scalerGDSC = StandardScaler()
-        scalerGDSC.fit(X_trainE)
-        X_trainE = scalerGDSC.transform(X_trainE)
+        X_trainE = scalerGDSC.fit_transform(X_trainE)
         x_val_e = torch.FloatTensor(scalerGDSC.transform(x_val_e)).to(device)
         trainDataset = torch.utils.data.TensorDataset(torch.FloatTensor(X_trainE), torch.FloatTensor(X_trainM),
                                                       torch.FloatTensor(X_trainC),
@@ -146,10 +143,12 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
 
         # train classifier
         classifier_input_dimension = OE_dim + OM_dim + OC_dim
+        classifier = Classifier(classifier_input_dimension, classifier_dropout).to(device)
+        classifier_optimizer = optim.Adagrad(classifier.parameters(), lr=lrCL,
+                                             weight_decay=classifier_weight_decay)
         val_auroc = train_validate_classifier(classifier_epoch, device, e_encoder,
                                               m_encoder, c_encoder, train_loader,
-                                              classifier_input_dimension,
-                                              classifier_dropout, lrCL, classifier_weight_decay,
+                                              classifier_optimizer,
                                               x_val_e, x_val_m, x_val_c, y_val, classifier, architecture)
         all_validation_aurocs.append(val_auroc)
 
@@ -174,8 +173,8 @@ def check_best_auroc(best_reachable_auroc):
 
 
 def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
-                device,   classifier_type, architecture):
-    if architecture in ('ae', 'supervised-ae'):
+                device, classifier_type, architecture):
+    if architecture == 'supervised-ae':
         encoder = AutoEncoder
     else:
         encoder = Encoder
@@ -216,7 +215,7 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     E_optimizer = optim.Adagrad(final_E_encoder.parameters(), lr=lrE, weight_decay=Ewd)
     M_optimizer = optim.Adagrad(final_M_encoder.parameters(), lr=lrM, weight_decay=Ewd)
     C_optimizer = optim.Adagrad(final_C_encoder.parameters(), lr=lrC, weight_decay=Ewd)
-    triplet_selector = get_triplet_selector(margin)
+    triplet_selector = AllTripletSelector()
     OCP_dim = OE_dim + OM_dim + OC_dim
     final_classifier = classifier_type(OCP_dim, C_dr).to(device)
     classifier_optimizer = optim.Adagrad(final_classifier.parameters(), lr=lrCL, weight_decay=Cwd)
@@ -224,13 +223,13 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     # train each Supervised_Encoder with triplet loss
     train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, final_E_encoder,
                   train_loader,
-                  trip_loss_fun,  0, architecture)
+                  trip_loss_fun, 0, architecture)
     train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, final_M_encoder,
                   train_loader,
-                  trip_loss_fun,  1, architecture)
+                  trip_loss_fun, 1, architecture)
     train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, final_C_encoder,
                   train_loader,
-                  trip_loss_fun,  2, architecture)
+                  trip_loss_fun, 2, architecture)
 
     # train classifier
     train_classifier(final_classifier, classifier_epoch, train_loader, classifier_optimizer, final_E_encoder,

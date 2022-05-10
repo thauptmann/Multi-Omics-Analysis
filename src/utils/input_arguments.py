@@ -15,5 +15,6 @@ def get_cmd_arguments():
     parser.add_argument('--noisy', default=False, action='store_true')
     parser.add_argument('--use_reconstruction_loss', default=False, action='store_true')
 
-    parser.add_argument('--stacking_type', default='less_stacking', choices=['all', 'less_stacking', 'only_single'])
+    parser.add_argument('--stacking_type', default='less_stacking', choices=['all', 'less_stacking', 'only_single',
+                                                                             'splitted'])
     return parser.parse_args()
