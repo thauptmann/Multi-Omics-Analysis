@@ -75,7 +75,7 @@ def stacking(search_iterations, experiment_name, drug_name,
         x_test_c = gdsc_c[test_index]
         y_test = gdsc_r[test_index]
 
-        if stacking_type == 'splitted':
+        if stacking_type in ('splitted_all', 'splitted_less_stacking', 'splitted_only_single'):
             reset_best_auroc_splitted()
             evaluation_function = lambda parameterization: optimise_hyperparameter_splitted(parameterization,
                                                                                             x_train_validate_e,
@@ -119,7 +119,7 @@ def stacking(search_iterations, experiment_name, drug_name,
 
         result_file.write(f'\t\t{str(best_parameters) = }\n')
 
-        if stacking_type == 'splitted':
+        if stacking_type in ('splitted_all', 'splitted_less_stacking', 'splitted_only_single'):
             auc_extern, auprc_extern, auc_test, auprc_test = compute_splitted_metrics(x_test_e, x_test_m,
                                                                                       x_test_c,
                                                                                       x_train_validate_e,

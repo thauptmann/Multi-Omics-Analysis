@@ -52,9 +52,9 @@ class StackingModel(nn.Module):
         mc_encoding_size = m_encoding_size + c_encoding_size
         ec_encoding_size = e_encoding_size + c_encoding_size
         emc_encoding_size = e_encoding_size + m_encoding_size + c_encoding_size
-        if stacking_type == 'all':
+        if stacking_type == 'splitted_all':
             stacking_dimension = 7
-        elif stacking_type == 'less_stacking':
+        elif stacking_type == 'splitted_less_stacking':
             stacking_dimension = 4
         else:
             stacking_dimension = 3
