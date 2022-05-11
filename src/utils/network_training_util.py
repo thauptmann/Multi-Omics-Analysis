@@ -34,7 +34,7 @@ def train(train_loader, model, optimiser, loss_fn, device, gamma, use_reconstruc
             target = target.to(device)
             prediction = model.forward(data_e, data_m, data_c)
             if gamma > 0:
-                if use_reconstruction:
+                if not use_reconstruction:
                     loss = loss_fn(prediction, target)
                 else:
                     reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
@@ -42,7 +42,7 @@ def train(train_loader, model, optimiser, loss_fn, device, gamma, use_reconstruc
                     triplet_loss = loss_fn(prediction, target)
                     loss = reconstruction_loss + triplet_loss
             else:
-                if use_reconstruction:
+                if not use_reconstruction:
                     loss = loss_fn(torch.squeeze(prediction[0]), target)
                 else:
                     reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
