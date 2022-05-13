@@ -4,7 +4,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
-from models.bo_holi_moli_model import AdaptiveMoli, AdaptiveMoliWithReconstruction
+from models.bo_holi_moli_model import Moli, MoliWithReconstruction
 from utils import network_training_util
 from utils.network_training_util import get_triplet_selector, get_loss_fn, create_data_loader, create_sampler
 from scipy.stats import sem
@@ -50,9 +50,9 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
     margin = parameterization['margin']
 
     if architecture == 'supervised-ae':
-        model_architecture = AdaptiveMoliWithReconstruction
+        model_architecture = MoliWithReconstruction
     else:
-        model_architecture = AdaptiveMoli
+        model_architecture = Moli
 
     aucs_validate = []
     iteration = 1
@@ -169,9 +169,9 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     margin = parameterization['margin']
 
     if architecture == 'supervised-ae':
-        model_architecture = AdaptiveMoliWithReconstruction
+        model_architecture = MoliWithReconstruction
     else:
-        model_architecture = AdaptiveMoli
+        model_architecture = Moli
 
     train_scaler_gdsc = StandardScaler()
     train_scaler_gdsc.fit(x_train_e)
