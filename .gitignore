@@ -139,3 +139,5 @@ data
 results
 nohup.out
 *.pdf
+*.txt
+*.svg
