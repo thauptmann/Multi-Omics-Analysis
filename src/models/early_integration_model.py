@@ -24,16 +24,3 @@ class EarlyIntegration(nn.Module):
     def forward(self, concatenated):
         encoded = self.encoder(concatenated)
         return torch.squeeze(self.classify(encoded)), encoded
-
-
-class EarlyIntegrationWithReconstruction(nn.Module):
-    def __init__(self, input_size, output_size, dropout_rate):
-        super(EarlyIntegrationWithReconstruction, self).__init__()
-        self.encoder = AdaptiveEncoder(input_size, output_size, dropout_rate)
-        self.classify = nn.Linear(output_size, 1)
-        self.decoder = nn.Linear(output_size, input_size)
-
-    def forward(self, concatenated):
-        encoded = self.encoder(concatenated)
-        reconstruction = self.decoder(encoded)
-        return torch.squeeze(self.classify(encoded)), encoded, reconstruction

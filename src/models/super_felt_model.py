@@ -45,24 +45,3 @@ class Encoder(nn.Module):
 
     def encode(self, x):
         return self.model(x)
-
-
-class AutoEncoder(nn.Module):
-    def __init__(self, input_dim, output_dim, drop_rate):
-        super(AutoEncoder, self).__init__()
-        self.encoder = nn.Sequential(
-            nn.Linear(input_dim, output_dim),
-            nn.BatchNorm1d(output_dim),
-            nn.ReLU(),
-            nn.Dropout(drop_rate),
-        )
-
-        self.decoder = nn.Linear(output_dim, input_dim)
-
-    def forward(self, x):
-        latent = self.encoder(x)
-        reconstruction = self.decoder(latent)
-        return latent, reconstruction
-
-    def encode(self, x):
-        return self.encoder(x)

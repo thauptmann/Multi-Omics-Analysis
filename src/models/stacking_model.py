@@ -59,11 +59,6 @@ class StackingModel(nn.Module):
         else:
             stacking_dimension = 3
 
-        if use_reconstruction:
-            self.expression_decoder = nn.Linear(encoding_sizes[0], input_sizes[0])
-            self.mutation_decoder = nn.Linear(encoding_sizes[1], input_sizes[1])
-            self.cna_decoder = nn.Linear(encoding_sizes[2], input_sizes[2])
-
         self.e_classify = nn.Sequential(nn.Linear(e_encoding_size, 1), nn.Sigmoid())
         self.m_classify = nn.Sequential(nn.Linear(m_encoding_size, 1), nn.Sigmoid())
         self.c_classify = nn.Sequential(nn.Linear(c_encoding_size, 1), nn.Sigmoid())
@@ -82,11 +77,6 @@ class StackingModel(nn.Module):
         classified_m = self.m_classify(encoded_m)
         classified_c = self.c_classify(encoded_c)
 
-        if self.use_reconstruction:
-            expression_reconstruction = self.expression_decoder(encoded_e)
-            mutation_reconstruction = self.mutation_decoder(encoded_m)
-            cna_reconstruction = self.cna_decoder(encoded_c)
-
         if self.stacking_type == 'less_stacking':
             classified_emc = self.emc_classify(torch.concat((encoded_e, encoded_m, encoded_c), dim=1))
             classification = self.classify_all(torch.concat((classified_e, classified_m, classified_c, classified_emc),
@@ -104,11 +94,8 @@ class StackingModel(nn.Module):
 
         else:
             classification = self.classify_all(torch.concat((classified_e, classified_m, classified_c), dim=1))
-        if self.use_reconstruction:
-            return [classification, torch.concat((encoded_e, encoded_m, encoded_c), dim=1),
-                    expression_reconstruction, mutation_reconstruction, cna_reconstruction]
-        else:
-            return [classification, torch.concat((encoded_e, encoded_m, encoded_c), dim=1)]
+
+        return [classification, torch.concat((encoded_e, encoded_m, encoded_c), dim=1)]
 
 
 class StackingSplittedModel(nn.Module):

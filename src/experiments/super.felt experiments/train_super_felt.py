@@ -28,12 +28,11 @@ def reset_best_auroc():
 
 
 def optimise_super_felt_parameter(search_iterations, x_train_val_e,
-                                  x_train_val_m, x_train_val_c, y_train_val, device, classifier, architecture):
+                                  x_train_val_m, x_train_val_c, y_train_val, device):
     evaluation_function = lambda parameterization: train_validate_hyperparameter_set(x_train_val_e,
                                                                                      x_train_val_m, x_train_val_c,
                                                                                      y_train_val, device,
-                                                                                     parameterization,
-                                                                                     classifier, architecture)
+                                                                                     parameterization)
     generation_strategy = create_generation_strategy()
     search_space = create_super_felt_search_space()
     best_parameters, values, experiment, model = optimize(
@@ -50,32 +49,28 @@ def optimise_super_felt_parameter(search_iterations, x_train_val_e,
 
 def compute_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_train_val_m, x_train_val_c,
                                best_parameters, device, extern_e, extern_m, extern_c, extern_r,
-                               y_test, y_train_val, classifier, architecture):
+                               y_test, y_train_val, classifier):
     # retrain best
     final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
     final_scaler_gdsc = train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_parameters,
-                                    device, classifier, architecture)
+                                    device, classifier)
     # Test
     test_AUC, test_AUCPR = super_felt_test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encoder,
                                            final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
-                                           final_scaler_gdsc, architecture)
+                                           final_scaler_gdsc)
     # Extern
     external_AUC, external_AUCPR = super_felt_test(extern_e, extern_m, extern_c, extern_r, device,
                                                    final_C_Supervised_Encoder,
                                                    final_Classifier, final_E_Supervised_Encoder,
                                                    final_M_Supervised_Encoder,
-                                                   final_scaler_gdsc, architecture)
+                                                   final_scaler_gdsc)
     return external_AUC, external_AUCPR, test_AUC, test_AUCPR
 
 
 def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val,
-                                      device, hyperparameters, classifier, architecture):
+                                      device, hyperparameters):
     skf = StratifiedKFold(n_splits=parameter['cv_splits'])
     all_validation_aurocs = []
-    if architecture == 'supervised-ae':
-        encoder = AutoEncoder
-    else:
-        encoder = Encoder
     encoder_dropout = hyperparameters['encoder_dropout']
     encoder_weight_decay = hyperparameters['encoder_weight_decay']
     classifier_dropout = hyperparameters['classifier_dropout']
@@ -125,21 +120,18 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
         IM_dim = X_trainM.shape[-1]
         IC_dim = X_trainC.shape[-1]
 
-        e_encoder = encoder(IE_dim, OE_dim, encoder_dropout).to(device)
-        m_encoder = encoder(IM_dim, OM_dim, encoder_dropout).to(device)
-        c_encoder = encoder(IC_dim, OC_dim, encoder_dropout).to(device)
+        e_encoder = Encoder(IE_dim, OE_dim, encoder_dropout).to(device)
+        m_encoder = Encoder(IM_dim, OM_dim, encoder_dropout).to(device)
+        c_encoder = Encoder(IC_dim, OC_dim, encoder_dropout).to(device)
 
         E_optimizer = optim.Adagrad(e_encoder.parameters(), lr=lrE, weight_decay=encoder_weight_decay)
         M_optimizer = optim.Adagrad(m_encoder.parameters(), lr=lrM, weight_decay=encoder_weight_decay)
         C_optimizer = optim.Adagrad(c_encoder.parameters(), lr=lrC, weight_decay=encoder_weight_decay)
 
         # train each Supervised_Encoder with triplet loss
-        train_encoder(e_Encoder_epoch, E_optimizer, triplet_selector, device, e_encoder,
-                      train_loader, trip_loss_fun, 0, architecture)
-        train_encoder(m_Encoder_epoch, M_optimizer, triplet_selector, device, m_encoder,
-                      train_loader, trip_loss_fun, 1, architecture)
-        train_encoder(c_Encoder_epoch, C_optimizer, triplet_selector, device, c_encoder,
-                      train_loader, trip_loss_fun, 2, architecture)
+        train_encoder(e_Encoder_epoch, E_optimizer, triplet_selector, device, e_encoder, train_loader, trip_loss_fun, 0)
+        train_encoder(m_Encoder_epoch, M_optimizer, triplet_selector, device, m_encoder, train_loader, trip_loss_fun, 1)
+        train_encoder(c_Encoder_epoch, C_optimizer, triplet_selector, device, c_encoder, train_loader, trip_loss_fun, 2)
 
         # train classifier
         classifier_input_dimension = OE_dim + OM_dim + OC_dim
@@ -149,7 +141,7 @@ def train_validate_hyperparameter_set(x_train_val_e, x_train_val_m, x_train_val_
         val_auroc = train_validate_classifier(classifier_epoch, device, e_encoder,
                                               m_encoder, c_encoder, train_loader,
                                               classifier_optimizer,
-                                              x_val_e, x_val_m, x_val_c, y_val, classifier, architecture)
+                                              x_val_e, x_val_m, x_val_c, y_val, classifier)
         all_validation_aurocs.append(val_auroc)
 
         if iteration < parameter['cv_splits']:
@@ -173,11 +165,7 @@ def check_best_auroc(best_reachable_auroc):
 
 
 def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
-                device, classifier_type, architecture):
-    if architecture == 'supervised-ae':
-        encoder = AutoEncoder
-    else:
-        encoder = Encoder
+                device, classifier_type):
     E_dr = best_hyperparameter['encoder_dropout']
     C_dr = best_hyperparameter['classifier_dropout']
     Cwd = best_hyperparameter['classifier_weight_decay']
@@ -189,13 +177,12 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     OE_dim = best_hyperparameter['e_dimension']
     OM_dim = best_hyperparameter['m_dimension']
     OC_dim = best_hyperparameter['c_dimension']
-
-    margin = best_hyperparameter['margin']
     E_Supervised_Encoder_epoch = best_hyperparameter['e_epochs']
     C_Supervised_Encoder_epoch = best_hyperparameter['m_epochs']
     M_Supervised_Encoder_epoch = best_hyperparameter['c_epochs']
     classifier_epoch = best_hyperparameter['classifier_epochs']
     mb_size = best_hyperparameter['mini_batch']
+    margin = best_hyperparameter['margin']
 
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
     sampler = create_sampler(y_train_val)
@@ -209,9 +196,9 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     IE_dim = x_train_val_e.shape[-1]
     IM_dim = x_train_val_m.shape[-1]
     IC_dim = x_train_val_c.shape[-1]
-    final_E_encoder = encoder(IE_dim, OE_dim, E_dr).to(device)
-    final_M_encoder = encoder(IM_dim, OM_dim, E_dr).to(device)
-    final_C_encoder = encoder(IC_dim, OC_dim, E_dr).to(device)
+    final_E_encoder = Encoder(IE_dim, OE_dim, E_dr).to(device)
+    final_M_encoder = Encoder(IM_dim, OM_dim, E_dr).to(device)
+    final_C_encoder = Encoder(IC_dim, OC_dim, E_dr).to(device)
     E_optimizer = optim.Adagrad(final_E_encoder.parameters(), lr=lrE, weight_decay=Ewd)
     M_optimizer = optim.Adagrad(final_M_encoder.parameters(), lr=lrM, weight_decay=Ewd)
     C_optimizer = optim.Adagrad(final_C_encoder.parameters(), lr=lrC, weight_decay=Ewd)
@@ -222,16 +209,13 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
 
     # train each Supervised_Encoder with triplet loss
     train_encoder(E_Supervised_Encoder_epoch, E_optimizer, triplet_selector, device, final_E_encoder,
-                  train_loader,
-                  trip_loss_fun, 0, architecture)
+                  train_loader, trip_loss_fun, 0)
     train_encoder(M_Supervised_Encoder_epoch, M_optimizer, triplet_selector, device, final_M_encoder,
-                  train_loader,
-                  trip_loss_fun, 1, architecture)
+                  train_loader, trip_loss_fun, 1)
     train_encoder(C_Supervised_Encoder_epoch, C_optimizer, triplet_selector, device, final_C_encoder,
-                  train_loader,
-                  trip_loss_fun, 2, architecture)
+                  train_loader, trip_loss_fun, 2)
 
     # train classifier
     train_classifier(final_classifier, classifier_epoch, train_loader, classifier_optimizer, final_E_encoder,
-                     final_M_encoder, final_C_encoder, architecture, device)
+                     final_M_encoder, final_C_encoder, device)
     return final_E_encoder, final_M_encoder, final_C_encoder, final_classifier, final_scaler

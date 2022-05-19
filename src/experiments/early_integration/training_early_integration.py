@@ -5,8 +5,8 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
-from models.early_integration import EarlyIntegration, EarlyIntegrationWithReconstruction
-from utils.network_training_util import get_triplet_selector, get_loss_fn, create_data_loader, create_sampler
+from models.early_integration_model import EarlyIntegration
+from utils.network_training_util import get_triplet_selector, get_loss_fn, create_sampler
 from scipy.stats import sem
 
 best_auroc = -1
@@ -19,7 +19,7 @@ def reset_best_auroc():
     best_auroc = 0
 
 
-def optimise_hyperparameter(parameterization, x, y, device, pin_memory, use_reconstruction_loss):
+def optimise_hyperparameter(parameterization, x, y, device, pin_memory):
     mini_batch = parameterization['mini_batch']
     h_dim = parameterization['h_dim']
     lr = parameterization['lr']
@@ -28,11 +28,6 @@ def optimise_hyperparameter(parameterization, x, y, device, pin_memory, use_reco
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
     margin = parameterization['margin']
-
-    if use_reconstruction_loss:
-        model_architecture = EarlyIntegrationWithReconstruction
-    else:
-        model_architecture = EarlyIntegration
 
     aucs_validate = []
     iteration = 1
@@ -60,14 +55,12 @@ def optimise_hyperparameter(parameterization, x, y, device, pin_memory, use_reco
         triplet_selector = get_triplet_selector()
         loss_fn = get_loss_fn(margin, gamma, triplet_selector)
 
-        early_integration_model = model_architecture(ie_dim, h_dim, dropout_rate, ).to(device)
+        early_integration_model = EarlyIntegration(ie_dim, h_dim, dropout_rate, ).to(device)
 
-        moli_optimiser = torch.optim.Adagrad(early_integration_model.parameters(), lr=lr,
-                                             weight_decay=weight_decay)
+        moli_optimiser = torch.optim.Adagrad(early_integration_model.parameters(), lr=lr, weight_decay=weight_decay)
 
         for _ in trange(epochs, desc='Epoch'):
-            train_early_integration(train_loader, early_integration_model, moli_optimiser, loss_fn, device, gamma,
-                                    use_reconstruction_loss)
+            train_early_integration(train_loader, early_integration_model, moli_optimiser, loss_fn, device, gamma)
 
         # validate
         auc_validate, _ = test_early_integration(early_integration_model, scaler_gdsc, x_validate_e, y_validate, device)
@@ -100,7 +93,7 @@ def set_best_auroc(new_auroc):
         best_auroc = new_auroc
 
 
-def train_final(parameterization, x_train_e, y_train, device, pin_memory, use_reconstruction_loss):
+def train_final(parameterization, x_train_e, y_train, device, pin_memory):
     mini_batch = parameterization['mini_batch']
     h_dim = parameterization['h_dim']
     lr = parameterization['lr']
@@ -109,11 +102,6 @@ def train_final(parameterization, x_train_e, y_train, device, pin_memory, use_re
     gamma = parameterization['gamma']
     epochs = parameterization['epochs']
     margin = parameterization['margin']
-
-    if use_reconstruction_loss:
-        model_architecture = EarlyIntegrationWithReconstruction
-    else:
-        model_architecture = EarlyIntegration
 
     train_scaler_gdsc = StandardScaler()
     train_scaler_gdsc.fit(x_train_e)
@@ -124,7 +112,7 @@ def train_final(parameterization, x_train_e, y_train, device, pin_memory, use_re
     triplet_selector = get_triplet_selector()
     loss_fn = get_loss_fn(margin, gamma, triplet_selector)
 
-    early_integration_model = model_architecture(ie_dim, h_dim, dropout_rate).to(device)
+    early_integration_model = EarlyIntegration(ie_dim, h_dim, dropout_rate).to(device)
 
     optimiser = torch.optim.Adagrad(early_integration_model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -141,15 +129,13 @@ def train_final(parameterization, x_train_e, y_train, device, pin_memory, use_re
                                                sampler=sampler)
 
     for epoch in range(epochs):
-        train_early_integration(train_loader, early_integration_model, optimiser, loss_fn, device, gamma,
-                                use_reconstruction_loss)
+        train_early_integration(train_loader, early_integration_model, optimiser, loss_fn, device, gamma)
     return early_integration_model, train_scaler_gdsc
 
 
-def train_early_integration(train_loader, model, optimiser, loss_fn, device, gamma, use_reconstruction_loss):
+def train_early_integration(train_loader, model, optimiser, loss_fn, device, gamma):
     y_true = []
     predictions = []
-    mse = torch.nn.MSELoss()
     model.train()
     for (data, target) in train_loader:
         if torch.mean(target) != 0. and torch.mean(target) != 1.:
@@ -160,19 +146,9 @@ def train_early_integration(train_loader, model, optimiser, loss_fn, device, gam
             target = target.to(device)
             prediction = model.forward(data)
             if gamma > 0:
-                if not use_reconstruction_loss:
-                    loss = loss_fn(prediction, target)
-                else:
-                    reconstruction_loss = mse(data, prediction[2])
-                    triplet_loss = loss_fn(prediction, target)
-                    loss = reconstruction_loss + triplet_loss
+                loss = loss_fn(prediction, target)
             else:
-                if not use_reconstruction_loss:
-                    loss = loss_fn(prediction[0], target)
-                else:
-                    reconstruction_loss = mse(data, prediction[2])
-                    triplet_loss = loss_fn(torch.squeeze(prediction[0]), target)
-                    loss = reconstruction_loss + triplet_loss
+                loss = loss_fn(prediction[0], target)
             prediction = sigmoid(prediction[0])
 
             predictions.extend(prediction.cpu().detach())
