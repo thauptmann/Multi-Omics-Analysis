@@ -34,7 +34,7 @@ class Moli(nn.Module):
         self.expression_encoder = MOLIEncoder(input_sizes[0], output_sizes[0], dropout_rates[0])
         self.mutation_encoder = MOLIEncoder(input_sizes[1], output_sizes[1], dropout_rates[1])
         self.cna_encoder = MOLIEncoder(input_sizes[2], output_sizes[2], dropout_rates[2])
-        self.classifier = MOLIClassifier(output_sizes[0] + output_sizes[1] + output_sizes[2], dropout_rates[4])
+        self.classifier = MOLIClassifier(output_sizes[0] + output_sizes[1] + output_sizes[2], dropout_rates[3])
 
     def forward(self, expression, mutation, cna):
         left_out = self.expression_encoder(expression)

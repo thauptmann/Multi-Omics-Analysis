@@ -135,7 +135,6 @@ def train_final(parameterization, x_train_e, y_train, device, pin_memory):
 
 def train_early_integration(train_loader, model, optimiser, loss_fn, device, gamma):
     y_true = []
-    predictions = []
     model.train()
     for (data, target) in train_loader:
         if torch.mean(target) != 0. and torch.mean(target) != 1.:
@@ -150,14 +149,8 @@ def train_early_integration(train_loader, model, optimiser, loss_fn, device, gam
             else:
                 loss = loss_fn(prediction[0], target)
             prediction = sigmoid(prediction[0])
-
-            predictions.extend(prediction.cpu().detach())
             loss.backward()
             optimiser.step()
-    y_true = torch.FloatTensor(y_true)
-    predictions = torch.FloatTensor(predictions)
-    auroc = roc_auc_score(y_true, predictions)
-    return auroc
 
 
 def test_early_integration(model, scaler, extern_concat, test_r, device):

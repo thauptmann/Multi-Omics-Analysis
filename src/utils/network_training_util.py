@@ -22,22 +22,17 @@ def train(train_loader, model, optimiser, loss_fn, device, gamma):
         if torch.mean(target) != 0. and torch.mean(target) != 1.:
             optimiser.zero_grad()
             y_true.extend(target)
-            original_data_e = data_e.clone().to(device)
-            original_data_m = data_m.clone().to(device)
-            original_data_c = data_c.clone().to(device)
 
             data_e = data_e.to(device)
             data_m = data_m.to(device)
             data_c = data_c.to(device)
             target = target.to(device)
+
             prediction = model.forward(data_e, data_m, data_c)
             if gamma > 0:
                 loss = loss_fn(prediction, target)
             else:
-                reconstruction_loss = mse(original_data_e, prediction[2]) + mse(original_data_m, prediction[3]) \
-                                          + mse(original_data_c, prediction[4])
-                triplet_loss = loss_fn(torch.squeeze(prediction[0]), target)
-                loss = reconstruction_loss + triplet_loss
+                loss = loss_fn(torch.squeeze(prediction[0]), target)
             prediction = sigmoid(prediction[0])
 
             predictions.extend(prediction.cpu().detach())

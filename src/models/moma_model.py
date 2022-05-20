@@ -2,9 +2,9 @@ import torch
 from torch import nn
 
 
-class mtlAttention(nn.Module):
+class Moma(nn.Module):
     def __init__(self, In_Nodes1, In_Nodes2, In_Nodes3, classifier_size, Modules):
-        super(mtlAttention, self).__init__()
+        super(Moma, self).__init__()
         self.Modules = Modules
         self.sigmoid = nn.Sigmoid()
 
@@ -92,7 +92,7 @@ class mtlAttention(nn.Module):
         mutation = self.mutation_FC2(mutation)
         mutation = self.mutation_FC3(mutation)
 
-        cna = self.mutation_FC2(cna)
-        cna = self.mutation_FC3(cna)
+        cna = self.cna_FC2(cna)
+        cna = self.cna_FC3(cna)
 
-        return expression, mutation, cna
+        return torch.squeeze(expression), torch.squeeze(mutation), torch.squeeze(cna)

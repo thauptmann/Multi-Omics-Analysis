@@ -174,3 +174,25 @@ def create_stacking_splitted_search_space():
                      "value_type": "int", 'type': 'range'}
                     ]
     return search_space
+
+
+def create_moma_search_space():
+    search_space = [{'name': 'mini_batch', 'values': parameter['all_triplet_batch_size_choices'], 'type': 'choice',
+                     'value_type': 'int'},
+                   {'name': "h_dim_classifier", 'values': parameter['dim_choice'], "value_type": "int",
+                    'type': 'choice'},
+                    {'name': "modules", 'values': parameter['dim_choice'], "value_type": "int", 'type': 'choice'},
+                    {'name': "lr_expression", 'values': parameter['learning_rate_choices'], "value_type": "float",
+                     'log_scale': True, 'type': 'choice'},
+                    {'name': "lr_mutation", 'values': parameter['learning_rate_choices'], "value_type": "float",
+                     'log_scale': True, 'type': 'choice'},
+                    {'name': "lr_cna", 'values': parameter['learning_rate_choices'], "value_type": "float",
+                     'log_scale': True, 'type': 'choice'},
+                    {'name': "lr_classifier", 'values': parameter['learning_rate_choices'], "value_type": "float",
+                     'log_scale': True, 'type': 'choice'},
+                    {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'log_scale': True,
+                     "value_type": "float", 'type': 'choice'},
+                    {'name': 'epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
+                     "value_type": "int", 'type': 'range'},
+                    ]
+    return search_space
