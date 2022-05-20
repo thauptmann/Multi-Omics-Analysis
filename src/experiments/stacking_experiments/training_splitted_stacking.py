@@ -21,8 +21,7 @@ def reset_best_auroc_splitted():
     best_auroc = 0
 
 
-def optimise_hyperparameter_splitted(parameterization, x_e, x_m, x_c, y, device, pin_memory, use_reconstruction,
-                                     stacking_type):
+def optimise_hyperparameter_splitted(parameterization, x_e, x_m, x_c, y, device, pin_memory, stacking_type):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -43,9 +42,6 @@ def optimise_hyperparameter_splitted(parameterization, x_e, x_m, x_c, y, device,
     margin = parameterization['margin']
     triplet_selector = AllTripletSelector()
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
-
-    architecture = 'supervised-ae' if use_reconstruction else None
-    encoder = AutoEncoder if use_reconstruction else Encoder
 
     aucs_validate = []
     iteration = 1
@@ -75,21 +71,18 @@ def optimise_hyperparameter_splitted(parameterization, x_e, x_m, x_c, y, device,
         IM_dim = x_train_m.shape[-1]
         IC_dim = x_train_c.shape[-1]
 
-        e_encoder = encoder(IE_dim, h_dim_e_encode, dropout_e).to(device)
-        m_encoder = encoder(IM_dim, h_dim_m_encode, dropout_m).to(device)
-        c_encoder = encoder(IC_dim, h_dim_c_encode, dropout_c).to(device)
+        e_encoder = Encoder(IE_dim, h_dim_e_encode, dropout_e).to(device)
+        m_encoder = Encoder(IM_dim, h_dim_m_encode, dropout_m).to(device)
+        c_encoder = Encoder(IC_dim, h_dim_c_encode, dropout_c).to(device)
 
         E_optimizer = torch.optim.Adagrad(e_encoder.parameters(), lr=lr_e, weight_decay=weight_decay)
         M_optimizer = torch.optim.Adagrad(m_encoder.parameters(), lr=lr_m, weight_decay=weight_decay)
         C_optimizer = torch.optim.Adagrad(c_encoder.parameters(), lr=lr_c, weight_decay=weight_decay)
 
         # train each Supervised_Encoder with triplet loss
-        train_encoder(epochs_e, E_optimizer, triplet_selector, device, e_encoder,
-                      train_loader, trip_loss_fun, 0, architecture)
-        train_encoder(epochs_m, M_optimizer, triplet_selector, device, m_encoder,
-                      train_loader, trip_loss_fun, 1, architecture)
-        train_encoder(epochs_c, C_optimizer, triplet_selector, device, c_encoder,
-                      train_loader, trip_loss_fun, 2, architecture)
+        train_encoder(epochs_e, E_optimizer, triplet_selector, device, e_encoder, train_loader, trip_loss_fun, 0)
+        train_encoder(epochs_m, M_optimizer, triplet_selector, device, m_encoder, train_loader, trip_loss_fun, 1)
+        train_encoder(epochs_c, C_optimizer, triplet_selector, device, c_encoder, train_loader, trip_loss_fun, 2)
 
         # train classifier
         classifier_input_dimensions = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
@@ -100,7 +93,7 @@ def optimise_hyperparameter_splitted(parameterization, x_e, x_m, x_c, y, device,
                                               m_encoder, c_encoder, train_loader,
                                               optimiser,
                                               x_validate_e, x_validate_m, x_validate_c,
-                                              y_validate, classifier, architecture)
+                                              y_validate, classifier)
         aucs_validate.append(val_auroc)
 
         if iteration < cv_splits_inner:

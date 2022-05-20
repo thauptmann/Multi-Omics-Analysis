@@ -146,8 +146,7 @@ def create_sampler(y_train):
     return sampler
 
 
-def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_loader, trip_loss_fun,
-                  omic_number):
+def train_encoder(epochs, optimizer, triplet_selector, device, encoder, train_loader, trip_loss_fun, omic_number):
     encoder.train()
     for _ in trange(epochs):
         for data in train_loader:
