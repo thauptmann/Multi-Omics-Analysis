@@ -80,7 +80,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         # validate
         auc_validate, _ = test_moma(moma_model, scaler_gdsc, torch.FloatTensor(x_validate_e),
                                     torch.FloatTensor(x_validate_m),
-                                    torch.FloatTensor(x_validate_c), y_validate)
+                                    torch.FloatTensor(x_validate_c), y_validate, device)
         aucs_validate.append(auc_validate)
 
         if iteration < cv_splits_inner:
@@ -182,8 +182,12 @@ def train_moma(train_loader, model, optimiser, loss_fn, device):
             optimiser.step()
 
 
-def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r):
-    extern_e = torch.FloatTensor(scaler.transform(extern_e))
+def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
+    model = model.to(device)
+    extern_e = torch.FloatTensor(scaler.transform(extern_e)).to(device)
+    extern_m = torch.FloatTensor(extern_m).to(device)
+    extern_c = torch.FloatTensor(extern_c).to(device)
+
     test_y = torch.FloatTensor(test_r.astype(int))
     model.eval()
     with torch.no_grad():
