@@ -182,8 +182,8 @@ def train_moma(train_loader, model, optimiser, loss_fn, device):
             optimiser.step()
 
 
-def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
-    extern_e = torch.FloatTensor(scaler.transform(extern_e)).to(device)
+def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r):
+    extern_e = torch.FloatTensor(scaler.transform(extern_e))
     test_y = torch.FloatTensor(test_r.astype(int))
     model.eval()
     with torch.no_grad():
