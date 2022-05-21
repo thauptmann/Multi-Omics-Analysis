@@ -66,11 +66,11 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
             {'params': moma_model.mutation_FC1_y.parameters(), 'lr': lr_mutation},
             {'params': moma_model.cna_FC1_x.parameters(), 'lr': lr_cna},
             {'params': moma_model.cna_FC1_y.parameters(), 'lr': lr_cna},
-            {'params': moma_model.expression_FC2.parameters(), 'lr': lr_classifier},
+           # {'params': moma_model.expression_FC2.parameters(), 'lr': lr_classifier},
             {'params': moma_model.expression_FC3.parameters(), 'lr': lr_classifier},
-            {'params': moma_model.mutation_FC2.parameters(), 'lr': lr_classifier},
+           # {'params': moma_model.mutation_FC2.parameters(), 'lr': lr_classifier},
             {'params': moma_model.mutation_FC3.parameters(), 'lr': lr_classifier},
-            {'params': moma_model.cna_FC2.parameters(), 'lr': lr_classifier},
+           # {'params': moma_model.cna_FC2.parameters(), 'lr': lr_classifier},
             {'params': moma_model.cna_FC3.parameters(), 'lr': lr_classifier}],
             weight_decay=weight_decay)
 
@@ -139,11 +139,11 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
         {'params': moma_model.mutation_FC1_y.parameters(), 'lr': lr_mutation},
         {'params': moma_model.cna_FC1_x.parameters(), 'lr': lr_cna},
         {'params': moma_model.cna_FC1_y.parameters(), 'lr': lr_cna},
-        {'params': moma_model.expression_FC2.parameters(), 'lr': lr_classifier},
+        #{'params': moma_model.expression_FC2.parameters(), 'lr': lr_classifier},
         {'params': moma_model.expression_FC3.parameters(), 'lr': lr_classifier},
-        {'params': moma_model.mutation_FC2.parameters(), 'lr': lr_classifier},
+        #{'params': moma_model.mutation_FC2.parameters(), 'lr': lr_classifier},
         {'params': moma_model.mutation_FC3.parameters(), 'lr': lr_classifier},
-        {'params': moma_model.cna_FC2.parameters(), 'lr': lr_classifier},
+        #{'params': moma_model.cna_FC2.parameters(), 'lr': lr_classifier},
         {'params': moma_model.cna_FC3.parameters(), 'lr': lr_classifier}],
         weight_decay=weight_decay)
 
