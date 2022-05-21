@@ -83,7 +83,6 @@ def stacking(search_iterations, experiment_name, drug_name,
                                                                                             x_train_validate_c,
                                                                                             y_train_validate, device,
                                                                                             pin_memory,
-                                                                                            use_reconstruction,
                                                                                             stacking_type)
             pass
         else:
@@ -93,7 +92,6 @@ def stacking(search_iterations, experiment_name, drug_name,
                                                                                    x_train_validate_m,
                                                                                    x_train_validate_c,
                                                                                    y_train_validate, device, pin_memory,
-                                                                                   use_reconstruction,
                                                                                    stacking_type)
         generation_strategy = create_generation_strategy()
 

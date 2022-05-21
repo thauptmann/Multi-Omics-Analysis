@@ -18,8 +18,7 @@ def reset_best_auroc():
     best_auroc = 0
 
 
-def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory, use_reconstruction,
-                            stacking_type):
+def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory, stacking_type):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -71,8 +70,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         encoding_sizes = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
         input_sizes = [ie_dim, im_dim, ic_dim]
         dropout_rates = [dropout_e, dropout_m, dropout_c, dropout_clf]
-        stacking_model = StackingModel(input_sizes, encoding_sizes, dropout_rates, stacking_type,
-                                       use_reconstruction).to(device)
+        stacking_model = StackingModel(input_sizes, encoding_sizes, dropout_rates, stacking_type).to(device)
 
         moli_optimiser = torch.optim.Adagrad([
             {'params': stacking_model.expression_encoder.parameters(), 'lr': lr_e},
@@ -80,8 +78,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
             {'params': stacking_model.cna_encoder.parameters(), 'lr': lr_c}], lr=lr_clf,
             weight_decay=weight_decay)
         for _ in trange(epochs, desc='Epoch'):
-            network_training_util.train(train_loader, stacking_model, moli_optimiser, loss_fn, device, gamma,
-                                        use_reconstruction)
+            network_training_util.train(train_loader, stacking_model, moli_optimiser, loss_fn, device, gamma)
 
         # validate
         auc_validate, _ = network_training_util.test(stacking_model, scaler_gdsc, x_validate_e, x_validate_m,

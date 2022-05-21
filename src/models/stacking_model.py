@@ -37,10 +37,9 @@ class AutoEncoder(nn.Module):
 
 
 class StackingModel(nn.Module):
-    def __init__(self, input_sizes, encoding_sizes, dropout, stacking_type, use_reconstruction):
+    def __init__(self, input_sizes, encoding_sizes, dropout, stacking_type):
         super(StackingModel, self).__init__()
         self.stacking_type = stacking_type
-        self.use_reconstruction = use_reconstruction
         self.expression_encoder = Encoder(input_sizes[0], encoding_sizes[0], dropout[0])
         self.mutation_encoder = Encoder(input_sizes[1], encoding_sizes[1], dropout[1])
         self.cna_encoder = Encoder(input_sizes[2], encoding_sizes[2], dropout[2])
