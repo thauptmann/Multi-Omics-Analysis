@@ -10,12 +10,13 @@ from sklearn.model_selection import StratifiedKFold
 from torch import optim
 from tqdm import tqdm
 
-from models.super_felt_model import AutoEncoder, Encoder, Classifier
+from models.super_felt_model import Encoder, Classifier
 from siamese_triplet.utils import AllTripletSelector
 from utils.experiment_utils import create_generation_strategy
 from utils.network_training_util import train_encoder, train_classifier, create_sampler, \
     super_felt_test, train_validate_classifier
 from utils.searchspaces import create_super_felt_search_space
+
 
 best_auroc = -1
 with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
@@ -49,11 +50,11 @@ def optimise_super_felt_parameter(search_iterations, x_train_val_e,
 
 def compute_super_felt_metrics(x_test_e, x_test_m, x_test_c, x_train_val_e, x_train_val_m, x_train_val_c,
                                best_parameters, device, extern_e, extern_m, extern_c, extern_r,
-                               y_test, y_train_val, classifier):
+                               y_test, y_train_val):
     # retrain best
     final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
     final_scaler_gdsc = train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_parameters,
-                                    device, classifier)
+                                    device)
     # Test
     test_AUC, test_AUCPR = super_felt_test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encoder,
                                            final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
@@ -164,8 +165,7 @@ def check_best_auroc(best_reachable_auroc):
     return best_reachable_auroc < best_auroc
 
 
-def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter,
-                device, classifier_type):
+def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_hyperparameter, device):
     E_dr = best_hyperparameter['encoder_dropout']
     C_dr = best_hyperparameter['classifier_dropout']
     Cwd = best_hyperparameter['classifier_weight_decay']
@@ -204,7 +204,7 @@ def train_final(x_train_val_e, x_train_val_m, x_train_val_c, y_train_val, best_h
     C_optimizer = optim.Adagrad(final_C_encoder.parameters(), lr=lrC, weight_decay=Ewd)
     triplet_selector = AllTripletSelector()
     OCP_dim = OE_dim + OM_dim + OC_dim
-    final_classifier = classifier_type(OCP_dim, C_dr).to(device)
+    final_classifier = Classifier(OCP_dim, C_dr).to(device)
     classifier_optimizer = optim.Adagrad(final_classifier.parameters(), lr=lrCL, weight_decay=Cwd)
 
     # train each Supervised_Encoder with triplet loss

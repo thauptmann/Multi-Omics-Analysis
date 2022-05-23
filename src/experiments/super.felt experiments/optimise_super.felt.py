@@ -72,7 +72,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
         best_parameters, experiment = optimise_super_felt_parameter(search_iterations,
                                                                     x_train_val_e,
                                                                     x_train_val_m, x_train_val_c, y_train_val,
-                                                                    device, classifier, architecture)
+                                                                    device)
         external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_super_felt_metrics(x_test_e, x_test_m,
                                                                                         x_test_c,
                                                                                         x_train_val_e,
@@ -84,8 +84,7 @@ def super_felt(experiment_name, drug_name, extern_dataset_name, gpu_number, sear
                                                                                         extern_c,
                                                                                         extern_r,
                                                                                         y_test,
-                                                                                        y_train_val,
-                                                                                        classifier, architecture)
+                                                                                        y_train_val)
 
         test_auc_list.append(test_AUC)
         extern_auc_list.append(external_AUC)
