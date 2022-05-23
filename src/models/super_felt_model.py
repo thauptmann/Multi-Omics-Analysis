@@ -38,8 +38,6 @@ class Encoder(nn.Module):
         )
 
     def forward(self, x):
-        if self.noisy:
-            x = self.noise_layer(x)
         output = self.model(x)
         return output
 
