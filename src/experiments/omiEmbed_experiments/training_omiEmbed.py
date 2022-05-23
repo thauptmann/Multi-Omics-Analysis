@@ -25,14 +25,12 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
     lr_vae = parameterization['lr_vae']
     lr_classifier = parameterization['lr_classifier']
     weight_decay = parameterization['weight_decay']
-    epochs_phase_one = parameterization['epochs_phase_one']
-    epochs_phase_two = parameterization['epochs_phase_two']
-    epochs_phase_three = parameterization['epochs_phase_three']
-    latent_space_dim = parameterization['h_dim_classifier']
+    epochs_phase = parameterization['epochs_phase']
+    latent_space_dim = parameterization['latent_space_dim']
     dropout = parameterization['dropout']
     k_kl = parameterization['k_kl']
     k_embed = parameterization['k_embed']
-    epochs = (epochs_phase_one, epochs_phase_two, epochs_phase_three)
+    epochs_phase = int(epochs_phase / 3) if int(epochs_phase / 3) > 0 else 1
 
     aucs_validate = []
     iteration = 1
@@ -69,7 +67,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         optimiser_classifier = torch.optim.Adagrad(params=moma_model.netDown.parameters(), lr=lr_classifier,
                                                    weight_decay=weight_decay)
 
-        train_omi_embed(train_loader, moma_model, optimiser_embedding, optimiser_classifier, device, epochs, k_kl,
+        train_omi_embed(train_loader, moma_model, optimiser_embedding, optimiser_classifier, device, epochs_phase, k_kl,
                         k_embed)
 
         # validate
@@ -110,20 +108,19 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     lr_vae = parameterization['lr_vae']
     lr_classifier = parameterization['lr_classifier']
     weight_decay = parameterization['weight_decay']
-    epochs_phase_one = parameterization['epochs_phase_one']
-    epochs_phase_two = parameterization['epochs_phase_two']
-    epochs_phase_three = parameterization['epochs_phase_three']
-    latent_space_dim = parameterization['h_dim_classifier']
+    epochs_phase = parameterization['epochs_phase']
+    latent_space_dim = parameterization['latent_space_dim']
     dropout = parameterization['dropout']
     k_kl = parameterization['k_kl']
     k_embed = parameterization['k_embed']
-    epochs = (epochs_phase_one, epochs_phase_two, epochs_phase_three)
+    epochs_phase = int(epochs_phase / 3) if int(epochs_phase / 3) > 0 else 1
 
     train_scaler_gdsc = StandardScaler()
     train_scaler_gdsc.fit(x_train_e)
     x_train_e = train_scaler_gdsc.transform(x_train_e)
 
     omic_dims = (x_train_e.shape[-1], x_train_m.shape[-1], x_train_c.shape[-1])
+    print(omic_dims)
     moma_model = VaeClassifierModel(omic_dims, dropout, latent_space_dim).to(device)
 
     optimiser_embedding = torch.optim.Adagrad(params=moma_model.netEmbed.parameters(),
@@ -143,13 +140,14 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
                                       torch.FloatTensor(x_train_c),
                                       torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
 
-    train_omi_embed(train_loader, moma_model, optimiser_embedding, optimiser_classifier, device, epochs, k_kl, k_embed)
+    train_omi_embed(train_loader, moma_model, optimiser_embedding, optimiser_classifier, device, epochs_phase,
+                    k_kl, k_embed)
     return moma_model, train_scaler_gdsc
 
 
 def train_omi_embed(train_loader, model, optimiser_embedding, optimiser_classifier, device, epochs, k_kl, k_embed):
     y_true = []
-    for _ in range(epochs[0]):
+    for _ in range(epochs):
         model.netEmbed.train()
         model.netDown.eval()
         for (data_e, data_m, data_c, target) in train_loader:
@@ -169,7 +167,7 @@ def train_omi_embed(train_loader, model, optimiser_embedding, optimiser_classifi
                     loss.backward()
                     optimiser_embedding.step()
 
-    for _ in range(epochs[1]):
+    for _ in range(epochs):
         model.netEmbed.eval()
         model.netDown.train()
         for (data_e, data_m, data_c, target) in train_loader:
@@ -182,11 +180,11 @@ def train_omi_embed(train_loader, model, optimiser_embedding, optimiser_classifi
                     data_c = data_c.to(device)
                     target = target.to(device)
                     logit = model.classify(data_e, data_m, data_c)
-                    loss = classifier_loss(target, logit)
+                    loss = classifier_loss(target, torch.squeeze(logit))
                     loss.backward()
                     optimiser_classifier.step()
 
-    for _ in range(epochs[2]):
+    for _ in range(epochs):
         model.netEmbed.train()
         model.netDown.train()
         for (data_e, data_m, data_c, target) in train_loader:
@@ -200,7 +198,7 @@ def train_omi_embed(train_loader, model, optimiser_embedding, optimiser_classifi
                 target = target.to(device)
                 z, recon_x, mean, log_var, logit = model.encode_and_classify(data_e, data_m, data_c)
                 loss_kl = kl_loss(mean, log_var)
-                classification_loss = classifier_loss(target, logit)
+                classification_loss = classifier_loss(target, torch.squeeze(logit))
                 reconstruction_loss = lossFuncRecon(recon_x[0], data_e) \
                                       + lossFuncRecon(recon_x[1], data_m) \
                                       + lossFuncRecon(recon_x[2], data_c)
@@ -208,6 +206,9 @@ def train_omi_embed(train_loader, model, optimiser_embedding, optimiser_classifi
                 loss.backward()
                 optimiser_embedding.step()
                 optimiser_classifier.step()
+
+
+sigmoid = torch.nn.Sigmoid()
 
 
 def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
@@ -219,9 +220,8 @@ def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
     test_y = torch.FloatTensor(test_r.astype(int))
     model.eval()
     with torch.no_grad():
-        expression_logit, mutation_logit, cna_logit = model.forward(extern_e, extern_m, extern_c)
-    stacked = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()])
-    probabilities = np.mean(stacked, axis=0)
+        logit = model.classify(extern_e, extern_m, extern_c)
+    probabilities = sigmoid(logit)
     auc_validate = roc_auc_score(test_y, probabilities)
     auprc_validate = average_precision_score(test_y, probabilities)
     return auc_validate, auprc_validate

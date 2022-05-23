@@ -1,11 +1,10 @@
 import functools
-from abc import ABC
 
 import torch
 from torch import nn
 
 
-class BasicModel(ABC):
+class BasicModel(torch.nn.Module):
     """
     This class is an abstract base class for models.
     To create a subclass, you need to implement the following five functions:
@@ -20,6 +19,7 @@ class BasicModel(ABC):
         """
         Initialize the BaseModel class
         """
+        super().__init__()
         self.phase = 'p1'
         self.epoch = 1
         self.iter = 0
@@ -68,83 +68,11 @@ class VaeBasicModel(BasicModel):
         self.loss_recon = None
         self.loss_kl = None
 
-    def set_input(self, input_dict):
-        """
-        Unpack input data from the output dictionary of the dataloader
-        Parameters:
-            input_dict (dict): include the data tensor and its index.
-        """
-        self.input_omics = []
-        for i in range(0, 3):
-            if i == 1 and self.param.ch_separate:
-                input_B = []
-                for ch in range(0, 23):
-                    input_B.append(input_dict['input_omics'][1][ch].to(self.device))
-                self.input_omics.append(input_B)
-            else:
-                self.input_omics.append(input_dict['input_omics'][i].to(self.device))
-
-        self.data_index = input_dict['index']
-
-    def forward(self):
+    def forward(self, data_e, data_m, data_c):
         # Get the output tensor
-        self.z, self.recon_omics, self.mean, self.log_var = self.netEmbed(self.input_omics)
-        self.latent = self.mean.detach()
-        return self.z, self.recon_omics, self.mean, self.log_var
-
-    def cal_losses(self):
-        """Calculate losses"""
-        # Calculate the reconstruction loss for A
-        if self.param.omics_mode == 'a' or self.param.omics_mode == 'ab' or self.param.omics_mode == 'abc':
-            self.loss_recon_A = self.lossFuncRecon(self.recon_omics[0], self.input_omics[0])
-        else:
-            self.loss_recon_A = 0
-        # Calculate the reconstruction loss for B
-        if self.param.omics_mode == 'b' or self.param.omics_mode == 'ab' or self.param.omics_mode == 'abc':
-            if self.param.ch_separate:
-                recon_omics_B = torch.cat(self.recon_omics[1], -1)
-                input_omics_B = torch.cat(self.input_omics[1], -1)
-                self.loss_recon_B = self.lossFuncRecon(recon_omics_B, input_omics_B)
-            else:
-                self.loss_recon_B = self.lossFuncRecon(self.recon_omics[1], self.input_omics[1])
-        else:
-            self.loss_recon_B = 0
-        # Calculate the reconstruction loss for C
-        if self.param.omics_mode == 'c' or self.param.omics_mode == 'abc':
-            self.loss_recon_C = self.lossFuncRecon(self.recon_omics[2], self.input_omics[2])
-        else:
-            self.loss_recon_C = 0
-        # Overall reconstruction loss
-        if self.param.reduction == 'sum':
-            self.loss_recon = self.loss_recon_A + self.loss_recon_B + self.loss_recon_C
-        elif self.param.reduction == 'mean':
-            self.loss_recon = (self.loss_recon_A + self.loss_recon_B + self.loss_recon_C) / self.param.omics_num
-        # Calculate the kl loss
-        # Calculate the overall vae loss (embedding loss)
-        # LOSS EMBED
-        self.loss_embed = self.loss_recon + self.param.k_kl * self.loss_kl
-
-    def update(self):
-        if self.phase == 'p1':
-            self.forward()
-            self.optimizer_Embed.zero_grad()                # Set gradients to zero
-            self.cal_losses()                               # Calculate losses
-            self.loss_embed.backward()                      # Backpropagation
-            self.optimizer_Embed.step()                     # Update weights
-        elif self.phase == 'p2':
-            self.forward()
-            self.optimizer_Down.zero_grad()                 # Set gradients to zero
-            self.cal_losses()                               # Calculate losses
-            self.loss_down.backward()                       # Backpropagation
-            self.optimizer_Down.step()                      # Update weights
-        elif self.phase == 'p3':
-            self.forward()
-            self.optimizer_Embed.zero_grad()                # Set gradients to zero
-            self.optimizer_Down.zero_grad()
-            self.cal_losses()                               # Calculate losses
-            self.loss_All.backward()                        # Backpropagation
-            self.optimizer_Embed.step()                     # Update weights
-            self.optimizer_Down.step()
+        z, recon_omics, mean, log_var = self.netEmbed.forward(data_e, data_m, data_c)
+        latent = mean.detach()
+        return z, recon_omics, mean, log_var, latent
 
 
 class FCBlock(nn.Module):
@@ -211,7 +139,6 @@ class FcVaeABC(nn.Module):
         """
 
         super(FcVaeABC, self).__init__()
-
         self.A_dim = omics_dims[0]
         self.B_dim = omics_dims[1]
         self.C_dim = omics_dims[2]
@@ -222,11 +149,14 @@ class FcVaeABC(nn.Module):
 
         # ENCODER
         # Layer 1
-        self.encode_fc_1B = FCBlock(self.B_dim, dim_1B, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=dropout_p,
+        self.encode_fc_1B = FCBlock(self.B_dim, dim_1B, norm_layer=norm_layer, leaky_slope=leaky_slope,
+                                    dropout_p=dropout_p,
                                     activation=True)
-        self.encode_fc_1A = FCBlock(self.A_dim, dim_1A, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=dropout_p,
+        self.encode_fc_1A = FCBlock(self.A_dim, dim_1A, norm_layer=norm_layer, leaky_slope=leaky_slope,
+                                    dropout_p=dropout_p,
                                     activation=True)
-        self.encode_fc_1C = FCBlock(self.C_dim, dim_1C, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=dropout_p,
+        self.encode_fc_1C = FCBlock(self.C_dim, dim_1C, norm_layer=norm_layer, leaky_slope=leaky_slope,
+                                    dropout_p=dropout_p,
                                     activation=True)
         # Layer 2
         self.encode_fc_2B = FCBlock(dim_1B, dim_2B, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=dropout_p,
@@ -266,10 +196,10 @@ class FcVaeABC(nn.Module):
         self.decode_fc_4C = FCBlock(dim_1C, self.C_dim, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
                                     activation=False, normalization=False)
 
-    def encode(self, x):
-        level_2_B = self.encode_fc_1B(x[1])
-        level_2_A = self.encode_fc_1A(x[0])
-        level_2_C = self.encode_fc_1C(x[2])
+    def encode(self, data_e, data_m, data_c):
+        level_2_A = self.encode_fc_1A(data_e)
+        level_2_B = self.encode_fc_1B(data_m)
+        level_2_C = self.encode_fc_1C(data_c)
 
         level_3_B = self.encode_fc_2B(level_2_B)
         level_3_A = self.encode_fc_2A(level_2_A)
@@ -309,8 +239,8 @@ class FcVaeABC(nn.Module):
     def get_last_encode_layer(self):
         return self.encode_fc_mean
 
-    def forward(self, x):
-        mean, log_var = self.encode(x)
+    def forward(self, data_e, data_m, data_c):
+        mean, log_var = self.encode(data_e, data_m, data_c)
         z = self.reparameterize(mean, log_var)
         recon_x = self.decode(z)
         return z, recon_x, mean, log_var
@@ -335,7 +265,7 @@ class VaeClassifierModel(VaeBasicModel):
         # output tensor
         self.y_out = None
         # define the network
-        self.netDown = define_down('batch', 0.2, dropout_p, latent_space_dim, 2)
+        self.netDown = define_down('batch', 0.2, dropout_p, latent_space_dim, 1)
         # define the classification loss
         self.loss_classifier = None
         self.metric_accuracy = None
@@ -350,21 +280,21 @@ class VaeClassifierModel(VaeBasicModel):
         self.label = input_dict['label'].to(self.device)
 
     def classify(self, data_e, data_m, data_c):
-        VaeBasicModel.forward(self)
+        z, recon_omics, mean, log_var, latent = VaeBasicModel.forward(self, data_e, data_m, data_c)
         # Get the output tensor
-        self.y_out = self.netDown(self.latent)
+        y_out = self.netDown(latent)
+        return y_out
 
     def encode(self, data_e, data_m, data_c):
-        VaeBasicModel.forward(self)
+        VaeBasicModel.forward(self, data_e, data_m, data_c)
         # Get the output tensor
-        z, recon_omics, mean, log_var = VaeBasicModel.forward(self)
+        z, recon_omics, mean, log_var, latent = VaeBasicModel.forward(self, data_e, data_m, data_c)
         return z, recon_omics, mean, log_var
 
     def encode_and_classify(self, data_e, data_m, data_c):
-        VaeBasicModel.forward(self)
         # Get the output tensor
-        z, recon_omics, mean, log_var = VaeBasicModel.forward(self)
-        y_out = self.netDown(self.latent)
+        z, recon_omics, mean, log_var, latent = VaeBasicModel.forward(self, data_e, data_m, data_c)
+        y_out = self.netDown(latent)
         return z, recon_omics, mean, log_var, y_out
 
     def update(self):

@@ -193,13 +193,13 @@ def create_moma_search_space():
                     {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'log_scale': True,
                      "value_type": "float", 'type': 'choice'},
                     {'name': 'epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
-                     "value_type": "int", 'type': 'range'},
+                     'value_type': "int", 'type': 'range'},
                     ]
     return search_space
 
 
 def create_omi_embed_search_space():
-    search_space = {{'name': 'mini_batch', 'values': parameter['batch_size_choices'], 'type': 'choice',
+    search_space = [{'name': 'mini_batch', 'values': parameter['batch_size_choices'], 'type': 'choice',
                      'value_type': 'int'},
                     {'name': "latent_space_dim", 'values': parameter['dim_choice'], "value_type": "int",
                      'type': 'choice'},
@@ -208,21 +208,17 @@ def create_omi_embed_search_space():
                     {'name': "lr_classifier", 'values': parameter['learning_rate_choices'], "value_type": "float",
                      'log_scale': True, 'type': 'choice'},
                     {'name': 'weight_decay', 'values': parameter['weight_decay_choices'], 'log_scale': True,
+                     'value_type': 'float', 'type': 'choice'},
+                    {'name': 'epochs_phase', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
+                     "value_type": "int", 'type': 'range'},
+                    {'name': 'k_kl', 'values': parameter['learning_rate_choices'],
                      "value_type": "float", 'type': 'choice'},
-                    {'name': 'epochs_phase_one', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
-                     "value_type": "int", 'type': 'range'},
-                    {'name': 'epochs_phase_two', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
-                     "value_type": "int", 'type': 'range'},
-                    {'name': 'epochs_phase_three', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
-                     "value_type": "int", 'type': 'range'},
-                    {'name': 'k_kl', 'values': parameter['weight_decay_choices'],
-                     "value_type": "int", 'type': 'range'},
-                    {'name': 'k_embed', 'values': parameter['weight_decay_choices'],
-                     "value_type": "int", 'type': 'range'},
+                    {'name': 'k_embed', 'values': parameter['learning_rate_choices'],
+                     "value_type": "float", 'type': 'choice'},
                     {'name': 'leaky_slope', 'values': parameter['weight_decay_choices'],
-                     "value_type": "int", 'type': 'range'},
-                    {'name': "dropout", 'values': parameter['drop_rate_choices'], "value_type": "float",
+                     "value_type": "float", 'type': 'choice'},
+                    {'name': 'dropout', 'values': parameter['drop_rate_choices'], 'value_type': 'float',
                      'type': 'choice'},
-                    }
+                    ]
 
     return search_space

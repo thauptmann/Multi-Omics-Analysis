@@ -19,7 +19,7 @@ gamma_choices:
     - 0.3
     - 0.5
 
-dim_choice:h_dim_cna
+dim_choice:
     - 32
     - 64
     - 128
