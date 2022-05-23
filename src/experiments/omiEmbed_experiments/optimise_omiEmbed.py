@@ -15,7 +15,7 @@ from utils.experiment_utils import create_generation_strategy
 from utils.input_arguments import get_cmd_arguments
 from utils.searchspaces import create_moma_search_space
 from utils.choose_gpu import get_free_gpu
-from training_moma import train_final, optimise_hyperparameter, reset_best_auroc, test_moma
+from training_omiEmbed import train_final, optimise_hyperparameter, reset_best_auroc, test_moma
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc

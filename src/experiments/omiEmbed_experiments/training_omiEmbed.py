@@ -4,13 +4,15 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
-from tqdm import trange, tqdm
-from models.moma_model import Moma
+from tqdm import tqdm
+from models.omiEmbed_model import VaeClassifierModel
 from utils.network_training_util import create_sampler, create_data_loader
 from scipy.stats import sem
 
 best_auroc = -1
 cv_splits_inner = 5
+lossFuncRecon = torch.nn.MSELoss()
+classifier_loss = torch.nn.BCEWithLogitsLoss()
 
 
 def reset_best_auroc():
@@ -20,14 +22,17 @@ def reset_best_auroc():
 
 def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory):
     mini_batch = parameterization['mini_batch']
-    h_dim_classifier = parameterization['h_dim_classifier']
-    modules = parameterization['modules']
-    lr_expression = parameterization['lr_expression']
-    lr_mutation = parameterization['lr_mutation']
-    lr_cna = parameterization['lr_cna']
+    lr_vae = parameterization['lr_vae']
     lr_classifier = parameterization['lr_classifier']
     weight_decay = parameterization['weight_decay']
-    epochs = parameterization['epochs']
+    epochs_phase_one = parameterization['epochs_phase_one']
+    epochs_phase_two = parameterization['epochs_phase_two']
+    epochs_phase_three = parameterization['epochs_phase_three']
+    latent_space_dim = parameterization['h_dim_classifier']
+    dropout = parameterization['dropout']
+    k_kl = parameterization['k_kl']
+    k_embed = parameterization['k_embed']
+    epochs = (epochs_phase_one, epochs_phase_two, epochs_phase_three)
 
     aucs_validate = []
     iteration = 1
@@ -53,29 +58,19 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
                                           torch.FloatTensor(x_train_c),
                                           torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
 
-        loss_fn = torch.nn.BCELoss()
         e_in = x_train_e.shape[-1]
         m_in = x_train_m.shape[-1]
         c_in = x_train_c.shape[-1]
-        moma_model = Moma(e_in, m_in, c_in, h_dim_classifier, modules).to(device)
+        moma_model = VaeClassifierModel((e_in, m_in, c_in), dropout, latent_space_dim).to(device)
 
-        moma_optimiser = torch.optim.Adagrad([
-            {'params': moma_model.expression_FC1_x.parameters(), 'lr': lr_expression},
-            {'params': moma_model.expression_FC1_y.parameters(), 'lr': lr_expression},
-            {'params': moma_model.mutation_FC1_x.parameters(), 'lr': lr_mutation},
-            {'params': moma_model.mutation_FC1_y.parameters(), 'lr': lr_mutation},
-            {'params': moma_model.cna_FC1_x.parameters(), 'lr': lr_cna},
-            {'params': moma_model.cna_FC1_y.parameters(), 'lr': lr_cna},
-           # {'params': moma_model.expression_FC2.parameters(), 'lr': lr_classifier},
-            {'params': moma_model.expression_FC3.parameters(), 'lr': lr_classifier},
-           # {'params': moma_model.mutation_FC2.parameters(), 'lr': lr_classifier},
-            {'params': moma_model.mutation_FC3.parameters(), 'lr': lr_classifier},
-           # {'params': moma_model.cna_FC2.parameters(), 'lr': lr_classifier},
-            {'params': moma_model.cna_FC3.parameters(), 'lr': lr_classifier}],
-            weight_decay=weight_decay)
+        optimiser_embedding = torch.optim.Adagrad(params=moma_model.netEmbed.parameters(),
+                                                  lr=lr_vae, weight_decay=weight_decay)
 
-        for _ in trange(epochs, desc='Epoch'):
-            train_moma(train_loader, moma_model, moma_optimiser, loss_fn, device)
+        optimiser_classifier = torch.optim.Adagrad(params=moma_model.netDown.parameters(), lr=lr_classifier,
+                                                   weight_decay=weight_decay)
+
+        train_omi_embed(train_loader, moma_model, optimiser_embedding, optimiser_classifier, device, epochs, k_kl,
+                        k_embed)
 
         # validate
         auc_validate, _ = test_moma(moma_model, scaler_gdsc, torch.FloatTensor(x_validate_e),
@@ -112,40 +107,30 @@ def set_best_auroc(new_auroc):
 
 def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory):
     mini_batch = parameterization['mini_batch']
-    h_dim_classifier = parameterization['h_dim_classifier']
-    modules = parameterization['modules']
-    lr_expression = parameterization['lr_expression']
-    lr_mutation = parameterization['lr_mutation']
-    lr_cna = parameterization['lr_cna']
+    lr_vae = parameterization['lr_vae']
     lr_classifier = parameterization['lr_classifier']
     weight_decay = parameterization['weight_decay']
-    epochs = parameterization['epochs']
+    epochs_phase_one = parameterization['epochs_phase_one']
+    epochs_phase_two = parameterization['epochs_phase_two']
+    epochs_phase_three = parameterization['epochs_phase_three']
+    latent_space_dim = parameterization['h_dim_classifier']
+    dropout = parameterization['dropout']
+    k_kl = parameterization['k_kl']
+    k_embed = parameterization['k_embed']
+    epochs = (epochs_phase_one, epochs_phase_two, epochs_phase_three)
 
     train_scaler_gdsc = StandardScaler()
     train_scaler_gdsc.fit(x_train_e)
     x_train_e = train_scaler_gdsc.transform(x_train_e)
 
-    loss_fn = torch.nn.BCELoss()
+    omic_dims = (x_train_e.shape[-1], x_train_m.shape[-1], x_train_c.shape[-1])
+    moma_model = VaeClassifierModel(omic_dims, dropout, latent_space_dim).to(device)
 
-    e_in = x_train_e.shape[-1]
-    m_in = x_train_m.shape[-1]
-    c_in = x_train_c.shape[-1]
-    moma_model = Moma(e_in, m_in, c_in, h_dim_classifier, modules).to(device)
+    optimiser_embedding = torch.optim.Adagrad(params=moma_model.netEmbed.parameters(),
+                                              lr=lr_vae, weight_decay=weight_decay)
 
-    moma_optimiser = torch.optim.Adagrad([
-        {'params': moma_model.expression_FC1_x.parameters(), 'lr': lr_expression},
-        {'params': moma_model.expression_FC1_y.parameters(), 'lr': lr_expression},
-        {'params': moma_model.mutation_FC1_x.parameters(), 'lr': lr_mutation},
-        {'params': moma_model.mutation_FC1_y.parameters(), 'lr': lr_mutation},
-        {'params': moma_model.cna_FC1_x.parameters(), 'lr': lr_cna},
-        {'params': moma_model.cna_FC1_y.parameters(), 'lr': lr_cna},
-        #{'params': moma_model.expression_FC2.parameters(), 'lr': lr_classifier},
-        {'params': moma_model.expression_FC3.parameters(), 'lr': lr_classifier},
-        #{'params': moma_model.mutation_FC2.parameters(), 'lr': lr_classifier},
-        {'params': moma_model.mutation_FC3.parameters(), 'lr': lr_classifier},
-        #{'params': moma_model.cna_FC2.parameters(), 'lr': lr_classifier},
-        {'params': moma_model.cna_FC3.parameters(), 'lr': lr_classifier}],
-        weight_decay=weight_decay)
+    optimiser_classifier = torch.optim.Adagrad(params=moma_model.netDown.parameters(), lr=lr_classifier,
+                                               weight_decay=weight_decay)
 
     class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
     weight = 1. / class_sample_count
@@ -158,28 +143,71 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
                                       torch.FloatTensor(x_train_c),
                                       torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
 
-    for epoch in range(epochs):
-        train_moma(train_loader, moma_model, moma_optimiser, loss_fn, device)
+    train_omi_embed(train_loader, moma_model, optimiser_embedding, optimiser_classifier, device, epochs, k_kl, k_embed)
     return moma_model, train_scaler_gdsc
 
 
-def train_moma(train_loader, model, optimiser, loss_fn, device):
+def train_omi_embed(train_loader, model, optimiser_embedding, optimiser_classifier, device, epochs, k_kl, k_embed):
     y_true = []
-    model.train()
-    for (data_e, data_m, data_c, target) in train_loader:
-        if torch.mean(target) != 0. and torch.mean(target) != 1.:
-            optimiser.zero_grad()
-            y_true.extend(target)
+    for _ in range(epochs[0]):
+        model.netEmbed.train()
+        model.netDown.eval()
+        for (data_e, data_m, data_c, target) in train_loader:
+            if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                    optimiser_embedding.zero_grad()
+                    y_true.extend(target)
+                    data_e = data_e.to(device)
+                    data_m = data_m.to(device)
+                    data_c = data_c.to(device)
+                    z, recon_x, mean, log_var = model.encode(data_e, data_m, data_c)
+                    loss_kl = kl_loss(mean, log_var)
+                    reconstruction_loss = lossFuncRecon(recon_x[0], data_e) \
+                                          + lossFuncRecon(recon_x[1], data_m) \
+                                          + lossFuncRecon(recon_x[2], data_c)
+                    loss = k_kl * loss_kl + reconstruction_loss
+                    loss.backward()
+                    optimiser_embedding.step()
 
-            data_e = data_e.to(device)
-            data_m = data_m.to(device)
-            data_c = data_c.to(device)
-            target = target.to(device)
-            expression_logit, mutation_logit, cna_logit = model.forward(data_e, data_m, data_c)
-            loss = loss_fn(torch.squeeze(expression_logit), target) + loss_fn(torch.squeeze(mutation_logit), target) \
-                   + loss_fn(torch.squeeze(cna_logit), target)
-            loss.backward()
-            optimiser.step()
+    for _ in range(epochs[1]):
+        model.netEmbed.eval()
+        model.netDown.train()
+        for (data_e, data_m, data_c, target) in train_loader:
+            if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                    optimiser_classifier.zero_grad()
+                    y_true.extend(target)
+                    data_e = data_e.to(device)
+                    data_m = data_m.to(device)
+                    data_c = data_c.to(device)
+                    target = target.to(device)
+                    logit = model.classify(data_e, data_m, data_c)
+                    loss = classifier_loss(target, logit)
+                    loss.backward()
+                    optimiser_classifier.step()
+
+    for _ in range(epochs[2]):
+        model.netEmbed.train()
+        model.netDown.train()
+        for (data_e, data_m, data_c, target) in train_loader:
+            if torch.mean(target) != 0. and torch.mean(target) != 1.:
+                optimiser_embedding.zero_grad()
+                optimiser_classifier.zero_grad()
+                y_true.extend(target)
+                data_e = data_e.to(device)
+                data_m = data_m.to(device)
+                data_c = data_c.to(device)
+                target = target.to(device)
+                z, recon_x, mean, log_var, logit = model.encode_and_classify(data_e, data_m, data_c)
+                loss_kl = kl_loss(mean, log_var)
+                classification_loss = classifier_loss(target, logit)
+                reconstruction_loss = lossFuncRecon(recon_x[0], data_e) \
+                                      + lossFuncRecon(recon_x[1], data_m) \
+                                      + lossFuncRecon(recon_x[2], data_c)
+                loss = k_embed * (k_kl * loss_kl + reconstruction_loss) + classification_loss
+                loss.backward()
+                optimiser_embedding.step()
+                optimiser_classifier.step()
 
 
 def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
@@ -197,3 +225,12 @@ def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
     auc_validate = roc_auc_score(test_y, probabilities)
     auprc_validate = average_precision_score(test_y, probabilities)
     return auc_validate, auprc_validate
+
+
+def kl_loss(mean, log_var, reduction='mean'):
+    part_loss = 1 + log_var - mean.pow(2) - log_var.exp()
+    if reduction == 'mean':
+        loss = -0.5 * torch.mean(part_loss)
+    else:
+        loss = -0.5 * torch.sum(part_loss)
+    return loss

@@ -19,7 +19,7 @@ gamma_choices:
     - 0.3
     - 0.5
 
-dim_choice:
+dim_choice:h_dim_cna
     - 32
     - 64
     - 128
@@ -36,14 +36,8 @@ learning_rate_choices:
     - 0.001
     - 0.01
 
-combination_choices:
-    - 0
-    - 1
-    - 2
-    - 3
-    - 4
 
-all_triplet_batch_size_choices:
+batch_size_choices:
     - 8
     - 16
     - 32
