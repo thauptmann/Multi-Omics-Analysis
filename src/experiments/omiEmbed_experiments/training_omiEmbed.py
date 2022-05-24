@@ -222,7 +222,7 @@ def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
     with torch.no_grad():
         logit = model.classify(extern_e, extern_m, extern_c)
     probabilities = sigmoid(logit)
-    auc_validate = roc_auc_score(test_y, probabilities)
+    auc_validate = roc_auc_score(test_y, probabilities.cpu())
     auprc_validate = average_precision_score(test_y, probabilities)
     return auc_validate, auprc_validate
 
