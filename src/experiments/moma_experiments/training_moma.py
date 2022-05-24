@@ -191,6 +191,7 @@ def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
     stacked = torch.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()])
     mean_logits = torch.mean(stacked, dim=0)
     probabilities = sigmoid(mean_logits)
+    probabilities = torch.nan_to_num(probabilities)
     auc_validate = roc_auc_score(test_y, probabilities)
     auprc_validate = average_precision_score(test_y, probabilities)
     return auc_validate, auprc_validate
