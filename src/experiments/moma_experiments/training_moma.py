@@ -194,6 +194,7 @@ def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
         expression_logit, mutation_logit, cna_logit = model.forward(extern_e, extern_m, extern_c)
     stacked = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()])
     probabilities = np.mean(stacked, axis=0)
+    probabilities = np.nan_to_num(probabilities, nan=0.0)
     auc_validate = roc_auc_score(test_y, probabilities)
     auprc_validate = average_precision_score(test_y, probabilities)
     return auc_validate, auprc_validate

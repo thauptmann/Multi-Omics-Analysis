@@ -114,6 +114,15 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     dropout = parameterization['dropout']
     k_kl = parameterization['k_kl']
     k_embed = parameterization['k_embed']
+    dim_1B
+    dim_2B
+    dim_1A
+    dim_2A
+    dim_1C
+    dim_2C
+    dim_3
+    class_dim_1
+    class_dim_2
     epochs_phase = int(epochs_phase / 3) if int(epochs_phase / 3) > 0 else 1
 
     train_scaler_gdsc = StandardScaler()
@@ -122,7 +131,10 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
 
     omic_dims = (x_train_e.shape[-1], x_train_m.shape[-1], x_train_c.shape[-1])
     print(omic_dims)
-    moma_model = VaeClassifierModel(omic_dims, dropout, latent_space_dim).to(device)
+    moma_model = VaeClassifierModel(omic_dims, dropout, latent_space_dim,
+                                    dim_1B, dim_2B, dim_1A, dim_2A, dim_1C, dim_2C, dim_3,
+                                    class_dim_1, class_dim_2
+                                    ).to(device)
 
     optimiser_embedding = torch.optim.Adagrad(params=moma_model.netEmbed.parameters(),
                                               lr=lr_vae, weight_decay=weight_decay)
