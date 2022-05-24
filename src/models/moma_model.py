@@ -18,10 +18,6 @@ class Moma(nn.Module):
         self.cna_FC1_y = nn.Linear(In_Nodes3, Modules, bias=False)
         self.softmax = nn.Softmax(dim=-1)
 
-        # self.expression_FC2 = nn.Sequential(nn.Linear(Modules * 4, classifier_size), nn.ReLU())
-        # self.mutation_FC2 = nn.Sequential(nn.Linear(Modules * 4, classifier_size), nn.ReLU())
-        # self.cna_FC2 = nn.Sequential(nn.Linear(Modules * 4, classifier_size), nn.ReLU())
-
         self.expression_FC3 = nn.Sequential(nn.Linear(Modules * 4, 1), nn.Sigmoid())
         self.mutation_FC3 = nn.Sequential(nn.Linear(Modules * 4, 1), nn.Sigmoid())
         self.cna_FC3 = nn.Sequential(nn.Linear(Modules * 4, 1), nn.Sigmoid())
@@ -86,13 +82,8 @@ class Moma(nn.Module):
         mutation = mutation.view(-1, self.Modules * 4)
         cna = cna.view(-1, self.Modules * 4)
 
-        #expression = self.expression_FC2(expression)
         expression = self.expression_FC3(expression)
-
-        #mutation = self.mutation_FC2(mutation)
         mutation = self.mutation_FC3(mutation)
-
-        #cna = self.cna_FC2(cna)
         cna = self.cna_FC3(cna)
 
         return torch.squeeze(expression), torch.squeeze(mutation), torch.squeeze(cna)
