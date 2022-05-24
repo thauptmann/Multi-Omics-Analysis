@@ -15,7 +15,7 @@ from utils.experiment_utils import create_generation_strategy
 from utils.input_arguments import get_cmd_arguments
 from utils.searchspaces import create_omi_embed_search_space
 from utils.choose_gpu import get_free_gpu
-from training_omiEmbed import train_final, optimise_hyperparameter, reset_best_auroc, test_moma
+from training_omiEmbed import train_final, optimise_hyperparameter, reset_best_auroc, test_omi_embed
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc
@@ -98,9 +98,9 @@ def bo_moli(search_iterations, experiment_name, drug_name, extern_dataset_name, 
         model_final, scaler_final = train_final(best_parameters, x_train_validate_e, x_train_validate_m,
                                                 x_train_validate_c, y_train_validate, device,
                                                 pin_memory)
-        auc_test, auprc_test = test_moma(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
-        auc_extern, auprc_extern = test_moma(model_final, scaler_final, extern_e, extern_m, extern_c,
-                                             extern_r, device)
+        auc_test, auprc_test = test_omi_embed(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
+        auc_extern, auprc_extern = test_omi_embed(model_final, scaler_final, extern_e, extern_m, extern_c,
+                                                  extern_r, device)
 
         result_file.write(f'\t\tBest {drug_name} validation Auroc = {max_objective}\n')
         objectives_list.append(objectives)

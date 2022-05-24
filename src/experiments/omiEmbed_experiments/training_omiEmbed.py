@@ -70,24 +70,24 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         m_in = x_train_m.shape[-1]
         c_in = x_train_c.shape[-1]
         omic_dims = (e_in, m_in, c_in)
-        moma_model = VaeClassifierModel(omic_dims, dropout, latent_space_dim,
+        omi_embed_model = VaeClassifierModel(omic_dims, dropout, latent_space_dim,
                                         dim_1B, dim_2B, dim_1A, dim_2A, dim_1C, dim_2C, dim_3,
                                         class_dim_1, class_dim_2
                                         ).to(device)
 
-        optimiser_embedding = torch.optim.Adagrad(params=moma_model.netEmbed.parameters(),
+        optimiser_embedding = torch.optim.Adagrad(params=omi_embed_model.netEmbed.parameters(),
                                                   lr=lr_vae, weight_decay=weight_decay)
 
-        optimiser_classifier = torch.optim.Adagrad(params=moma_model.netDown.parameters(), lr=lr_classifier,
+        optimiser_classifier = torch.optim.Adagrad(params=omi_embed_model.netDown.parameters(), lr=lr_classifier,
                                                    weight_decay=weight_decay)
 
-        train_omi_embed(train_loader, moma_model, optimiser_embedding, optimiser_classifier, device, epochs_phase, k_kl,
+        train_omi_embed(train_loader, omi_embed_model, optimiser_embedding, optimiser_classifier, device, epochs_phase, k_kl,
                         k_embed)
 
         # validate
-        auc_validate, _ = test_moma(moma_model, scaler_gdsc, torch.FloatTensor(x_validate_e),
-                                    torch.FloatTensor(x_validate_m),
-                                    torch.FloatTensor(x_validate_c), y_validate, device)
+        auc_validate, _ = test_omi_embed(omi_embed_model, scaler_gdsc, torch.FloatTensor(x_validate_e),
+                                         torch.FloatTensor(x_validate_m),
+                                         torch.FloatTensor(x_validate_c), y_validate, device)
         aucs_validate.append(auc_validate)
 
         if iteration < cv_splits_inner:
@@ -144,15 +144,15 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
 
     omic_dims = (x_train_e.shape[-1], x_train_m.shape[-1], x_train_c.shape[-1])
     print(omic_dims)
-    moma_model = VaeClassifierModel(omic_dims, dropout, latent_space_dim,
+    omi_embed_model = VaeClassifierModel(omic_dims, dropout, latent_space_dim,
                                     dim_1B, dim_2B, dim_1A, dim_2A, dim_1C, dim_2C, dim_3,
                                     class_dim_1, class_dim_2
                                     ).to(device)
 
-    optimiser_embedding = torch.optim.Adagrad(params=moma_model.netEmbed.parameters(),
+    optimiser_embedding = torch.optim.Adagrad(params=omi_embed_model.netEmbed.parameters(),
                                               lr=lr_vae, weight_decay=weight_decay)
 
-    optimiser_classifier = torch.optim.Adagrad(params=moma_model.netDown.parameters(), lr=lr_classifier,
+    optimiser_classifier = torch.optim.Adagrad(params=omi_embed_model.netDown.parameters(), lr=lr_classifier,
                                                weight_decay=weight_decay)
 
     class_sample_count = np.array([len(np.where(y_train == t)[0]) for t in np.unique(y_train)])
@@ -166,9 +166,9 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
                                       torch.FloatTensor(x_train_c),
                                       torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
 
-    train_omi_embed(train_loader, moma_model, optimiser_embedding, optimiser_classifier, device, epochs_phase,
+    train_omi_embed(train_loader, omi_embed_model, optimiser_embedding, optimiser_classifier, device, epochs_phase,
                     k_kl, k_embed)
-    return moma_model, train_scaler_gdsc
+    return omi_embed_model, train_scaler_gdsc
 
 
 def train_omi_embed(train_loader, model, optimiser_embedding, optimiser_classifier, device, epochs, k_kl, k_embed):
@@ -237,8 +237,7 @@ def train_omi_embed(train_loader, model, optimiser_embedding, optimiser_classifi
 sigmoid = torch.nn.Sigmoid()
 
 
-def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
-    model = model
+def test_omi_embed(model, scaler, extern_e, extern_m, extern_c, test_r):
     extern_e = torch.FloatTensor(scaler.transform(extern_e))
     extern_m = torch.FloatTensor(extern_m)
     extern_c = torch.FloatTensor(extern_c)
