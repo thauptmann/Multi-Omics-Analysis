@@ -66,11 +66,8 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
             {'params': moma_model.mutation_FC1_y.parameters(), 'lr': lr_mutation},
             {'params': moma_model.cna_FC1_x.parameters(), 'lr': lr_cna},
             {'params': moma_model.cna_FC1_y.parameters(), 'lr': lr_cna},
-           # {'params': moma_model.expression_FC2.parameters(), 'lr': lr_classifier},
             {'params': moma_model.expression_FC3.parameters(), 'lr': lr_classifier},
-           # {'params': moma_model.mutation_FC2.parameters(), 'lr': lr_classifier},
             {'params': moma_model.mutation_FC3.parameters(), 'lr': lr_classifier},
-           # {'params': moma_model.cna_FC2.parameters(), 'lr': lr_classifier},
             {'params': moma_model.cna_FC3.parameters(), 'lr': lr_classifier}],
             weight_decay=weight_decay)
 
@@ -139,11 +136,8 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
         {'params': moma_model.mutation_FC1_y.parameters(), 'lr': lr_mutation},
         {'params': moma_model.cna_FC1_x.parameters(), 'lr': lr_cna},
         {'params': moma_model.cna_FC1_y.parameters(), 'lr': lr_cna},
-        #{'params': moma_model.expression_FC2.parameters(), 'lr': lr_classifier},
         {'params': moma_model.expression_FC3.parameters(), 'lr': lr_classifier},
-        #{'params': moma_model.mutation_FC2.parameters(), 'lr': lr_classifier},
         {'params': moma_model.mutation_FC3.parameters(), 'lr': lr_classifier},
-        #{'params': moma_model.cna_FC2.parameters(), 'lr': lr_classifier},
         {'params': moma_model.cna_FC3.parameters(), 'lr': lr_classifier}],
         weight_decay=weight_decay)
 
@@ -194,8 +188,8 @@ def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
     model.eval()
     with torch.no_grad():
         expression_logit, mutation_logit, cna_logit = model.forward(extern_e, extern_m, extern_c)
-    stacked = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()])
-    mean_logits = np.mean(stacked, axis=0)
+    stacked = torch.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()])
+    mean_logits = torch.mean(stacked, dim=0)
     probabilities = sigmoid(mean_logits)
     auc_validate = roc_auc_score(test_y, probabilities)
     auprc_validate = average_precision_score(test_y, probabilities)
