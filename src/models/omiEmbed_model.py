@@ -8,7 +8,8 @@ class VaeBasicModel(torch.nn.Module):
     This is the basic VAE model class, called by all other VAE son classes.
     """
 
-    def __init__(self, omics_dims, norm_type, leaky_slope, dropout_p, latent_space_dim):
+    def __init__(self, omics_dims, norm_type, leaky_slope, dropout_p, latent_space_dim,
+                 dim_1B, dim_2B, dim_1A, dim_2A, dim_1C, dim_2C, dim_3):
         """
         Initialize the VAE basic class.
         """
@@ -16,7 +17,8 @@ class VaeBasicModel(torch.nn.Module):
         super().__init__()
 
         # define the network
-        self.netEmbed = define_VAE(omics_dims, norm_type, leaky_slope, dropout_p, latent_space_dim)
+        self.netEmbed = define_VAE(omics_dims, norm_type, leaky_slope, dropout_p, latent_space_dim,
+                                   dim_1B, dim_2B, dim_1A, dim_2A, dim_1C, dim_2C, dim_3)
 
     def forward(self, data_e, data_m, data_c):
         # Get the output tensor
@@ -205,15 +207,17 @@ class VaeClassifierModel(VaeBasicModel):
     This class implements the VAE classifier model, using the VAE framework with the classification downstream task.
     """
 
-    def __init__(self, omics_dims, dropout_p, latent_space_dim):
+    def __init__(self, omics_dims, dropout_p, latent_space_dim, dim_1B, dim_2B, dim_1A, dim_2A, dim_1C, dim_2C, dim_3,
+                 class_dim_1, class_dim_2):
         """
         Initialize the VAE_classifier class.
         """
-        VaeBasicModel.__init__(self, omics_dims, 'batch', 0.2, dropout_p, latent_space_dim)
+        VaeBasicModel.__init__(self, omics_dims, 'batch', 0.2, dropout_p, latent_space_dim,
+                               dim_1B, dim_2B, dim_1A, dim_2A, dim_1C, dim_2C, dim_3)
         # specify the training losses you want to print out.
 
         # define the network
-        self.netDown = define_down('batch', 0.2, dropout_p, latent_space_dim, 1)
+        self.netDown = define_down('batch', 0.2, dropout_p, latent_space_dim, 1, class_dim_1, class_dim_2)
 
     def classify(self, data_e, data_m, data_c):
         z, recon_omics, mean, log_var, latent = VaeBasicModel.forward(self, data_e, data_m, data_c)
@@ -234,7 +238,8 @@ class VaeClassifierModel(VaeBasicModel):
         return z, recon_omics, mean, log_var, y_out
 
 
-def define_down(norm_type='batch', leaky_slope=0.2, dropout_p=0, latent_dim=256, class_num=2):
+def define_down(norm_type='batch', leaky_slope=0.2, dropout_p=0, latent_dim=256, class_num=2,
+                class_dim_1=128, class_dim_2=64):
     """
         Create the downstream task network
         Parameters:
@@ -246,6 +251,8 @@ def define_down(norm_type='batch', leaky_slope=0.2, dropout_p=0, latent_dim=256,
         Returns a downstream task network
         The default downstream task network is a multi-layer fully-connected classifier.
         The generator has been initialized by <init_net>.
+        :param class_dim_2:
+        :param class_dim_1:
         """
 
     net = None
@@ -253,7 +260,7 @@ def define_down(norm_type='batch', leaky_slope=0.2, dropout_p=0, latent_dim=256,
     # get the normalization layer
     norm_layer = get_norm_layer(norm_type=norm_type)
 
-    net = MultiFcClassifier(class_num, latent_dim, norm_layer, leaky_slope, dropout_p)
+    net = MultiFcClassifier(class_num, latent_dim, norm_layer, leaky_slope, dropout_p, class_dim_1, class_dim_2)
 
     return net
 
@@ -322,7 +329,8 @@ class MultiFcClassifier(nn.Module):
         return y
 
 
-def define_VAE(omics_dims, norm_type='batch', leaky_slope=0.2, dropout_p=0, latent_dim=256):
+def define_VAE(omics_dims, norm_type='batch', leaky_slope=0.2, dropout_p=0, latent_dim=256,
+               dim_1B=384, dim_2B=256, dim_1A=384, dim_2A=256, dim_1C=384, dim_2C=256, dim_3=256,):
     """
     Create the VAE network
     Parameters:
@@ -339,5 +347,6 @@ def define_VAE(omics_dims, norm_type='batch', leaky_slope=0.2, dropout_p=0, late
     net = None
     # get the normalization layer
     norm_layer = get_norm_layer(norm_type=norm_type)
-    net = FcVaeABC(omics_dims, norm_layer, leaky_slope, dropout_p, latent_dim=latent_dim)
+    net = FcVaeABC(omics_dims, norm_layer, leaky_slope, dropout_p, dim_1B=dim_1B, dim_2B=dim_2B,
+                 dim_1A=dim_1A, dim_2A=dim_2A, dim_1C=dim_1C, dim_2C=dim_2C, dim_3=dim_3, latent_dim=latent_dim)
     return net

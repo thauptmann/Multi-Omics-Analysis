@@ -225,16 +225,16 @@ sigmoid = torch.nn.Sigmoid()
 
 
 def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
-    model = model.to(device)
-    extern_e = torch.FloatTensor(scaler.transform(extern_e)).to(device)
-    extern_m = torch.FloatTensor(extern_m).to(device)
-    extern_c = torch.FloatTensor(extern_c).to(device)
+    model = model
+    extern_e = torch.FloatTensor(scaler.transform(extern_e))
+    extern_m = torch.FloatTensor(extern_m)
+    extern_c = torch.FloatTensor(extern_c)
 
     test_y = torch.FloatTensor(test_r.astype(int))
     model.eval()
     with torch.no_grad():
         logit = model.classify(extern_e, extern_m, extern_c)
-    probabilities = sigmoid(logit).cpu()
+    probabilities = sigmoid(logit)
     auc_validate = roc_auc_score(test_y, probabilities)
     auprc_validate = average_precision_score(test_y, probabilities)
     return auc_validate, auprc_validate
