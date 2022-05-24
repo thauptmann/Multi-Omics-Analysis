@@ -98,9 +98,9 @@ def bo_moli(search_iterations, experiment_name, drug_name, extern_dataset_name, 
         model_final, scaler_final = train_final(best_parameters, x_train_validate_e, x_train_validate_m,
                                                 x_train_validate_c, y_train_validate, device,
                                                 pin_memory)
-        auc_test, auprc_test = test_omi_embed(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
+        auc_test, auprc_test = test_omi_embed(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test)
         auc_extern, auprc_extern = test_omi_embed(model_final, scaler_final, extern_e, extern_m, extern_c,
-                                                  extern_r, device)
+                                                  extern_r)
 
         result_file.write(f'\t\tBest {drug_name} validation Auroc = {max_objective}\n')
         objectives_list.append(objectives)
