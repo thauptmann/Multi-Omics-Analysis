@@ -21,6 +21,7 @@ def reset_best_auroc():
 
 
 def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memory):
+    torch.multiprocessing.set_sharing_strategy('file_system')
     mini_batch = parameterization['mini_batch']
     lr_vae = parameterization['lr_vae']
     lr_classifier = parameterization['lr_classifier']

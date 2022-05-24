@@ -1,44 +1,9 @@
 import functools
-
 import torch
 from torch import nn
 
 
-class BasicModel(torch.nn.Module):
-    """
-    This class is an abstract base class for models.
-    To create a subclass, you need to implement the following five functions:
-        -- <__init__>:                          Initialize the class, first call BasicModel.__init__(self, param)
-        -- <modify_commandline_parameters>:     Add model-specific parameters, and rewrite default values for existing parameters
-        -- <set_input>:                         Unpack input data from the output dictionary of the dataloader
-        -- <forward>:                           Get the reconstructed omics data and results for the downstream task
-        -- <update>:                            Calculate losses, gradients and update network parameters
-    """
-
-    def __init__(self):
-        """
-        Initialize the BaseModel class
-        """
-        super().__init__()
-        self.phase = 'p1'
-        self.epoch = 1
-        self.iter = 0
-
-        self.plateau_metric = 0  # used for learning rate policy 'plateau'
-
-        self.loss_names = []
-        self.model_names = []
-        self.metric_names = []
-        self.optimizers = []
-        self.schedulers = []
-
-        self.latent = None
-        self.loss_embed = None
-        self.loss_down = None
-        self.loss_All = None
-
-
-class VaeBasicModel(BasicModel):
+class VaeBasicModel(torch.nn.Module):
     """
     This is the basic VAE model class, called by all other VAE son classes.
     """
@@ -47,26 +12,11 @@ class VaeBasicModel(BasicModel):
         """
         Initialize the VAE basic class.
         """
-        BasicModel.__init__(self)
-
         # input tensor
-        self.input_omics = []
-        self.data_index = None  # The indexes of input data
-
-        # output tensor
-        self.z = None
-        self.recon_omics = None
-        self.mean = None
-        self.log_var = None
+        super().__init__()
 
         # define the network
         self.netEmbed = define_VAE(omics_dims, norm_type, leaky_slope, dropout_p, latent_space_dim)
-
-        self.loss_recon_A = None
-        self.loss_recon_B = None
-        self.loss_recon_C = None
-        self.loss_recon = None
-        self.loss_kl = None
 
     def forward(self, data_e, data_m, data_c):
         # Get the output tensor
@@ -79,6 +29,7 @@ class FCBlock(nn.Module):
     """
     Linear => Norm1D => LeakyReLU
     """
+
     def __init__(self, input_dim, output_dim, norm_layer=nn.BatchNorm1d, leaky_slope=0.2, dropout_p=0, activation=True,
                  normalization=True, activation_name='LeakyReLU'):
         """
@@ -117,8 +68,7 @@ class FCBlock(nn.Module):
         self.fc_block = nn.Sequential(*self.fc_block)
 
     def forward(self, x):
-        y = self.fc_block(x)
-        return y
+        return self.fc_block(x)
 
 
 # FcVae
@@ -126,6 +76,7 @@ class FcVaeABC(nn.Module):
     """
         Defines a fully-connected variational autoencoder for multi-omics dataset
     """
+
     def __init__(self, omics_dims, norm_layer=nn.BatchNorm1d, leaky_slope=0.2, dropout_p=0, dim_1B=384, dim_2B=256,
                  dim_1A=384, dim_2A=256, dim_1C=384, dim_2C=256, dim_3=256, latent_dim=256):
         """
@@ -166,7 +117,8 @@ class FcVaeABC(nn.Module):
         self.encode_fc_2C = FCBlock(dim_1C, dim_2C, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=dropout_p,
                                     activation=True)
         # Layer 3
-        self.encode_fc_3 = FCBlock(dim_2B+dim_2A+dim_2C, dim_3, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=dropout_p,
+        self.encode_fc_3 = FCBlock(dim_2B + dim_2A + dim_2C, dim_3, norm_layer=norm_layer, leaky_slope=leaky_slope,
+                                   dropout_p=dropout_p,
                                    activation=True)
         # Layer 4
         self.encode_fc_mean = FCBlock(dim_3, latent_dim, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
@@ -176,10 +128,12 @@ class FcVaeABC(nn.Module):
 
         # DECODER
         # Layer 1
-        self.decode_fc_z = FCBlock(latent_dim, dim_3, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=dropout_p,
+        self.decode_fc_z = FCBlock(latent_dim, dim_3, norm_layer=norm_layer, leaky_slope=leaky_slope,
+                                   dropout_p=dropout_p,
                                    activation=True)
         # Layer 2
-        self.decode_fc_2 = FCBlock(dim_3, dim_2B+dim_2A+dim_2C, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=dropout_p,
+        self.decode_fc_2 = FCBlock(dim_3, dim_2B + dim_2A + dim_2C, norm_layer=norm_layer, leaky_slope=leaky_slope,
+                                   dropout_p=dropout_p,
                                    activation=True)
         # Layer 3
         self.decode_fc_3B = FCBlock(dim_2B, dim_1B, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=dropout_p,
@@ -224,7 +178,7 @@ class FcVaeABC(nn.Module):
         level_2 = self.decode_fc_2(level_1)
         level_2_B = level_2.narrow(1, 0, self.dim_2B)
         level_2_A = level_2.narrow(1, self.dim_2B, self.dim_2A)
-        level_2_C = level_2.narrow(1, self.dim_2B+self.dim_2A, self.dim_2C)
+        level_2_C = level_2.narrow(1, self.dim_2B + self.dim_2A, self.dim_2C)
 
         level_3_B = self.decode_fc_3B(level_2_B)
         level_3_A = self.decode_fc_3A(level_2_A)
@@ -257,27 +211,9 @@ class VaeClassifierModel(VaeBasicModel):
         """
         VaeBasicModel.__init__(self, omics_dims, 'batch', 0.2, dropout_p, latent_space_dim)
         # specify the training losses you want to print out.
-        self.loss_names.append('classifier')
-        # specify the metrics you want to print out.
-        self.metric_names = ['accuracy']
-        # input tensor
-        self.label = None
-        # output tensor
-        self.y_out = None
+
         # define the network
         self.netDown = define_down('batch', 0.2, dropout_p, latent_space_dim, 1)
-        # define the classification loss
-        self.loss_classifier = None
-        self.metric_accuracy = None
-
-    def set_input(self, input_dict):
-        """
-        Unpack input data from the output dictionary of the dataloader
-        Parameters:
-            input_dict (dict): include the data tensor and its index.
-        """
-        VaeBasicModel.set_input(self, input_dict)
-        self.label = input_dict['label'].to(self.device)
 
     def classify(self, data_e, data_m, data_c):
         z, recon_omics, mean, log_var, latent = VaeBasicModel.forward(self, data_e, data_m, data_c)
@@ -296,9 +232,6 @@ class VaeClassifierModel(VaeBasicModel):
         z, recon_omics, mean, log_var, latent = VaeBasicModel.forward(self, data_e, data_m, data_c)
         y_out = self.netDown(latent)
         return z, recon_omics, mean, log_var, y_out
-
-    def update(self):
-        VaeBasicModel.update(self)
 
 
 def define_down(norm_type='batch', leaky_slope=0.2, dropout_p=0, latent_dim=256, class_num=2):
@@ -345,6 +278,7 @@ class MultiFcClassifier(nn.Module):
     """
     Defines a multi-layer fully-connected classifier
     """
+
     def __init__(self, class_num=2, latent_dim=256, norm_layer=nn.BatchNorm1d, leaky_slope=0.2, dropout_p=0,
                  class_dim_1=128, class_dim_2=64, layer_num=3):
         """
@@ -359,7 +293,8 @@ class MultiFcClassifier(nn.Module):
         """
         super(MultiFcClassifier, self).__init__()
 
-        self.input_fc = FCBlock(latent_dim, class_dim_1, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=dropout_p,
+        self.input_fc = FCBlock(latent_dim, class_dim_1, norm_layer=norm_layer, leaky_slope=leaky_slope,
+                                dropout_p=dropout_p,
                                 activation=True)
 
         # create a list to store fc blocks
@@ -368,9 +303,9 @@ class MultiFcClassifier(nn.Module):
         block_layer_num = max(layer_num, 3)
         input_dim = class_dim_1
         dropout_flag = True
-        for num in range(0, block_layer_num-2):
+        for num in range(0, block_layer_num - 2):
             mul_fc_block += [FCBlock(input_dim, class_dim_2, norm_layer=norm_layer, leaky_slope=leaky_slope,
-                                    dropout_p=dropout_flag*dropout_p, activation=True)]
+                                     dropout_p=dropout_flag * dropout_p, activation=True)]
             input_dim = class_dim_2
             # dropout for every other layer
             dropout_flag = not dropout_flag
