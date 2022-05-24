@@ -53,7 +53,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
                                           torch.FloatTensor(x_train_c),
                                           torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
 
-        loss_fn = torch.nn.BCELoss()
+        loss_fn = torch.nn.BCEWithLogitsLoss()
         e_in = x_train_e.shape[-1]
         m_in = x_train_m.shape[-1]
         c_in = x_train_c.shape[-1]
@@ -180,6 +180,7 @@ def train_moma(train_loader, model, optimiser, loss_fn, device):
                    + loss_fn(torch.squeeze(cna_logit), target)
             loss.backward()
             optimiser.step()
+
 
 sigmoid = torch.nn.Sigmoid()
 
