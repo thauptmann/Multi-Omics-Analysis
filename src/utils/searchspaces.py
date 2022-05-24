@@ -179,8 +179,8 @@ def create_stacking_splitted_search_space():
 def create_moma_search_space():
     search_space = [{'name': 'mini_batch', 'values': parameter['batch_size_choices'], 'type': 'choice',
                      'value_type': 'int'},
-                   {'name': "h_dim_classifier", 'values': parameter['dim_choice'], "value_type": "int",
-                    'type': 'choice'},
+                    {'name': "h_dim_classifier", 'values': parameter['dim_choice'], "value_type": "int",
+                     'type': 'choice'},
                     {'name': "modules", 'values': parameter['dim_choice'], "value_type": "int", 'type': 'choice'},
                     {'name': "lr_expression", 'values': parameter['learning_rate_choices'], "value_type": "float",
                      'log_scale': True, 'type': 'choice'},
@@ -219,6 +219,24 @@ def create_omi_embed_search_space():
                      "value_type": "float", 'type': 'choice'},
                     {'name': 'dropout', 'values': parameter['drop_rate_choices'], 'value_type': 'float',
                      'type': 'choice'},
+                    {'name': "dim_1B", 'values': parameter['dim_choice'], "value_type": "int",
+                     'type': 'choice'},
+                    {'name': "dim_2B", 'values': parameter['dim_choice'], "value_type": "int",
+                     'type': 'choice'},
+                    {'name': "dim_1A", 'values': parameter['dim_choice'], "value_type": "int",
+                     'type': 'choice'},
+                    {'name': "dim_2A", 'values': parameter['dim_choice'], "value_type": "int",
+                     'type': 'choice'},
+                    {'name': "dim_1C", 'values': parameter['dim_choice'], "value_type": "int",
+                     'type': 'choice'},
+                    {'name': "dim_2C", 'values': parameter['dim_choice'], "value_type": "int",
+                     'type': 'choice'},
+                    {'name': "dim_3", 'values': parameter['dim_choice'], "value_type": "int",
+                     'type': 'choice'},
+                    {'name': "class_dim_1", 'values': parameter['dim_choice'], "value_type": "int",
+                     'type': 'choice'},
+                    {'name': "class_dim_2", 'values': parameter['dim_choice'], "value_type": "int",
+                     'type': 'choice'}
                     ]
 
     return search_space

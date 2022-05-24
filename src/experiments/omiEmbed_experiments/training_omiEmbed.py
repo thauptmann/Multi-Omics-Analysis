@@ -31,6 +31,15 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
     dropout = parameterization['dropout']
     k_kl = parameterization['k_kl']
     k_embed = parameterization['k_embed']
+    dim_1B = parameterization['dim_1B']
+    dim_2B = parameterization['dim_2B']
+    dim_1A = parameterization['dim_1A']
+    dim_2A = parameterization['dim_2A']
+    dim_1C = parameterization['dim_1C']
+    dim_2C = parameterization['dim_2C']
+    dim_3 = parameterization['dim_3']
+    class_dim_1 = parameterization['class_dim_1']
+    class_dim_2 = parameterization['class_dim_2']
     epochs_phase = int(epochs_phase / 3) if int(epochs_phase / 3) > 0 else 1
 
     aucs_validate = []
@@ -60,7 +69,11 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         e_in = x_train_e.shape[-1]
         m_in = x_train_m.shape[-1]
         c_in = x_train_c.shape[-1]
-        moma_model = VaeClassifierModel((e_in, m_in, c_in), dropout, latent_space_dim).to(device)
+        omic_dims = (e_in, m_in, c_in)
+        moma_model = VaeClassifierModel(omic_dims, dropout, latent_space_dim,
+                                        dim_1B, dim_2B, dim_1A, dim_2A, dim_1C, dim_2C, dim_3,
+                                        class_dim_1, class_dim_2
+                                        ).to(device)
 
         optimiser_embedding = torch.optim.Adagrad(params=moma_model.netEmbed.parameters(),
                                                   lr=lr_vae, weight_decay=weight_decay)
@@ -114,15 +127,15 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     dropout = parameterization['dropout']
     k_kl = parameterization['k_kl']
     k_embed = parameterization['k_embed']
-    dim_1B
-    dim_2B
-    dim_1A
-    dim_2A
-    dim_1C
-    dim_2C
-    dim_3
-    class_dim_1
-    class_dim_2
+    dim_1B = parameterization['dim_1B']
+    dim_2B = parameterization['dim_2B']
+    dim_1A = parameterization['dim_1A']
+    dim_2A = parameterization['dim_2A']
+    dim_1C = parameterization['dim_1C']
+    dim_2C = parameterization['dim_2C']
+    dim_3 = parameterization['dim_3']
+    class_dim_1 = parameterization['class_dim_1']
+    class_dim_2 = parameterization['class_dim_2']
     epochs_phase = int(epochs_phase / 3) if int(epochs_phase / 3) > 0 else 1
 
     train_scaler_gdsc = StandardScaler()
