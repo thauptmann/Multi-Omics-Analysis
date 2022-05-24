@@ -87,7 +87,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         # validate
         auc_validate, _ = test_omi_embed(omi_embed_model, scaler_gdsc, torch.FloatTensor(x_validate_e),
                                          torch.FloatTensor(x_validate_m),
-                                         torch.FloatTensor(x_validate_c), y_validate, device)
+                                         torch.FloatTensor(x_validate_c), y_validate)
         aucs_validate.append(auc_validate)
 
         if iteration < cv_splits_inner:
