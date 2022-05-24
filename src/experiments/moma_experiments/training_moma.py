@@ -125,7 +125,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     train_scaler_gdsc.fit(x_train_e)
     x_train_e = train_scaler_gdsc.transform(x_train_e)
 
-    loss_fn = torch.nn.BCELoss()
+    loss_fn = torch.nn.BCEWithLogitsLoss()
 
     e_in = x_train_e.shape[-1]
     m_in = x_train_m.shape[-1]
@@ -181,20 +181,21 @@ def train_moma(train_loader, model, optimiser, loss_fn, device):
             loss.backward()
             optimiser.step()
 
+sigmoid = torch.nn.Sigmoid()
+
 
 def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
     model = model.to(device)
     extern_e = torch.FloatTensor(scaler.transform(extern_e)).to(device)
     extern_m = torch.FloatTensor(extern_m).to(device)
     extern_c = torch.FloatTensor(extern_c).to(device)
-
     test_y = torch.FloatTensor(test_r.astype(int))
     model.eval()
     with torch.no_grad():
         expression_logit, mutation_logit, cna_logit = model.forward(extern_e, extern_m, extern_c)
     stacked = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()])
-    probabilities = np.mean(stacked, axis=0)
-    probabilities = np.nan_to_num(probabilities, nan=0.0)
+    mean_logits = np.mean(stacked, axis=0)
+    probabilities = sigmoid(mean_logits)
     auc_validate = roc_auc_score(test_y, probabilities)
     auprc_validate = average_precision_score(test_y, probabilities)
     return auc_validate, auprc_validate

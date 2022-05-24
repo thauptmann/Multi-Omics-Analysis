@@ -18,9 +18,9 @@ class Moma(nn.Module):
         self.cna_FC1_y = nn.Linear(In_Nodes3, Modules, bias=False)
         self.softmax = nn.Softmax(dim=-1)
 
-        self.expression_FC3 = nn.Sequential(nn.Linear(Modules * 4, 1), nn.Sigmoid())
-        self.mutation_FC3 = nn.Sequential(nn.Linear(Modules * 4, 1), nn.Sigmoid())
-        self.cna_FC3 = nn.Sequential(nn.Linear(Modules * 4, 1), nn.Sigmoid())
+        self.expression_FC3 = nn.Sequential(nn.Linear(Modules * 4, 1))
+        self.mutation_FC3 = nn.Sequential(nn.Linear(Modules * 4, 1))
+        self.cna_FC3 = nn.Sequential(nn.Linear(Modules * 4, 1))
 
     def forward(self, expression, mutation, cna):
         expression_x = self.expression_FC1_x(expression)
