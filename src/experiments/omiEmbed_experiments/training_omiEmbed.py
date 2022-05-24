@@ -238,6 +238,7 @@ sigmoid = torch.nn.Sigmoid()
 
 
 def test_omi_embed(model, scaler, extern_e, extern_m, extern_c, test_r):
+    model = model.cpu()
     extern_e = torch.FloatTensor(scaler.transform(extern_e))
     extern_m = torch.FloatTensor(extern_m)
     extern_c = torch.FloatTensor(extern_c)
