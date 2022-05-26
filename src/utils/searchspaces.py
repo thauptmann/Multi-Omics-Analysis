@@ -221,22 +221,14 @@ def create_omi_embed_search_space():
                      'type': 'choice'},
                     {'name': "dim_1B", 'values': parameter['dim_choice'], "value_type": "int",
                      'type': 'choice'},
-                    {'name': "dim_2B", 'values': parameter['dim_choice'], "value_type": "int",
-                     'type': 'choice'},
                     {'name': "dim_1A", 'values': parameter['dim_choice'], "value_type": "int",
                      'type': 'choice'},
-                    {'name': "dim_2A", 'values': parameter['dim_choice'], "value_type": "int",
-                     'type': 'choice'},
                     {'name': "dim_1C", 'values': parameter['dim_choice'], "value_type": "int",
-                     'type': 'choice'},
-                    {'name': "dim_2C", 'values': parameter['dim_choice'], "value_type": "int",
                      'type': 'choice'},
                     {'name': "dim_3", 'values': parameter['dim_choice'], "value_type": "int",
                      'type': 'choice'},
                     {'name': "class_dim_1", 'values': parameter['dim_choice'], "value_type": "int",
                      'type': 'choice'},
-                    {'name': "class_dim_2", 'values': parameter['dim_choice'], "value_type": "int",
-                     'type': 'choice'}
                     ]
 
     return search_space

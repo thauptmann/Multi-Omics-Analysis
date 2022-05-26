@@ -1,5 +1,0 @@
-combination = 0: (expression + mutation) + cna
-combination = 1: (cna + mutation) + expression
-combination = 2: (cna + expression) + mutation
-combination = 3: (expression + mutation + cna) = MOLI
-combination = 4: (expression + mutation + cna) = Early Integration
