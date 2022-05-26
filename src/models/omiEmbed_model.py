@@ -137,11 +137,8 @@ class FcVaeABC(nn.Module):
         level_2_C = self.encode_fc_1C(data_c)
 
         level_3 = torch.cat((level_2_B, level_2_A, level_2_C), 1)
-
-        level_4 = self.encode_fc_3(level_3)
-
-        latent_mean = self.encode_fc_mean(level_4)
-        latent_log_var = self.encode_fc_log_var(level_4)
+        latent_mean = self.encode_fc_mean(level_3)
+        latent_log_var = self.encode_fc_log_var(level_3)
 
         return latent_mean, latent_log_var
 
