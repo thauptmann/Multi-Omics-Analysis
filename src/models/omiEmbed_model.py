@@ -151,9 +151,9 @@ class FcVaeABC(nn.Module):
         level_1 = self.decode_fc_z(z)
 
         level_2 = self.decode_fc_2(level_1)
-        level_2_B = level_2.narrow(1, 0, self.dim_2B)
-        level_2_A = level_2.narrow(1, self.dim_2B, self.dim_2A)
-        level_2_C = level_2.narrow(1, self.dim_2B + self.dim_2A, self.dim_2C)
+        level_2_B = level_2.narrow(1, 0, self.dim_1B)
+        level_2_A = level_2.narrow(1, self.dim_1B, self.dim_1A)
+        level_2_C = level_2.narrow(1, self.dim_1B + self.dim_1A, self.dim_1C)
 
         recon_B = self.decode_fc_4B(level_2_B)
         recon_A = self.decode_fc_4A(level_2_A)
