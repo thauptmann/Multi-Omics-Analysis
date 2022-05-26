@@ -109,18 +109,18 @@ class FcVaeABC(nn.Module):
                                     dropout_p=dropout_p,
                                     activation=True)
         # Layer 4
-        self.encode_fc_mean = FCBlock(dim_3, latent_dim, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
+        self.encode_fc_mean = FCBlock(dim_3, dim_1C+dim_1B+dim_1A, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
                                       activation=False, normalization=False)
-        self.encode_fc_log_var = FCBlock(dim_3, latent_dim, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
+        self.encode_fc_log_var = FCBlock(dim_3, dim_1C+dim_1B+dim_1A, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
                                          activation=False, normalization=False)
 
         # DECODER
         # Layer 1
-        self.decode_fc_z = FCBlock(latent_dim, dim_3, norm_layer=norm_layer, leaky_slope=leaky_slope,
+        self.decode_fc_z = FCBlock(dim_1C+dim_1B+dim_1A, dim_3, norm_layer=norm_layer, leaky_slope=leaky_slope,
                                    dropout_p=dropout_p,
                                    activation=True)
         # Layer 2
-        self.decode_fc_2 = FCBlock(dim_3, dim_1B + dim_1A + dim_1C, norm_layer=norm_layer, leaky_slope=leaky_slope,
+        self.decode_fc_2 = FCBlock(dim_1C+dim_1B+dim_1A, dim_1B + dim_1A + dim_1C, norm_layer=norm_layer, leaky_slope=leaky_slope,
                                    dropout_p=dropout_p,
                                    activation=True)
         # Layer 4
