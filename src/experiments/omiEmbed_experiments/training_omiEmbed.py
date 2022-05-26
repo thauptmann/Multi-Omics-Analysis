@@ -34,7 +34,6 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
     dim_1B = parameterization['dim_1B']
     dim_1A = parameterization['dim_1A']
     dim_1C = parameterization['dim_1C']
-    dim_3 = parameterization['dim_3']
     class_dim_1 = parameterization['class_dim_1']
     leaky_slope = parameterization['leaky_slope']
     epochs_phase = int(epochs_phase / 3) if int(epochs_phase / 3) > 0 else 1
@@ -68,7 +67,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         c_in = x_train_c.shape[-1]
         omic_dims = (e_in, m_in, c_in)
         omi_embed_model = VaeClassifierModel(omic_dims, dropout, latent_space_dim,
-                                             dim_1B, dim_1A, dim_1C, dim_3,
+                                             dim_1B, dim_1A, dim_1C,
                                              class_dim_1, leaky_slope).to(device)
 
         optimiser_embedding = torch.optim.Adagrad(params=omi_embed_model.netEmbed.parameters(),
@@ -127,7 +126,6 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     dim_1B = parameterization['dim_1B']
     dim_1A = parameterization['dim_1A']
     dim_1C = parameterization['dim_1C']
-    dim_3 = parameterization['dim_3']
     class_dim_1 = parameterization['class_dim_1']
     leaky_slope = parameterization['leaky_slope']
     epochs_phase = int(epochs_phase / 3) if int(epochs_phase / 3) > 0 else 1
@@ -139,7 +137,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     omic_dims = (x_train_e.shape[-1], x_train_m.shape[-1], x_train_c.shape[-1])
     print(omic_dims)
     omi_embed_model = VaeClassifierModel(omic_dims, dropout, latent_space_dim,
-                                         dim_1B, dim_1A, dim_1C, dim_3,
+                                         dim_1B, dim_1A, dim_1C,
                                          class_dim_1, leaky_slope).to(device)
 
     optimiser_embedding = torch.optim.Adagrad(params=omi_embed_model.netEmbed.parameters(),

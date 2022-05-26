@@ -9,7 +9,7 @@ class VaeBasicModel(torch.nn.Module):
     """
 
     def __init__(self, omics_dims, norm_type, leaky_slope, dropout_p, latent_space_dim,
-                 dim_1B, dim_1A, dim_1C, dim_3):
+                 dim_1B, dim_1A, dim_1C):
         """
         Initialize the VAE basic class.
         """
@@ -18,7 +18,7 @@ class VaeBasicModel(torch.nn.Module):
 
         # define the network
         self.netEmbed = define_VAE(omics_dims, norm_type, leaky_slope, dropout_p, latent_space_dim,
-                                   dim_1B,  dim_1A,  dim_1C, dim_3)
+                                   dim_1B,  dim_1A,  dim_1C)
 
     def forward(self, data_e, data_m, data_c):
         # Get the output tensor
@@ -80,7 +80,7 @@ class FcVaeABC(nn.Module):
     """
 
     def __init__(self, omics_dims, norm_layer=nn.BatchNorm1d, leaky_slope=0.2, dropout_p=0, dim_1B=384,
-                 dim_1A=384, dim_1C=384, dim_3=256, latent_dim=256):
+                 dim_1A=384, dim_1C=384, latent_dim=256):
         """
             Construct a fully-connected variational autoencoder
             Parameters:
@@ -109,14 +109,14 @@ class FcVaeABC(nn.Module):
                                     dropout_p=dropout_p,
                                     activation=True)
         # Layer 4
-        self.encode_fc_mean = FCBlock(dim_3, dim_1C+dim_1B+dim_1A, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
+        self.encode_fc_mean = FCBlock(dim_1C+dim_1B+dim_1A, latent_dim, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
                                       activation=False, normalization=False)
-        self.encode_fc_log_var = FCBlock(dim_3, dim_1C+dim_1B+dim_1A, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
+        self.encode_fc_log_var = FCBlock(dim_1C+dim_1B+dim_1A, latent_dim, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
                                          activation=False, normalization=False)
 
         # DECODER
         # Layer 1
-        self.decode_fc_z = FCBlock(dim_1C+dim_1B+dim_1A, dim_3, norm_layer=norm_layer, leaky_slope=leaky_slope,
+        self.decode_fc_z = FCBlock(latent_dim, dim_1C+dim_1B+dim_1A, norm_layer=norm_layer, leaky_slope=leaky_slope,
                                    dropout_p=dropout_p,
                                    activation=True)
         # Layer 2
@@ -176,13 +176,12 @@ class VaeClassifierModel(VaeBasicModel):
     This class implements the VAE classifier model, using the VAE framework with the classification downstream task.
     """
 
-    def __init__(self, omics_dims, dropout_p, latent_space_dim, dim_1B, dim_1A, dim_1C, dim_3,
-                 class_dim_1, leaky_slope):
+    def __init__(self, omics_dims, dropout_p, latent_space_dim, dim_1B, dim_1A, dim_1C, class_dim_1, leaky_slope):
         """
         Initialize the VAE_classifier class.
         """
         VaeBasicModel.__init__(self, omics_dims, 'batch', leaky_slope, dropout_p, latent_space_dim,
-                               dim_1B, dim_1A, dim_1C, dim_3)
+                               dim_1B, dim_1A, dim_1C)
         # specify the training losses you want to print out.
 
         # define the network
@@ -288,7 +287,7 @@ class MultiFcClassifier(nn.Module):
 
 
 def define_VAE(omics_dims, norm_type='batch', leaky_slope=0.2, dropout_p=0, latent_dim=256,
-               dim_1B=384,  dim_1A=384,  dim_1C=384,  dim_3=256,):
+               dim_1B=384,  dim_1A=384,  dim_1C=384, ):
     """
     Create the VAE network
     Parameters:
@@ -306,5 +305,5 @@ def define_VAE(omics_dims, norm_type='batch', leaky_slope=0.2, dropout_p=0, late
     # get the normalization layer
     norm_layer = get_norm_layer(norm_type=norm_type)
     net = FcVaeABC(omics_dims, norm_layer, leaky_slope, dropout_p, dim_1B=dim_1B,
-                 dim_1A=dim_1A, dim_1C=dim_1C, dim_3=dim_3, latent_dim=latent_dim)
+                 dim_1A=dim_1A, dim_1C=dim_1C, latent_dim=latent_dim)
     return net
