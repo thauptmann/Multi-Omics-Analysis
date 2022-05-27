@@ -148,7 +148,6 @@ def train_early_integration(train_loader, model, optimiser, loss_fn, device, gam
                 loss = loss_fn(prediction, target)
             else:
                 loss = loss_fn(prediction[0], target)
-            prediction = sigmoid(prediction[0])
             loss.backward()
             optimiser.step()
 

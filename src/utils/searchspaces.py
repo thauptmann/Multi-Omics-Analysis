@@ -79,7 +79,11 @@ def create_super_felt_search_space():
     return search_space
 
 
-def create_early_integration_search_space():
+def create_early_integration_search_space(deactivate_triplet_loss):
+    if deactivate_triplet_loss:
+        gamma = {'name': 'gamma', "value": 0, "value_type": "int", 'type': 'fixed'}
+    else:
+        gamma = {'name': 'gamma', "values": parameter['gamma_choices'], "value_type": "float", 'type': 'choice'}
     search_space = [{'name': 'mini_batch', 'values': parameter['batch_size_choices'], 'type': 'choice',
                      'value_type': 'int'},
                     {'name': "h_dim", 'values': parameter['dim_choice'], "value_type": "int", 'type': 'choice'},
@@ -93,6 +97,7 @@ def create_early_integration_search_space():
                     {'name': 'margin', "values": parameter['margin_choices'], "value_type": "float", 'type': 'choice'},
                     {'name': 'epochs', 'bounds': [parameter['epoch_lower'], parameter['epoch_upper']],
                      "value_type": "int", 'type': 'range'},
+                    gamma
                     ]
     return search_space
 
