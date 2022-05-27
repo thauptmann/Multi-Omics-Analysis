@@ -96,6 +96,8 @@ class FcVaeABC(nn.Module):
         self.B_dim = omics_dims[1]
         self.C_dim = omics_dims[2]
         self.dim_1B = dim_1B
+        self.dim_1A = dim_1A
+        self.dim_1C = dim_1C
 
         # ENCODER
         # Layer 1
@@ -109,9 +111,11 @@ class FcVaeABC(nn.Module):
                                     dropout_p=dropout_p,
                                     activation=True)
         # Layer 4
-        self.encode_fc_mean = FCBlock(dim_1C+dim_1B+dim_1A, latent_dim, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
+        self.encode_fc_mean = FCBlock(dim_1C+dim_1B+dim_1A, latent_dim, norm_layer=norm_layer,
+                                      leaky_slope=leaky_slope, dropout_p=0,
                                       activation=False, normalization=False)
-        self.encode_fc_log_var = FCBlock(dim_1C+dim_1B+dim_1A, latent_dim, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
+        self.encode_fc_log_var = FCBlock(dim_1C+dim_1B+dim_1A, latent_dim, norm_layer=norm_layer,
+                                         leaky_slope=leaky_slope, dropout_p=0,
                                          activation=False, normalization=False)
 
         # DECODER
@@ -119,10 +123,7 @@ class FcVaeABC(nn.Module):
         self.decode_fc_z = FCBlock(latent_dim, dim_1C+dim_1B+dim_1A, norm_layer=norm_layer, leaky_slope=leaky_slope,
                                    dropout_p=dropout_p,
                                    activation=True)
-        # Layer 2
-        self.decode_fc_2 = FCBlock(dim_1C+dim_1B+dim_1A, dim_1B + dim_1A + dim_1C, norm_layer=norm_layer, leaky_slope=leaky_slope,
-                                   dropout_p=dropout_p,
-                                   activation=True)
+
         # Layer 4
         self.decode_fc_4B = FCBlock(dim_1B, self.B_dim, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
                                     activation=False, normalization=False)
