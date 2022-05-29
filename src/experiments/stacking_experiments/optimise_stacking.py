@@ -28,7 +28,7 @@ with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
 
 
 def stacking(search_iterations, experiment_name, drug_name,
-             extern_dataset_name, gpu_number, use_reconstruction, stacking_type, deactivate_triplet_loss):
+             extern_dataset_name, gpu_number, stacking_type, deactivate_triplet_loss):
     device, pin_memory = create_device(gpu_number)
 
     result_path = Path('..', '..', '..', 'results', 'stacking', drug_name, experiment_name)
@@ -130,12 +130,12 @@ def stacking(search_iterations, experiment_name, drug_name,
                                                                                       extern_r,
                                                                                       y_test,
                                                                                       y_train_validate,
-                                                                                      use_reconstruction,
+
                                                                                       stacking_type)
         else:
             model_final, scaler_final = train_final(best_parameters, x_train_validate_e, x_train_validate_m,
                                                     x_train_validate_c, y_train_validate, device,
-                                                    pin_memory, stacking_type, use_reconstruction)
+                                                    pin_memory, stacking_type)
             auc_test, auprc_test = test(model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device)
             auc_extern, auprc_extern = test(model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device)
 
@@ -201,9 +201,9 @@ if __name__ == '__main__':
     if args.drug == 'all':
         for drug, extern_dataset in parameter['drugs'].items():
             stacking(args.search_iterations, args.experiment_name,
-                     drug, extern_dataset, args.gpu_number, args.use_reconstruction_loss, args.stacking_type,
+                     drug, extern_dataset, args.gpu_number,  args.stacking_type,
                      args.deactivate_triplet_loss)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         stacking(args.search_iterations, args.experiment_name, args.drug, extern_dataset, args.gpu_number,
-                 args.use_reconstruction_loss, args.stacking_type, args.deactivate_triplet_loss)
+                  args.stacking_type, args.deactivate_triplet_loss)

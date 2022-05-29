@@ -124,7 +124,7 @@ def set_best_auroc_splitted(new_auroc):
 
 
 def train_final_splitted(parameterization, x_train_e, x_train_m, x_train_c, y_train, device,
-                         stacking_type, use_reconstruction):
+                         stacking_type):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -144,9 +144,6 @@ def train_final_splitted(parameterization, x_train_e, x_train_m, x_train_c, y_tr
     epochs_clf = parameterization['epochs_clf']
     margin = parameterization['margin']
 
-    architecture = 'supervised-ae' if use_reconstruction else None
-    encoder = AutoEncoder if use_reconstruction else Encoder
-
     trip_loss_fun = torch.nn.TripletMarginLoss(margin=margin, p=2)
     sampler = create_sampler(y_train)
     final_scaler = StandardScaler()
@@ -159,9 +156,9 @@ def train_final_splitted(parameterization, x_train_e, x_train_m, x_train_c, y_tr
     IE_dim = x_train_e.shape[-1]
     IM_dim = x_train_m.shape[-1]
     IC_dim = x_train_c.shape[-1]
-    final_E_encoder = encoder(IE_dim, h_dim_e_encode, dropout_e).to(device)
-    final_M_encoder = encoder(IM_dim, h_dim_m_encode, dropout_m).to(device)
-    final_C_encoder = encoder(IC_dim, h_dim_c_encode, dropout_c).to(device)
+    final_E_encoder = Encoder(IE_dim, h_dim_e_encode, dropout_e).to(device)
+    final_M_encoder = Encoder(IM_dim, h_dim_m_encode, dropout_m).to(device)
+    final_C_encoder = Encoder(IC_dim, h_dim_c_encode, dropout_c).to(device)
     E_optimizer = torch.optim.Adagrad(final_E_encoder.parameters(), lr=lr_e, weight_decay=weight_decay)
     M_optimizer = torch.optim.Adagrad(final_M_encoder.parameters(), lr=lr_m, weight_decay=weight_decay)
     C_optimizer = torch.optim.Adagrad(final_C_encoder.parameters(), lr=lr_c, weight_decay=weight_decay)
@@ -172,29 +169,23 @@ def train_final_splitted(parameterization, x_train_e, x_train_m, x_train_c, y_tr
 
     # train each Supervised_Encoder with triplet loss
     train_encoder(epochs_e, E_optimizer, triplet_selector, device, final_E_encoder, train_loader,
-                  trip_loss_fun, 0, architecture)
+                  trip_loss_fun, 0)
     train_encoder(epochs_m, M_optimizer, triplet_selector, device, final_M_encoder, train_loader,
-                  trip_loss_fun, 1, architecture)
+                  trip_loss_fun, 1)
     train_encoder(epochs_c, C_optimizer, triplet_selector, device, final_C_encoder, train_loader,
-                  trip_loss_fun, 2, architecture)
+                  trip_loss_fun, 2)
 
     # train classifier
     train_classifier(final_classifier, epochs_clf, train_loader, classifier_optimizer, final_E_encoder,
-                     final_M_encoder, final_C_encoder, architecture, device)
+                     final_M_encoder, final_C_encoder, device)
     return final_E_encoder, final_M_encoder, final_C_encoder, final_classifier, final_scaler
 
 
 def splitted_test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encoder,
-                  final_classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
-                  use_reconstruction):
-    if use_reconstruction:
-        encoded_test_E = final_E_Supervised_Encoder(torch.FloatTensor(x_test_e).to(device))[0]
-        encoded_test_M = final_M_Supervised_Encoder(torch.FloatTensor(x_test_m).to(device))[0]
-        encoded_test_C = final_C_Supervised_Encoder(torch.FloatTensor(x_test_c).to(device))[0]
-    else:
-        encoded_test_E = final_E_Supervised_Encoder(torch.FloatTensor(x_test_e).to(device))
-        encoded_test_M = final_M_Supervised_Encoder(torch.FloatTensor(x_test_m).to(device))
-        encoded_test_C = final_C_Supervised_Encoder(torch.FloatTensor(x_test_c).to(device))
+                  final_classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,):
+    encoded_test_E = final_E_Supervised_Encoder(torch.FloatTensor(x_test_e).to(device))
+    encoded_test_M = final_M_Supervised_Encoder(torch.FloatTensor(x_test_m).to(device))
+    encoded_test_C = final_C_Supervised_Encoder(torch.FloatTensor(x_test_c).to(device))
     test_predictions = final_classifier(encoded_test_E, encoded_test_M, encoded_test_C)
     test_y_true = y_test
     test_y_predictions = test_predictions.cpu().detach().numpy()
@@ -205,22 +196,20 @@ def splitted_test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervis
 
 def compute_splitted_metrics(x_test_e, x_test_m, x_test_c, x_train_validate_e, x_train_validate_m,
                              x_train_validate_c, best_parameters, device, extern_e, extern_m,
-                             extern_c, extern_r, y_test, y_train_validate, use_reconstruction,
+                             extern_c, extern_r, y_test, y_train_validate,
                              stacking_type):
     # retrain best
     final_E_Supervised_Encoder, final_M_Supervised_Encoder, final_C_Supervised_Encoder, final_Classifier, \
     final_scaler_gdsc = train_final_splitted(best_parameters, x_train_validate_e, x_train_validate_m,
                                              x_train_validate_c, y_train_validate, device,
-                                             stacking_type, use_reconstruction)
+                                             stacking_type)
     x_test_e = torch.FloatTensor(final_scaler_gdsc.transform(x_test_e))
     # Test
     test_AUC, test_AUCPR = splitted_test(x_test_e, x_test_m, x_test_c, y_test, device, final_C_Supervised_Encoder,
-                                         final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder,
-                                         use_reconstruction)
+                                         final_Classifier, final_E_Supervised_Encoder, final_M_Supervised_Encoder)
     # Extern
     external_AUC, external_AUCPR = splitted_test(extern_e, extern_m, extern_c, extern_r, device,
                                                  final_C_Supervised_Encoder,
                                                  final_Classifier, final_E_Supervised_Encoder,
-                                                 final_M_Supervised_Encoder,
-                                                 use_reconstruction)
+                                                 final_M_Supervised_Encoder)
     return external_AUC, external_AUCPR, test_AUC, test_AUCPR

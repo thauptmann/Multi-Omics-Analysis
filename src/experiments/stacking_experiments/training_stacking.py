@@ -113,7 +113,7 @@ def set_best_auroc(new_auroc):
 
 
 def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory,
-                stacking_type, use_reconstruction):
+                stacking_type):
     mini_batch = parameterization['mini_batch']
     h_dim_e_encode = parameterization['h_dim_e_encode']
     h_dim_m_encode = parameterization['h_dim_m_encode']
@@ -145,8 +145,7 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     input_sizes = [ie_dim, im_dim, ic_dim]
     dropout_rates = [dropout_e, dropout_m, dropout_c, dropout_clf]
 
-    stacking_model = StackingModel(input_sizes, encoding_sizes, dropout_rates, stacking_type,
-                                   use_reconstruction).to(device)
+    stacking_model = StackingModel(input_sizes, encoding_sizes, dropout_rates, stacking_type).to(device)
 
     optimiser = torch.optim.Adagrad([
         {'params': stacking_model.expression_encoder.parameters(), 'lr': lr_e},
@@ -166,5 +165,5 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
                                       torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
 
     for epoch in range(epochs):
-        network_training_util.train(train_loader, stacking_model, optimiser, loss_fn, device, gamma, use_reconstruction)
+        network_training_util.train(train_loader, stacking_model, optimiser, loss_fn, device, gamma)
     return stacking_model, train_scaler_gdsc
