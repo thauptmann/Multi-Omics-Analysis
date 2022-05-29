@@ -43,7 +43,7 @@ def stacking(search_iterations, experiment_name, drug_name,
     gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
         = multi_omics_data.load_drug_data_with_elbow(data_path, drug_name, extern_dataset_name)
 
-    if stacking_type == 'splitted':
+    if stacking_type in ('splitted_all', 'splitted_less_stacking', 'splitted_only_single'):
         stacking_search_space = create_stacking_splitted_search_space()
     else:
         stacking_search_space = create_stacking_search_space(deactivate_triplet_loss)

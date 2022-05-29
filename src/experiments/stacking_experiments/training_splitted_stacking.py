@@ -36,8 +36,6 @@ def optimise_hyperparameter_splitted(parameterization, x_e, x_m, x_c, y, device,
     dropout_clf = parameterization['dropout_clf']
     weight_decay = parameterization['weight_decay']
     epochs_e = parameterization['epochs_e']
-    epochs_m = parameterization['epochs_m']
-    epochs_c = parameterization['epochs_c']
     epochs_clf = parameterization['epochs_clf']
     margin = parameterization['margin']
     triplet_selector = AllTripletSelector()
