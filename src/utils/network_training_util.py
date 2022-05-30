@@ -201,7 +201,7 @@ def train_classifier(classifier, classifier_epoch, train_loader, classifier_opti
             encoded_m = m_supervised_encoder(dataM)
             encoded_c = c_supervised_encoder(dataC)
             predictions = classifier(encoded_e, encoded_m, encoded_c)
-            cl_loss = bce_loss_function(predictions, torch.squeeze(target))
+            cl_loss = bce_loss_function(torch.squeeze(predictions), torch.squeeze(target))
             cl_loss.backward()
             classifier_optimizer.step()
     classifier.eval()
