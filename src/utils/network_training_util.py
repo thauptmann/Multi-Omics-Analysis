@@ -186,7 +186,7 @@ def train_validate_classifier(classifier_epoch, device, e_supervised_encoder,
 
 def train_classifier(classifier, classifier_epoch, train_loader, classifier_optimizer, e_supervised_encoder,
                      m_supervised_encoder, c_supervised_encoder, device):
-    bce_loss_function = torch.nn.BCEWithLogitsLoss()
+    bce_loss_function = torch.nn.BCEWithLogitsLoss().to(device)
     classifier = classifier.to(device)
     for cl_epoch in range(classifier_epoch):
         classifier.train()
