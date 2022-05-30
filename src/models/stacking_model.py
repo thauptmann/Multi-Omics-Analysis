@@ -126,17 +126,16 @@ class StackingSplittedModel(nn.Module):
         self.classify_all = nn.Linear(stacking_dimension, 1)
 
     def forward(self, encoded_e, encoded_m, encoded_c):
-
         classified_e = self.e_classify(encoded_e)
         classified_m = self.m_classify(encoded_m)
         classified_c = self.c_classify(encoded_c)
 
-        if self.stacking_type == 'less_stacking':
+        if self.stacking_type == 'splitted_less_stacking':
             classified_emc = self.emc_classify(torch.concat((encoded_e, encoded_m, encoded_c), dim=1))
             classification = self.classify_all(torch.concat((classified_e, classified_m, classified_c, classified_emc),
                                                             dim=1))
 
-        elif self.stacking_type == 'all':
+        elif self.stacking_type == 'splitted_all':
             classified_emc = self.emc_classify(torch.concat((encoded_e, encoded_m, encoded_c), dim=1))
             classified_em = self.em_classify(torch.concat((encoded_e, encoded_m), dim=1))
             classified_mc = self.mc_classify(torch.concat((encoded_m, encoded_c), dim=1))
