@@ -86,7 +86,7 @@ def optimise_hyperparameter_splitted(parameterization, x_e, x_m, x_c, y, device,
 
         # train classifier
         classifier_input_dimensions = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
-        classifier = StackingSplittedModel(classifier_input_dimensions, dropout_clf, stacking_type)
+        classifier = StackingSplittedModel(classifier_input_dimensions, dropout_clf, stacking_type).to(device)
         optimiser = torch.optim.Adagrad(classifier.parameters(), lr=lr_clf,
                                         weight_decay=weight_decay)
         val_auroc = train_validate_classifier(epochs_clf, device, e_encoder,
