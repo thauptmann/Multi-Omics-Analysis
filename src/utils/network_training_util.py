@@ -194,6 +194,7 @@ def train_classifier(classifier, classifier_epoch, train_loader, classifier_opti
             dataE = dataE.to(device)
             dataM = dataM.to(device)
             dataC = dataC.to(device)
+            target = target.to(device)
 
             encoded_e = e_supervised_encoder(dataE)
             encoded_m = m_supervised_encoder(dataM)
