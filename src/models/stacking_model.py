@@ -145,4 +145,4 @@ class StackingSplittedModel(nn.Module):
                               classified_mc, classified_ec, classified_emc), dim=1))
         else:
             classification = self.classify_all(torch.concat((classified_e, classified_m, classified_c), dim=1))
-        return [classification, torch.concat((encoded_e, encoded_m, encoded_c), dim=1)]
+        return classification
