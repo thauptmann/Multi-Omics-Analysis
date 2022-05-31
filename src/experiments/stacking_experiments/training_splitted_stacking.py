@@ -164,7 +164,7 @@ def train_final_splitted(parameterization, x_train_e, x_train_m, x_train_c, y_tr
     C_optimizer = torch.optim.Adagrad(final_C_encoder.parameters(), lr=lr_c, weight_decay=weight_decay)
     triplet_selector = AllTripletSelector()
     classifier_input_dimensions = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
-    final_classifier = StackingSplittedModel(classifier_input_dimensions, dropout_clf, stacking_type)
+    final_classifier = StackingSplittedModel(classifier_input_dimensions, dropout_clf, stacking_type).to(device)
     classifier_optimizer = torch.optim.Adagrad(final_classifier.parameters(), lr=lr_clf, weight_decay=weight_decay)
 
     # train each Supervised_Encoder with triplet loss
