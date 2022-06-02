@@ -201,9 +201,9 @@ if __name__ == '__main__':
     if args.drug == 'all':
         for drug, extern_dataset in parameter['drugs'].items():
             stacking(args.search_iterations, args.experiment_name,
-                     drug, extern_dataset, args.gpu_number,  args.stacking_type,
+                     drug, extern_dataset, args.gpu_number, args.stacking_type,
                      args.deactivate_triplet_loss)
     else:
         extern_dataset = parameter['drugs'][args.drug]
         stacking(args.search_iterations, args.experiment_name, args.drug, extern_dataset, args.gpu_number,
-                  args.stacking_type, args.deactivate_triplet_loss)
+                 args.stacking_type, args.deactivate_triplet_loss)
