@@ -199,15 +199,15 @@ sigmoid = torch.nn.Sigmoid()
 
 
 def test_moma(model, scaler, expression, mutation, cna, response, device, logistic_regression):
-    model = model.to(device)
-    expression = torch.FloatTensor(scaler.transform(expression)).to(device)
-    mutation = torch.FloatTensor(mutation).to(device)
-    cna = torch.FloatTensor(cna).to(device)
+    model = model.cpu()
+    expression = torch.FloatTensor(scaler.transform(expression))
+    mutation = torch.FloatTensor(mutation)
+    cna = torch.FloatTensor(cna)
     test_y = torch.FloatTensor(response.astype(int))
     model.eval()
     with torch.no_grad():
         expression_logit, mutation_logit, cna_logit = model.forward(expression, mutation, cna)
-    X = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()], axis=-1)
+    X = np.stack([expression_logit, mutation_logit, cna_logit], axis=-1)
     final_probabilities = logistic_regression.predict_proba(X)[:, 1]
 
     auc_validate = roc_auc_score(test_y, final_probabilities)
