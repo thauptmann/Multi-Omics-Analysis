@@ -76,9 +76,9 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
             train_moma(train_loader, moma_model, moma_optimiser, loss_fn, device)
 
         with torch.no_grad():
-            expression_logit, mutation_logit, cna_logit = moma_model.forward(torch.FloatTensor(x_train_e),
-                                                                             torch.FloatTensor(x_train_m),
-                                                                             torch.FloatTensor(x_train_c))
+            expression_logit, mutation_logit, cna_logit = moma_model.forward(torch.FloatTensor(x_train_e).to(device),
+                                                                             torch.FloatTensor(x_train_m).to(device),
+                                                                             torch.FloatTensor(x_train_c).to(device))
         X = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()], axis=-1)
         logistic_regression = LogisticRegression().fit(X, y_train)
 
@@ -164,7 +164,9 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
         train_moma(train_loader, moma_model, moma_optimiser, loss_fn, device)
 
     with torch.no_grad():
-        expression_logit, mutation_logit, cna_logit = moma_model.forward(x_train_e, x_train_m, x_train_c)
+        expression_logit, mutation_logit, cna_logit = moma_model.forward(torch.FloatTensor(x_train_e).to(device),
+                                                                         torch.FloatTensor(x_train_m).to(device),
+                                                                         torch.FloatTensor(x_train_c).to(device))
     X = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()], axis=-1)
     logistic_regression = LogisticRegression().fit(X, y_train)
     return moma_model, train_scaler_gdsc, logistic_regression
