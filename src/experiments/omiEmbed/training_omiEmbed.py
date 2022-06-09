@@ -11,7 +11,7 @@ from scipy.stats import sem
 
 best_auroc = -1
 cv_splits_inner = 5
-lossFuncRecon = torch.nn.MSELoss()
+lossFuncRecon = torch.nn.BCEWithLogitsLoss()
 classifier_loss = torch.nn.BCEWithLogitsLoss()
 
 
