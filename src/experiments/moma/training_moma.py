@@ -191,7 +191,7 @@ def test_moma(model, scaler, expression, mutation, cna, response, device):
         expression_logit, mutation_logit, cna_logit = model.forward(expression, mutation, cna)
     X = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()], axis=-1)
     logistic_regression = LogisticRegression().fit(X, test_y)
-    final_probabilities = logistic_regression.predict_proba()
+    final_probabilities = logistic_regression.predict_proba(X)
 
     auc_validate = roc_auc_score(test_y, final_probabilities)
     auprc_validate = average_precision_score(test_y, final_probabilities)
