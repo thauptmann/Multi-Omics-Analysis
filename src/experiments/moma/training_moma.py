@@ -75,10 +75,15 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         for _ in trange(epochs, desc='Epoch'):
             train_moma(train_loader, moma_model, moma_optimiser, loss_fn, device)
 
+        with torch.no_grad():
+            expression_logit, mutation_logit, cna_logit = moma_model.forward(x_train_e, x_train_m, x_train_c)
+        X = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()], axis=-1)
+        logistic_regression = LogisticRegression().fit(X, y_train)
+
         # validate
         auc_validate, _ = test_moma(moma_model, scaler_gdsc, torch.FloatTensor(x_validate_e),
                                     torch.FloatTensor(x_validate_m),
-                                    torch.FloatTensor(x_validate_c), y_validate, device)
+                                    torch.FloatTensor(x_validate_c), y_validate, device, logistic_regression)
         aucs_validate.append(auc_validate)
 
         if iteration < cv_splits_inner:
@@ -155,7 +160,12 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
 
     for epoch in range(epochs):
         train_moma(train_loader, moma_model, moma_optimiser, loss_fn, device)
-    return moma_model, train_scaler_gdsc
+
+    with torch.no_grad():
+        expression_logit, mutation_logit, cna_logit = moma_model.forward(x_train_e, x_train_m, x_train_c)
+    X = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()], axis=-1)
+    logistic_regression = LogisticRegression().fit(X, y_train)
+    return moma_model, train_scaler_gdsc, logistic_regression
 
 
 def train_moma(train_loader, model, optimiser, loss_fn, device):
@@ -180,7 +190,7 @@ def train_moma(train_loader, model, optimiser, loss_fn, device):
 sigmoid = torch.nn.Sigmoid()
 
 
-def test_moma(model, scaler, expression, mutation, cna, response, device):
+def test_moma(model, scaler, expression, mutation, cna, response, device, logistic_regression):
     model = model.to(device)
     expression = torch.FloatTensor(scaler.transform(expression)).to(device)
     mutation = torch.FloatTensor(mutation).to(device)
@@ -190,7 +200,6 @@ def test_moma(model, scaler, expression, mutation, cna, response, device):
     with torch.no_grad():
         expression_logit, mutation_logit, cna_logit = model.forward(expression, mutation, cna)
     X = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()], axis=-1)
-    logistic_regression = LogisticRegression().fit(X, test_y)
     final_probabilities = logistic_regression.predict_proba(X)
 
     auc_validate = roc_auc_score(test_y, final_probabilities)
