@@ -8,6 +8,7 @@ from tqdm import trange, tqdm
 from models.moma_model import Moma
 from utils.network_training_util import create_sampler, create_data_loader
 from scipy.stats import sem
+from sklearn.linear_model import LogisticRegression
 
 best_auroc = -1
 cv_splits_inner = 5
@@ -179,19 +180,19 @@ def train_moma(train_loader, model, optimiser, loss_fn, device):
 sigmoid = torch.nn.Sigmoid()
 
 
-def test_moma(model, scaler, extern_e, extern_m, extern_c, test_r, device):
+def test_moma(model, scaler, expression, mutation, cna, response, device):
     model = model.to(device)
-    extern_e = torch.FloatTensor(scaler.transform(extern_e)).to(device)
-    extern_m = torch.FloatTensor(extern_m).to(device)
-    extern_c = torch.FloatTensor(extern_c).to(device)
-    test_y = torch.FloatTensor(test_r.astype(int))
+    expression = torch.FloatTensor(scaler.transform(expression)).to(device)
+    mutation = torch.FloatTensor(mutation).to(device)
+    cna = torch.FloatTensor(cna).to(device)
+    test_y = torch.FloatTensor(response.astype(int))
     model.eval()
     with torch.no_grad():
-        expression_logit, mutation_logit, cna_logit = model.forward(extern_e, extern_m, extern_c)
-    stacked = torch.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()])
-    mean_logits = torch.mean(stacked, dim=0)
-    probabilities = sigmoid(mean_logits)
-    probabilities = torch.nan_to_num(probabilities)
-    auc_validate = roc_auc_score(test_y, probabilities)
-    auprc_validate = average_precision_score(test_y, probabilities)
+        expression_logit, mutation_logit, cna_logit = model.forward(expression, mutation, cna)
+    X = np.stack([expression_logit.cpu(), mutation_logit.cpu(), cna_logit.cpu()], axis=-1)
+    logistic_regression = LogisticRegression().fit(X, test_y)
+    final_probabilities = logistic_regression.predict_proba()
+
+    auc_validate = roc_auc_score(test_y, final_probabilities)
+    auprc_validate = average_precision_score(test_y, final_probabilities)
     return auc_validate, auprc_validate

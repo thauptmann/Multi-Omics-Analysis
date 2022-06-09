@@ -24,7 +24,7 @@ with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
     parameter = yaml.safe_load(stream)
 
 
-def bo_moli(search_iterations, experiment_name, drug_name, extern_dataset_name, gpu_number):
+def optimise_moma(search_iterations, experiment_name, drug_name, extern_dataset_name, gpu_number):
     device, pin_memory = create_device(gpu_number)
     result_path = Path('..', '..', '..', 'results', 'moma', drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
@@ -38,7 +38,7 @@ def bo_moli(search_iterations, experiment_name, drug_name, extern_dataset_name, 
     gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r \
         = multi_omics_data.load_drug_data_with_elbow(data_path, drug_name, extern_dataset_name)
 
-    early_moma_search_space = create_moma_search_space()
+    moma_search_space = create_moma_search_space()
 
     torch.manual_seed(parameter['random_seed'])
     np.random.seed(parameter['random_seed'])
@@ -78,7 +78,7 @@ def bo_moli(search_iterations, experiment_name, drug_name, extern_dataset_name, 
             total_trials=search_iterations,
             experiment_name='Moma',
             objective_name='auroc',
-            parameters=early_moma_search_space,
+            parameters=moma_search_space,
             evaluation_function=evaluation_function,
             minimize=False,
             generation_strategy=generation_strategy
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     args = get_cmd_arguments()
     if args.drug == 'all':
         for drug, extern_dataset in parameter['drugs'].items():
-            bo_moli(args.search_iterations, args.experiment_name, drug, extern_dataset, args.gpu_number)
+            optimise_moma(args.search_iterations, args.experiment_name, drug, extern_dataset, args.gpu_number)
     else:
         extern_dataset = parameter['drugs'][args.drug]
-        bo_moli(args.search_iterations, args.experiment_name, args.drug, extern_dataset, args.gpu_number)
+        optimise_moma(args.search_iterations, args.experiment_name, args.drug, extern_dataset, args.gpu_number)
