@@ -122,7 +122,7 @@ class FcVaeABC(nn.Module):
         # Layer 1
         self.decode_fc_z = FCBlock(latent_dim, dim_1C+dim_1B+dim_1A, norm_layer=norm_layer, leaky_slope=leaky_slope,
                                    dropout_p=dropout_p,
-                                   activation=decode_fc_4BTrue)
+                                   activation=True)
 
         # Layer 4
         self.decode_fc_4B = FCBlock(dim_1B, self.B_dim, norm_layer=norm_layer, leaky_slope=leaky_slope, dropout_p=0,
