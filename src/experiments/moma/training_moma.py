@@ -205,6 +205,7 @@ def test_moma(model, scaler, expression, mutation, cna, response, device, logist
     with torch.no_grad():
         expression_logit, mutation_logit, cna_logit = model.forward(expression, mutation, cna)
     X = np.stack([expression_logit, mutation_logit, cna_logit], axis=-1)
+    X = np.nan_to_num(X)
     final_probabilities = logistic_regression.predict_proba(X)[:, 1]
 
     auc_validate = roc_auc_score(test_y, final_probabilities)
