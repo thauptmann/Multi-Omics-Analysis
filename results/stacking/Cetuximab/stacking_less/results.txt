@@ -1,0 +1,55 @@
+Start experiment at 2022-04-25 16:50:57.437820
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim_e_encode': 1024, 'h_dim_m_encode': 32, 'h_dim_c_encode': 128, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_clf': 0.01, 'dropout_e': 0.7, 'dropout_m': 0.5, 'dropout_c': 0.3, 'dropout_clf': 0.5, 'weight_decay': 0.01, 'gamma': 0.1, 'margin': 0.2, 'epochs': 4}"
+		Best Cetuximab validation Auroc = 0.7437305671828419
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim_e_encode': 1024, 'h_dim_m_encode': 512, 'h_dim_c_encode': 32, 'lr_e': 0.001, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_clf': 0.01, 'dropout_e': 0.3, 'dropout_m': 0.5, 'dropout_c': 0.5, 'dropout_clf': 0.1, 'weight_decay': 0.05, 'gamma': 0.3, 'margin': 0.2, 'epochs': 4}"
+		Best Cetuximab validation Auroc = 0.7615583613531874
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 16, 'h_dim_e_encode': 512, 'h_dim_m_encode': 128, 'h_dim_c_encode': 32, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.001, 'lr_clf': 0.01, 'dropout_e': 0.7, 'dropout_m': 0.5, 'dropout_c': 0.5, 'dropout_clf': 0.7, 'weight_decay': 0.0001, 'gamma': 0.5, 'margin': 1.0, 'epochs': 8}"
+		Best Cetuximab validation Auroc = 0.7632339867487058
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 16, 'h_dim_e_encode': 256, 'h_dim_m_encode': 256, 'h_dim_c_encode': 64, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_clf': 0.01, 'dropout_e': 0.5, 'dropout_m': 0.7, 'dropout_c': 0.5, 'dropout_clf': 0.5, 'weight_decay': 0.1, 'gamma': 0.3, 'margin': 0.5, 'epochs': 4}"
+		Best Cetuximab validation Auroc = 0.7410848067583126
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim_e_encode': 512, 'h_dim_m_encode': 64, 'h_dim_c_encode': 128, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_clf': 0.01, 'dropout_e': 0.7, 'dropout_m': 0.7, 'dropout_c': 0.7, 'dropout_clf': 0.3, 'weight_decay': 0.01, 'gamma': 0.1, 'margin': 1.0, 'epochs': 3}"
+		Best Cetuximab validation Auroc = 0.7682161074132529
+	Minutes needed: 1101	Mean Result for Cetuximab:
+
+		validation auroc max: 0.7682161074132529
+		validation auroc min: 0.7410848067583126
+		validation auroc mean: 0.7555647658912601
+		validation auroc std: 0.01099558141245629
+
+		test auroc max: 0.8299319727891157
+		test auroc min: 0.5640589569160999
+		test auroc mean: 0.7311224489795919
+		test auroc std: 0.09039534718151751
+
+		test auprc max: 0.5276622504533252
+		test auprc min: 0.2592770255903259
+		test auprc mean: 0.37633158901962005
+		test auprc std: 0.10401529541336287
+
+		extern auroc max: 0.6509090909090909
+		extern auroc min: 0.5054545454545454
+		extern auroc mean: 0.5752727272727272
+		extern auroc std: 0.049293856590052504
+
+		extern auprc max: 0.15881136950904393
+		extern auprc min: 0.10440964264493675
+		extern auprc mean: 0.12465864613594194
+		extern auprc std: 0.018210316643829563
+
+
+ No skill predictor extern AUPRC: 0.08333333333333333 
+
+ test auroc list: [0.8299319727891157, 0.733843537414966, 0.5640589569160999, 0.7865646258503401, 0.7412131519274376] 
+
+ test auprc list: [0.5276622504533252, 0.3430981345268677, 0.28528910277782005, 0.4663314317497616, 0.2592770255903259] 
+
+ extern auroc list: [0.5490909090909091, 0.6509090909090909, 0.5672727272727274, 0.5054545454545454, 0.6036363636363636] 
+
+ extern auprc list: [0.10440964264493675, 0.15881136950904393, 0.12134687208216619, 0.11666221033868093, 0.12206313610488183] 
+
+ validation auroc list: [0.7437305671828419, 0.7615583613531874, 0.7632339867487058, 0.7410848067583126, 0.7682161074132529] 

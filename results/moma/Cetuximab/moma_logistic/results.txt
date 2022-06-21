@@ -1,0 +1,55 @@
+Start experiment at 2022-06-20 05:08:50.711897
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 32, 'h_dim_classifier': 64, 'modules': 32, 'lr_expression': 0.001, 'lr_mutation': 0.01, 'lr_cna': 0.01, 'lr_classifier': 0.001, 'weight_decay': 0.01, 'epochs': 8}"
+		Best Cetuximab validation Auroc = 0.7311702768437827
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 16, 'h_dim_classifier': 32, 'modules': 32, 'lr_expression': 0.001, 'lr_mutation': 0.01, 'lr_cna': 0.01, 'lr_classifier': 0.001, 'weight_decay': 0.001, 'epochs': 6}"
+		Best Cetuximab validation Auroc = 0.7670013037809649
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 32, 'h_dim_classifier': 64, 'modules': 32, 'lr_expression': 0.001, 'lr_mutation': 0.01, 'lr_cna': 0.01, 'lr_classifier': 0.001, 'weight_decay': 0.1, 'epochs': 5}"
+		Best Cetuximab validation Auroc = 0.7723059386841724
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim_classifier': 1024, 'modules': 32, 'lr_expression': 0.001, 'lr_mutation': 0.01, 'lr_cna': 0.001, 'lr_classifier': 0.001, 'weight_decay': 0.01, 'epochs': 5}"
+		Best Cetuximab validation Auroc = 0.7522957981655573
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim_classifier': 512, 'modules': 64, 'lr_expression': 0.001, 'lr_mutation': 0.01, 'lr_cna': 0.01, 'lr_classifier': 0.001, 'weight_decay': 0.01, 'epochs': 3}"
+		Best Cetuximab validation Auroc = 0.7490362695090615
+	Minutes needed: 954	Mean Result for Cetuximab:
+
+		validation auroc max: 0.7723059386841724
+		validation auroc min: 0.7311702768437827
+		validation auroc mean: 0.7543619173967078
+		validation auroc std: 0.014506726396896917
+
+		test auroc max: 0.8247619047619048
+		test auroc min: 0.7154195011337868
+		test auroc mean: 0.751233560090703
+		test auroc std: 0.04348420631336414
+
+		test auprc max: 0.44158517415004933
+		test auprc min: 0.2618053541882378
+		test auprc mean: 0.34751966235643045
+		test auprc std: 0.07049376914762191
+
+		extern auroc max: 0.52
+		extern auroc min: 0.4690909090909091
+		extern auroc mean: 0.5047272727272728
+		extern auroc std: 0.01874050723887291
+
+		extern auprc max: 0.2762738588319984
+		extern auprc min: 0.10542034719666299
+		extern auprc mean: 0.14758622635230634
+		extern auprc std: 0.06487215720961306
+
+
+ No skill predictor extern AUPRC: 0.08333333333333333 
+
+ test auroc list: [0.8247619047619048, 0.7774943310657597, 0.7154195011337868, 0.7154195011337868, 0.7230725623582767] 
+
+ test auprc list: [0.44158517415004933, 0.41627301553196666, 0.3307849731539709, 0.2871497947579275, 0.2618053541882378] 
+
+ extern auroc list: [0.4690909090909091, 0.5054545454545455, 0.5090909090909091, 0.52, 0.52] 
+
+ extern auprc list: [0.12041517702687118, 0.2762738588319984, 0.10542034719666299, 0.12801030089455137, 0.1078114478114478] 
+
+ validation auroc list: [0.7311702768437827, 0.7670013037809649, 0.7723059386841724, 0.7522957981655573, 0.7490362695090615] 

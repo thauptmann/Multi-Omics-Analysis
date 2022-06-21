@@ -1,0 +1,55 @@
+Start experiment at 2022-05-21 07:26:23.990273
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim_classifier': 512, 'modules': 32, 'lr_expression': 0.01, 'lr_mutation': 0.001, 'lr_cna': 0.001, 'lr_classifier': 0.01, 'weight_decay': 0.01, 'epochs': 16}"
+		Best Gemcitabine_pdx validation Auroc = 0.6612895610270938
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 32, 'h_dim_classifier': 512, 'modules': 32, 'lr_expression': 0.01, 'lr_mutation': 0.01, 'lr_cna': 0.01, 'lr_classifier': 0.01, 'weight_decay': 0.1, 'epochs': 14}"
+		Best Gemcitabine_pdx validation Auroc = 0.6838124401116528
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 32, 'h_dim_classifier': 128, 'modules': 64, 'lr_expression': 0.01, 'lr_mutation': 0.001, 'lr_cna': 0.01, 'lr_classifier': 0.001, 'weight_decay': 0.1, 'epochs': 17}"
+		Best Gemcitabine_pdx validation Auroc = 0.7034086017025649
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 16, 'h_dim_classifier': 128, 'modules': 64, 'lr_expression': 0.001, 'lr_mutation': 0.001, 'lr_cna': 0.001, 'lr_classifier': 0.01, 'weight_decay': 0.0001, 'epochs': 12}"
+		Best Gemcitabine_pdx validation Auroc = 0.6057159521726451
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 16, 'h_dim_classifier': 64, 'modules': 256, 'lr_expression': 0.001, 'lr_mutation': 0.001, 'lr_cna': 0.001, 'lr_classifier': 0.001, 'weight_decay': 0.001, 'epochs': 10}"
+		Best Gemcitabine_pdx validation Auroc = 0.67381993917427
+	Minutes needed: 759	Mean Result for Gemcitabine_pdx:
+
+		validation auroc max: 0.7034086017025649
+		validation auroc min: 0.6057159521726451
+		validation auroc mean: 0.6656092988376453
+		validation auroc std: 0.03296491884879623
+
+		test auroc max: 0.6950517836593786
+		test auroc min: 0.5425776754890679
+		test auroc mean: 0.6091254315304948
+		test auroc std: 0.050749494405201954
+
+		test auprc max: 0.18251879430555437
+		test auprc min: 0.07748539436899499
+		test auprc mean: 0.12266196917493186
+		test auprc std: 0.036604748207853546
+
+		extern auroc max: 0.7301587301587302
+		extern auroc min: 0.6349206349206349
+		extern auroc mean: 0.6777777777777778
+		extern auroc std: 0.040030222898154014
+
+		extern auprc max: 0.5570528211284513
+		extern auprc min: 0.3855442176870748
+		extern auprc mean: 0.44603553874009433
+		extern auprc std: 0.06235679188479041
+
+
+ No skill predictor extern AUPRC: 0.28 
+
+ test auroc list: [0.61795166858458, 0.5425776754890679, 0.6121979286536248, 0.6950517836593786, 0.5778481012658228] 
+
+ test auprc list: [0.18251879430555437, 0.09189918309396627, 0.1309296716442826, 0.13047680246186094, 0.07748539436899499] 
+
+ extern auroc list: [0.7301587301587302, 0.6349206349206349, 0.6507936507936507, 0.6507936507936507, 0.7222222222222223] 
+
+ extern auprc list: [0.4470321461918101, 0.38764351894604, 0.4529049897470949, 0.3855442176870748, 0.5570528211284513] 
+
+ validation auroc list: [0.6612895610270938, 0.6838124401116528, 0.7034086017025649, 0.6057159521726451, 0.67381993917427] 

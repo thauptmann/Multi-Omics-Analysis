@@ -1,0 +1,69 @@
+Start experiment at 2021-12-31 19:52:29.730820
+	iteration = 0. 
+		str(best_parameters) = "{'epochs': 4, 'mini_batch': 64, 'h_dim1': 1024, 'h_dim2': 32, 'h_dim3': 512, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.01, 'dropout_rate_e': 0.3, 'dropout_rate_m': 0.3, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.3, 'weight_decay': 0.0001, 'gamma': 0.5, 'margin': 0.2, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.755316009747828
+		Cisplatin test Auroc = 0.7430463576158941
+		Cisplatin test AUPRC = 0.26999020277672003
+		Cisplatin extern AUROC = 0.6472222222222223
+		Cisplatin extern AUPRC = 0.9445488853313333
+	iteration = 1. 
+		str(best_parameters) = "{'epochs': 17, 'mini_batch': 8, 'h_dim1': 512, 'h_dim2': 128, 'h_dim3': 512, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.01, 'lr_cl': 0.01, 'dropout_rate_e': 0.1, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.5, 'dropout_rate_clf': 0.7, 'weight_decay': 0.001, 'gamma': 0.1, 'margin': 1.0, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.7427583527583528
+		Cisplatin test Auroc = 0.8198675496688741
+		Cisplatin test AUPRC = 0.47385178271774187
+		Cisplatin extern AUROC = 0.663888888888889
+		Cisplatin extern AUPRC = 0.9406427981491483
+	iteration = 2. 
+		str(best_parameters) = "{'epochs': 14, 'mini_batch': 16, 'h_dim1': 512, 'h_dim2': 256, 'h_dim3': 512, 'lr_e': 0.01, 'lr_m': 0.01, 'lr_c': 0.001, 'lr_cl': 0.001, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.7, 'dropout_rate_c': 0.8, 'dropout_rate_clf': 0.1, 'weight_decay': 0.01, 'gamma': 0.5, 'margin': 1.0, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.7854284099738645
+		Cisplatin test Auroc = 0.7158333333333333
+		Cisplatin test AUPRC = 0.2480253479681561
+		Cisplatin extern AUROC = 0.6361111111111111
+		Cisplatin extern AUPRC = 0.9503930153175046
+	iteration = 3. 
+		str(best_parameters) = "{'epochs': 8, 'mini_batch': 8, 'h_dim1': 256, 'h_dim2': 32, 'h_dim3': 512, 'lr_e': 0.001, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.001, 'dropout_rate_e': 0.7, 'dropout_rate_m': 0.1, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.1, 'weight_decay': 0.05, 'gamma': 0.0, 'margin': 0.2, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.7258330684467048
+		Cisplatin test Auroc = 0.79875
+		Cisplatin test AUPRC = 0.2577322144585417
+		Cisplatin extern AUROC = 0.7027777777777778
+		Cisplatin extern AUPRC = 0.9566888273324835
+	iteration = 4. 
+		str(best_parameters) = "{'epochs': 15, 'mini_batch': 32, 'h_dim1': 1024, 'h_dim2': 256, 'h_dim3': 256, 'lr_e': 0.01, 'lr_m': 0.001, 'lr_c': 0.01, 'lr_cl': 0.01, 'dropout_rate_e': 0.5, 'dropout_rate_m': 0.5, 'dropout_rate_c': 0.1, 'dropout_rate_clf': 0.8, 'weight_decay': 0.0001, 'gamma': 0.3, 'margin': 1.0, 'combination': 3}"
+		Best Cisplatin validation Auroc = 0.7207211979939253
+		Cisplatin test Auroc = 0.7404444444444443
+		Cisplatin test AUPRC = 0.32829953716300586
+		Cisplatin extern AUROC = 0.7194444444444444
+		Cisplatin extern AUPRC = 0.957109523494203
+	Mean Result for Cisplatin:
+
+		validation auroc max: 0.7854284099738645
+		validation auroc min: 0.7207211979939253
+		validation auroc mean: 0.7460114077841351
+		validation auroc std: 0.023227647904934198
+
+		test auroc max: 0.8198675496688741
+		test auroc min: 0.7158333333333333
+		test auroc mean: 0.7635883370125092
+		test auroc std: 0.03909436117497614
+
+		test auprc max: 0.47385178271774187
+		test auprc min: 0.2480253479681561
+		test auprc mean: 0.3155798170168331
+		test auprc std: 0.08390491135109984
+
+		extern auroc max: 0.7194444444444444
+		extern auroc min: 0.6361111111111111
+		extern auroc mean: 0.673888888888889
+		extern auroc std: 0.0320878423959859
+
+		extern auprc max: 0.957109523494203
+		extern auprc min: 0.9406427981491483
+		extern auprc mean: 0.9498766099249346
+		extern auprc std: 0.0065212874264765856
+
+	Minutes needed: 1291
+	
+ test auroc list: [0.7430463576158941, 0.8198675496688741, 0.7158333333333333, 0.79875, 0.7404444444444443] 
+ test auprc list: [0.26999020277672003, 0.47385178271774187, 0.2480253479681561, 0.2577322144585417, 0.32829953716300586] 
+ extern auroc list: [0.6472222222222223, 0.663888888888889, 0.6361111111111111, 0.7027777777777778, 0.7194444444444444] 
+ extern auprc list: [0.9445488853313333, 0.9406427981491483, 0.9503930153175046, 0.9566888273324835, 0.957109523494203] 

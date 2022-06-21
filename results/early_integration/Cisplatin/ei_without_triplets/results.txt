@@ -1,0 +1,55 @@
+Start experiment at 2022-05-30 12:13:16.321415
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim': 1024, 'lr': 0.001, 'dropout_rate': 0.5, 'weight_decay': 0.01, 'margin': 0.5, 'epochs': 20, 'gamma': 0}"
+		Best Cisplatin validation Auroc = 0.6758837500882955
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim': 512, 'lr': 0.001, 'dropout_rate': 0.3, 'weight_decay': 0.01, 'margin': 0.2, 'epochs': 15, 'gamma': 0}"
+		Best Cisplatin validation Auroc = 0.649513050081232
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 16, 'h_dim': 128, 'lr': 0.01, 'dropout_rate': 0.3, 'weight_decay': 0.05, 'margin': 0.5, 'epochs': 14, 'gamma': 0}"
+		Best Cisplatin validation Auroc = 0.7435657272020908
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim': 256, 'lr': 0.001, 'dropout_rate': 0.3, 'weight_decay': 0.05, 'margin': 0.5, 'epochs': 19, 'gamma': 0}"
+		Best Cisplatin validation Auroc = 0.6867840997386452
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim': 256, 'lr': 0.001, 'dropout_rate': 0.1, 'weight_decay': 0.05, 'margin': 1.0, 'epochs': 12, 'gamma': 0}"
+		Best Cisplatin validation Auroc = 0.653715564738292
+	Minutes needed: 738	Mean Result for Cisplatin:
+
+		validation auroc max: 0.7435657272020908
+		validation auroc min: 0.649513050081232
+		validation auroc mean: 0.681892438369711
+		validation auroc std: 0.03378161699738702
+
+		test auroc max: 0.7461368653421634
+		test auroc min: 0.45583333333333337
+		test auroc mean: 0.6598466151582045
+		test auroc std: 0.10459916606500268
+
+		test auprc max: 0.32030711488927444
+		test auprc min: 0.11600903050367282
+		test auprc mean: 0.22239739384681054
+		test auprc std: 0.06527033134603033
+
+		extern auroc max: 0.6944444444444444
+		extern auroc min: 0.5555555555555556
+		extern auroc mean: 0.6038888888888889
+		extern auroc std: 0.051925873091324105
+
+		extern auprc max: 0.9361921809326852
+		extern auprc min: 0.9243732141008514
+		extern auprc mean: 0.931893138670055
+		extern auprc std: 0.004093181424101307
+
+
+ No skill predictor extern AUPRC: 0.9090909090909091 
+
+ test auroc list: [0.7461368653421634, 0.7064017660044151, 0.45583333333333337, 0.7170833333333333, 0.6737777777777777] 
+
+ test auprc list: [0.32030711488927444, 0.24085761575941927, 0.11600903050367282, 0.21572023489073056, 0.21909297319095558] 
+
+ extern auroc list: [0.5805555555555555, 0.5611111111111111, 0.6944444444444444, 0.6277777777777779, 0.5555555555555556] 
+
+ extern auprc list: [0.931225305525405, 0.9361921809326852, 0.9344427178060872, 0.9243732141008514, 0.933232274985246] 
+
+ validation auroc list: [0.6758837500882955, 0.649513050081232, 0.7435657272020908, 0.6867840997386452, 0.653715564738292] 

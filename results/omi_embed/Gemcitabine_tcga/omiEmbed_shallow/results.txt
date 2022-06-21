@@ -1,0 +1,55 @@
+Start experiment at 2022-05-27 13:37:54.876533
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 16, 'latent_space_dim': 512, 'lr_vae': 0.01, 'lr_classifier': 0.001, 'weight_decay': 0.0001, 'epochs_phase': 18, 'k_kl': 0.01, 'k_embed': 0.001, 'leaky_slope': 0.01, 'dropout': 0.5, 'dim_1B': 1024, 'dim_1A': 64, 'dim_1C': 256, 'class_dim_1': 128}"
+		Best Gemcitabine_tcga validation Auroc = 0.6623807440736574
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 16, 'latent_space_dim': 128, 'lr_vae': 0.001, 'lr_classifier': 0.01, 'weight_decay': 0.001, 'epochs_phase': 8, 'k_kl': 0.01, 'k_embed': 0.01, 'leaky_slope': 0.001, 'dropout': 0.1, 'dim_1B': 1024, 'dim_1A': 32, 'dim_1C': 1024, 'class_dim_1': 64}"
+		Best Gemcitabine_tcga validation Auroc = 0.6736546820536322
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 8, 'latent_space_dim': 64, 'lr_vae': 0.01, 'lr_classifier': 0.001, 'weight_decay': 0.01, 'epochs_phase': 15, 'k_kl': 0.001, 'k_embed': 0.001, 'leaky_slope': 0.1, 'dropout': 0.7, 'dim_1B': 128, 'dim_1A': 128, 'dim_1C': 1024, 'class_dim_1': 1024}"
+		Best Gemcitabine_tcga validation Auroc = 0.6875444388895832
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 8, 'latent_space_dim': 32, 'lr_vae': 0.01, 'lr_classifier': 0.001, 'weight_decay': 0.001, 'epochs_phase': 2, 'k_kl': 0.001, 'k_embed': 0.001, 'leaky_slope': 0.01, 'dropout': 0.5, 'dim_1B': 1024, 'dim_1A': 64, 'dim_1C': 1024, 'class_dim_1': 512}"
+		Best Gemcitabine_tcga validation Auroc = 0.6626748045383215
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 32, 'latent_space_dim': 1024, 'lr_vae': 0.001, 'lr_classifier': 0.001, 'weight_decay': 0.001, 'epochs_phase': 18, 'k_kl': 0.001, 'k_embed': 0.01, 'leaky_slope': 0.1, 'dropout': 0.1, 'dim_1B': 64, 'dim_1A': 512, 'dim_1C': 32, 'class_dim_1': 64}"
+		Best Gemcitabine_tcga validation Auroc = 0.6778857503923121
+	Minutes needed: 859	Mean Result for Gemcitabine_tcga:
+
+		validation auroc max: 0.6875444388895832
+		validation auroc min: 0.6623807440736574
+		validation auroc mean: 0.6728280839895013
+		validation auroc std: 0.009540129456960679
+
+		test auroc max: 0.7330264672036824
+		test auroc min: 0.5362485615650172
+		test auroc mean: 0.6278365937859609
+		test auroc std: 0.07816300489803486
+
+		test auprc max: 0.22018729762733763
+		test auprc min: 0.07175052816423218
+		test auprc mean: 0.12707291772465937
+		test auprc std: 0.054228901719698054
+
+		extern auroc max: 0.6190476190476191
+		extern auroc min: 0.503968253968254
+		extern auroc mean: 0.5765873015873015
+		extern auroc std: 0.04297293131156874
+
+		extern auprc max: 0.5058876259566673
+		extern auprc min: 0.3862527042363385
+		extern auprc mean: 0.44126889251562657
+		extern auprc std: 0.04346016084497917
+
+
+ No skill predictor extern AUPRC: 0.3684210526315789 
+
+ test auroc list: [0.7330264672036824, 0.6585155350978136, 0.5379746835443038, 0.5362485615650172, 0.6734177215189874] 
+
+ test auprc list: [0.22018729762733763, 0.14155218611300177, 0.07175052816423218, 0.07450602921809747, 0.12736854750062776] 
+
+ extern auroc list: [0.6190476190476191, 0.6064814814814815, 0.5515873015873016, 0.6018518518518519, 0.503968253968254] 
+
+ extern auprc list: [0.4722714990985009, 0.43606624098114316, 0.40586639230548305, 0.5058876259566673, 0.3862527042363385] 
+
+ validation auroc list: [0.6623807440736574, 0.6736546820536322, 0.6875444388895832, 0.6626748045383215, 0.6778857503923121] 

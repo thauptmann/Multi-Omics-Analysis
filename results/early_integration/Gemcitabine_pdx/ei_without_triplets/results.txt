@@ -1,0 +1,55 @@
+Start experiment at 2022-05-30 12:13:15.805417
+	iteration = 0. 
+		str(best_parameters) = "{'mini_batch': 32, 'h_dim': 256, 'lr': 0.01, 'dropout_rate': 0.3, 'weight_decay': 0.05, 'margin': 0.5, 'epochs': 8, 'gamma': 0}"
+		Best Gemcitabine_pdx validation Auroc = 0.6852573983807579
+	iteration = 1. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim': 1024, 'lr': 0.01, 'dropout_rate': 0.1, 'weight_decay': 0.001, 'margin': 0.5, 'epochs': 14, 'gamma': 0}"
+		Best Gemcitabine_pdx validation Auroc = 0.703641905872877
+	iteration = 2. 
+		str(best_parameters) = "{'mini_batch': 8, 'h_dim': 128, 'lr': 0.01, 'dropout_rate': 0.3, 'weight_decay': 0.1, 'margin': 0.2, 'epochs': 5, 'gamma': 0}"
+		Best Gemcitabine_pdx validation Auroc = 0.6714178088850005
+	iteration = 3. 
+		str(best_parameters) = "{'mini_batch': 16, 'h_dim': 256, 'lr': 0.01, 'dropout_rate': 0.7, 'weight_decay': 0.05, 'margin': 1.0, 'epochs': 14, 'gamma': 0}"
+		Best Gemcitabine_pdx validation Auroc = 0.5978214528739463
+	iteration = 4. 
+		str(best_parameters) = "{'mini_batch': 32, 'h_dim': 512, 'lr': 0.01, 'dropout_rate': 0.5, 'weight_decay': 0.01, 'margin': 0.2, 'epochs': 18, 'gamma': 0}"
+		Best Gemcitabine_pdx validation Auroc = 0.6892648835562222
+	Minutes needed: 696	Mean Result for Gemcitabine_pdx:
+
+		validation auroc max: 0.703641905872877
+		validation auroc min: 0.5978214528739463
+		validation auroc mean: 0.6694806899137608
+		validation auroc std: 0.037272258335060586
+
+		test auroc max: 0.7416570771001151
+		test auroc min: 0.48676639815880324
+		test auroc mean: 0.5858688147295743
+		test auroc std: 0.09197203522798016
+
+		test auprc max: 0.18107503987829354
+		test auprc min: 0.06762188525667623
+		test auprc mean: 0.13849693791236148
+		test auprc std: 0.04631792888902479
+
+		extern auroc max: 0.7222222222222222
+		extern auroc min: 0.46825396825396826
+		extern auroc mean: 0.5253968253968254
+		extern auroc std: 0.09854062346138893
+
+		extern auprc max: 0.5646031746031746
+		extern auprc min: 0.2784052781951942
+		extern auprc mean: 0.3623217544121338
+		extern auprc std: 0.10825386261572396
+
+
+ No skill predictor extern AUPRC: 0.28 
+
+ test auroc list: [0.6064441887226698, 0.48676639815880324, 0.49827387802071343, 0.7416570771001151, 0.5962025316455696] 
+
+ test auprc list: [0.17725892495564796, 0.06762188525667623, 0.1674209322507216, 0.18107503987829354, 0.09910790722046803] 
+
+ extern auroc list: [0.46825396825396826, 0.4761904761904761, 0.47619047619047616, 0.48412698412698413, 0.7222222222222222] 
+
+ extern auprc list: [0.2784052781951942, 0.38461399711399713, 0.28091210168277836, 0.30307422046552485, 0.5646031746031746] 
+
+ validation auroc list: [0.6852573983807579, 0.703641905872877, 0.6714178088850005, 0.5978214528739463, 0.6892648835562222] 
