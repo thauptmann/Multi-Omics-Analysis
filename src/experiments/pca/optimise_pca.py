@@ -13,9 +13,9 @@ from sklearn.model_selection import StratifiedKFold
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.experiment_utils import create_generation_strategy
 from utils.input_arguments import get_cmd_arguments
-from utils.searchspaces import create_moli_search_space
+from utils.searchspaces import create_pca_search_space
 from utils.choose_gpu import get_free_gpu
-from training_moli import train_final, optimise_hyperparameter, reset_best_auroc
+from train_pca import test_pca, train_final, optimise_hyperparameter, reset_best_auroc
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc, test
@@ -50,7 +50,7 @@ def moli(
         data_path, drug_name, extern_dataset_name
     )
 
-    moli_search_space = create_moli_search_space()
+    pca_search_space = create_pca_search_space()
 
     torch.manual_seed(parameter["random_seed"])
     np.random.seed(parameter["random_seed"])
@@ -92,15 +92,14 @@ def moli(
             x_train_validate_c,
             y_train_validate,
             device,
-            pin_memory,
         )
         generation_strategy = create_generation_strategy()
 
         best_parameters, _, experiment, _ = optimize(
             total_trials=search_iterations,
-            experiment_name="Moli",
+            experiment_name="PCA",
             objective_name="auroc",
-            parameters=moli_search_space,
+            parameters=pca_search_space,
             evaluation_function=evaluation_function,
             minimize=False,
             generation_strategy=generation_strategy,
@@ -121,7 +120,7 @@ def moli(
 
         result_file.write(f"\t\t{str(best_parameters) = }\n")
 
-        model_final, scaler_final = train_final(
+        model_final, scaler_final, pca_e, pca_m, pca_c = train_final(
             best_parameters,
             x_train_validate_e,
             x_train_validate_m,
@@ -130,8 +129,13 @@ def moli(
             device,
             pin_memory,
         )
-        auc_test, auprc_test = test(
-            model_final, scaler_final, x_test_e, x_test_m, x_test_c, y_test, device
+        auc_test, auprc_test = test_pca(
+            model_final,
+            pca_e.transform(scaler_final.transform(x_test_e)),
+            pca_m.transform(x_test_m),
+            pca_c.transform(x_test_c),
+            y_test,
+            device,
         )
         auc_extern, auprc_extern = test(
             model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device
