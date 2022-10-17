@@ -82,7 +82,7 @@ def calculate_mean_and_std_auc(result_dict, result_file, drug_name):
 
 
 def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device):
-    x_test_e = torch.FloatTensor(scaler.transform(x_test_e).to(device)
+    x_test_e = torch.FloatTensor(scaler.transform(x_test_e)).to(device)
     x_test_m = torch.FloatTensor(x_test_m).to(device)
     x_test_c = torch.FloatTensor(x_test_c).to(device)
     test_y = torch.FloatTensor(test_y.astype(int))
