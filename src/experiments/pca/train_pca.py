@@ -61,6 +61,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device):
         classifier_model = Classifier(input_size, dropout_rate).to(device)
 
         pca_optimiser = torch.optim.Adagrad(
+            classifier_model.parameters(),
             lr=learning_rate,
             weight_decay=weight_decay,
         )
@@ -149,6 +150,7 @@ def train_final(
     pca_model = Classifier(input_sizes, dropout_rate).to(device)
 
     pca_optimiser = torch.optim.Adagrad(
+        pca_model.parameters()
         lr=learning_rate,
         weight_decay=weight_decay,
     )
