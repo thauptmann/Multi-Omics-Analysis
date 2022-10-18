@@ -17,7 +17,7 @@ from utils import multi_omics_data
 from utils.choose_gpu import get_free_gpu
 from train_super_felt import optimise_super_felt_parameter, compute_super_felt_metrics
 
-with open(Path('../../config/hyperparameter.yaml'), 'r') as stream:
+with open((Path(__file__).parent / "../../config/hyperparameter.yaml"), "r") as stream:
     parameter = yaml.safe_load(stream)
 best_auroc = 0
 

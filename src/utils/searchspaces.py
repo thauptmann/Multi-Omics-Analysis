@@ -1,7 +1,7 @@
 from pathlib import Path
 import yaml
 
-with open(Path("../../config/hyperparameter.yaml"), "r") as stream:
+with open((Path(__file__).parent / "../config/hyperparameter.yaml"), "r") as stream:
     parameter = yaml.safe_load(stream)
 
 

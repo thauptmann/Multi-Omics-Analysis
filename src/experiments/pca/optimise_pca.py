@@ -20,7 +20,8 @@ from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc, test
 
-with open(Path("../../config/hyperparameter.yaml"), "r") as stream:
+
+with open((Path(__file__).parent / "../../config/hyperparameter.yaml"), "r") as stream:
     parameter = yaml.safe_load(stream)
 
 
