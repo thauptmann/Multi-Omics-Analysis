@@ -98,7 +98,6 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device):
         # validate
         auc_validate, _ = test_pca(
             classifier_model,
-            scaler_gdsc,
             pca_e.transform(scaler_gdsc.transform(x_validate_e)),
             pca_m.transform(x_validate_m),
             pca_c.transform(x_validate_c),
@@ -231,7 +230,7 @@ def train_pca(train_loader, model, optimiser, loss_fn, device):
 
 
 def test_pca(
-    moli_model,
+    model,
     x_test_e,
     x_test_m,
     x_test_c,
@@ -242,10 +241,10 @@ def test_pca(
     x_test_m = torch.FloatTensor(x_test_m).to(device)
     x_test_c = torch.FloatTensor(x_test_c).to(device)
     test_y = torch.FloatTensor(test_y.astype(int))
-    moli_model.eval()
+    model.eval()
 
     input = torch.concat([x_test_e, x_test_m, x_test_c], axis=1)
-    predictions = moli_model.forward(input)
+    predictions = model.forward(input)
     probabilities = sigmoid(predictions)
     auc_validate = roc_auc_score(test_y, probabilities.cpu().detach().numpy())
     auprc_validate = average_precision_score(
