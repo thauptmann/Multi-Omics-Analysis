@@ -218,8 +218,8 @@ def train_pca(train_loader, model, optimiser, loss_fn, device):
             input = torch.concat([data_e, data_m, data_c], axis=1)
 
             prediction = model.forward(input)
-            loss = loss_fn(torch.squeeze(prediction[0]), target)
-            prediction = sigmoid(prediction[0])
+            loss = loss_fn(torch.squeeze(prediction), target)
+            prediction = sigmoid(prediction)
 
             predictions.extend(prediction.cpu().detach())
             loss.backward()
@@ -246,7 +246,7 @@ def test_pca(
 
     input = torch.concat([x_test_e, x_test_m, x_test_c], axis=1)
     predictions = moli_model.forward(input)
-    probabilities = sigmoid(predictions[0])
+    probabilities = sigmoid(predictions)
     auc_validate = roc_auc_score(test_y, probabilities.cpu().detach().numpy())
     auprc_validate = average_precision_score(
         test_y, probabilities.cpu().detach().numpy()
