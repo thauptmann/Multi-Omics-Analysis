@@ -673,19 +673,19 @@ def create_pca_search_space():
         {
             "name": "dim_e",
             "values": parameter["dim_choice"],
-            "value_type": "float",
+            "value_type": "int",
             "type": "choice",
         },
         {
             "name": "dim_m",
             "values": parameter["dim_choice"],
-            "value_type": "float",
+            "value_type": "int",
             "type": "choice",
         },
         {
             "name": "dim_c",
             "values": parameter["dim_choice"],
-            "value_type": "float",
+            "value_type": "int",
             "type": "choice",
         },
         {
