@@ -18,19 +18,19 @@ from utils.choose_gpu import get_free_gpu
 from train_pca import test_pca, train_final, optimise_hyperparameter, reset_best_auroc
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
-from utils.network_training_util import calculate_mean_and_std_auc, test
+from utils.network_training_util import calculate_mean_and_std_auc
 
 file_directory = Path(__file__).parent
 with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
     parameter = yaml.safe_load(stream)
 
 
-def moli(
+def pca(
     search_iterations, experiment_name, drug_name, extern_dataset_name, gpu_number
 ):
     device, pin_memory = create_device(gpu_number)
 
-    result_path = Path(file_directory, "..", "..", "..", "results", "moli", drug_name, experiment_name)
+    result_path = Path(file_directory, "..", "..", "..", "results", "pca", drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
 
     result_file = open(result_path / "results.txt", "w")
@@ -138,7 +138,7 @@ def moli(
             y_test,
             device,
         )
-        auc_extern, auprc_extern = test(
+        auc_extern, auprc_extern = test_pca(
             model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device
         )
 
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     args = get_cmd_arguments()
     if args.drug == "all":
         for drug, extern_dataset in parameter["drugs"].items():
-            moli(
+            pca(
                 args.search_iterations,
                 args.experiment_name,
                 drug,
@@ -216,7 +216,7 @@ if __name__ == "__main__":
             )
     else:
         extern_dataset = parameter["drugs"][args.drug]
-        moli(
+        pca(
             args.search_iterations,
             args.experiment_name,
             args.drug,
