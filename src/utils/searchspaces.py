@@ -672,19 +672,19 @@ def create_pca_search_space():
     search_space = [
         {
             "name": "variance_e",
-            "values": parameter["variance_choice"],
+            "values": parameter["variance_choices"],
             "value_type": "int",
             "type": "choice",
         },
         {
             "name": "variance_m",
-            "values": parameter["variance_choice"],
+            "values": parameter["variance_choices"],
             "value_type": "int",
             "type": "choice",
         },
         {
             "name": "variance_c",
-            "values": parameter["variance_choice"],
+            "values": parameter["variance_choices"],
             "value_type": "int",
             "type": "choice",
         },
