@@ -150,7 +150,7 @@ def train_final(
     pca_model = Classifier(input_sizes, dropout_rate).to(device)
 
     pca_optimiser = torch.optim.Adagrad(
-        pca_model.parameters()
+        pca_model.parameters(),
         lr=learning_rate,
         weight_decay=weight_decay,
     )
