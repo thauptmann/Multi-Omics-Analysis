@@ -25,9 +25,9 @@ def reset_best_auroc():
 
 
 def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device):
-    dim_e = parameterization["dim_e"]
-    dim_m = parameterization["dim_m"]
-    dim_c = parameterization["dim_c"]
+    variance_e = parameterization["variance_e"]
+    variance_m = parameterization["variance_m"]
+    variance_c = parameterization["variance_c"]
     dropout_rate = parameterization["dropout"]
     learning_rate = parameterization["learning_rate"]
     weight_decay = parameterization["weight_decay"]
@@ -56,7 +56,16 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device):
 
         # Initialisation
         loss_fn = get_loss_fn(None, None, None)
-        input_size = dim_e + dim_m + dim_c
+
+        pca_e = PCA(n_components=variance_e).fit(x_train_e)
+        pca_m = PCA(n_components=variance_m).fit(x_train_m)
+        pca_c = PCA(n_components=variance_c).fit(x_train_c)
+
+        e_dimension = pca_e.n_components_
+        m_dimension = pca_m.n_components_
+        c_dimension = pca_c.n_components_
+
+        input_size = e_dimension + m_dimension + c_dimension
 
         classifier_model = Classifier(input_size, dropout_rate).to(device)
 
@@ -66,9 +75,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device):
             weight_decay=weight_decay,
         )
 
-        pca_e = PCA(n_components=dim_e).fit(x_train_e)
-        pca_m = PCA(n_components=dim_m).fit(x_train_m)
-        pca_c = PCA(n_components=dim_c).fit(x_train_c)
+        
 
         transformed_e = pca_e.transform(x_train_e)
         transformed_m = pca_m.transform(x_train_m)
@@ -132,9 +139,9 @@ def set_best_auroc(new_auroc):
 def train_final(
     parameterization, x_train_e, x_train_m, x_train_c, y_train, device, pin_memory
 ):
-    dim_e = parameterization["dim_e"]
-    dim_m = parameterization["dim_m"]
-    dim_c = parameterization["dim_c"]
+    variance_e = parameterization["variance_e"]
+    variance_m = parameterization["variance_m"]
+    variance_c = parameterization["variance_c"]
     dropout_rate = parameterization["dropout"]
     learning_rate = parameterization["learning_rate"]
     weight_decay = parameterization["weight_decay"]
@@ -145,8 +152,20 @@ def train_final(
     train_scaler_gdsc.fit(x_train_e)
     x_train_e = train_scaler_gdsc.transform(x_train_e)
 
+    pca_e = PCA(n_components=variance_e).fit(x_train_e)
+    pca_m = PCA(n_components=variance_m).fit(x_train_m)
+    pca_c = PCA(n_components=variance_c).fit(x_train_c)
+
+    e_dimension = pca_e.n_components_
+    m_dimension = pca_m.n_components_
+    c_dimension = pca_c.n_components_
+
+    transformed_e = pca_e.transform(x_train_e)
+    transformed_m = pca_m.transform(x_train_m)
+    transformed_c = pca_c.transform(x_train_c)
+
     loss_fn = get_loss_fn(None, None, None)
-    input_sizes = dim_e + dim_m + dim_c
+    input_sizes = e_dimension + m_dimension + c_dimension
     pca_model = Classifier(input_sizes, dropout_rate).to(device)
 
     pca_optimiser = torch.optim.Adagrad(
@@ -166,13 +185,6 @@ def train_final(
         samples_weight.type("torch.DoubleTensor"), len(samples_weight), replacement=True
     )
 
-    pca_e = PCA(n_components=dim_e).fit(x_train_e)
-    pca_m = PCA(n_components=dim_m).fit(x_train_m)
-    pca_c = PCA(n_components=dim_c).fit(x_train_c)
-
-    transformed_e = pca_e.transform(x_train_e)
-    transformed_m = pca_m.transform(x_train_m)
-    transformed_c = pca_c.transform(x_train_c)
 
     train_loader = create_data_loader(
         torch.FloatTensor(transformed_e),

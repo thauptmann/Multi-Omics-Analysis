@@ -671,20 +671,20 @@ def create_omi_embed_search_space():
 def create_pca_search_space():
     search_space = [
         {
-            "name": "dim_e",
-            "values": parameter["dim_choice"],
+            "name": "variance_e",
+            "values": parameter["variance_choice"],
             "value_type": "int",
             "type": "choice",
         },
         {
-            "name": "dim_m",
-            "values": parameter["dim_choice"],
+            "name": "variance_m",
+            "values": parameter["variance_choice"],
             "value_type": "int",
             "type": "choice",
         },
         {
-            "name": "dim_c",
-            "values": parameter["dim_choice"],
+            "name": "variance_c",
+            "values": parameter["variance_choice"],
             "value_type": "int",
             "type": "choice",
         },
