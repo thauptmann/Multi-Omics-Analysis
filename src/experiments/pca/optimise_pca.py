@@ -139,7 +139,12 @@ def pca(
             device,
         )
         auc_extern, auprc_extern = test_pca(
-            model_final, scaler_final, extern_e, extern_m, extern_c, extern_r, device
+            model_final,
+            pca_e.transform(scaler_final.transform(extern_e)),
+            pca_m.transform(extern_m),
+            pca_c.transform(extern_c),
+            extern_r,
+            device,
         )
 
         result_file.write(f"\t\tBest {drug_name} validation Auroc = {max_objective}\n")
