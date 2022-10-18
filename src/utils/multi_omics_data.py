@@ -3,7 +3,9 @@ from sklearn.feature_selection import VarianceThreshold
 
 from utils.network_training_util import read_and_transpose_csv, feature_selection
 
-
+def get_non_zero_variance_gen_indices(data):
+    selector = VarianceThreshold(0)
+    return selector.fit(data).get_support(indices=True)
 
 def load_drug_data(data_path, drug, dataset, return_data_frames=False):
     drug = drug.split('_')[0]
