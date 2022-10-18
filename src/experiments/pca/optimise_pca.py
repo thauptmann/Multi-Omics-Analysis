@@ -20,8 +20,8 @@ from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc, test
 
-
-with open((Path(__file__).parent / "../../config/hyperparameter.yaml"), "r") as stream:
+file_directory = Path(__file__).parent
+with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
     parameter = yaml.safe_load(stream)
 
 
@@ -30,14 +30,14 @@ def moli(
 ):
     device, pin_memory = create_device(gpu_number)
 
-    result_path = Path("..", "..", "..", "results", "moli", drug_name, experiment_name)
+    result_path = Path(file_directory, "..", "..", "..", "results", "moli", drug_name, experiment_name)
     result_path.mkdir(parents=True, exist_ok=True)
 
     result_file = open(result_path / "results.txt", "w")
     log_file = open(result_path / "logs.txt", "w")
     log_file.write(f"Start for {drug_name}\n")
 
-    data_path = Path("..", "..", "..", "data")
+    data_path = Path(file_directory, "..", "..", "..", "data")
     (
         gdsc_e,
         gdsc_m,
