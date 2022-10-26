@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
 from models.early_integration_model import EarlyIntegration
-from utils.network_training_util import get_triplet_selector, get_loss_fn, create_sampler
+from utils.network_training_util import get_loss_fn, create_sampler
 from scipy.stats import sem
 
 best_auroc = -1
@@ -50,10 +50,9 @@ def optimise_hyperparameter(parameterization, x, y, device, pin_memory):
                                                    num_workers=8, pin_memory=pin_memory, drop_last=True,
                                                    sampler=sampler)
 
-        n_sample_e, ie_dim = x_train_e.shape
+        _, ie_dim = x_train_e.shape
 
-        triplet_selector = get_triplet_selector()
-        loss_fn = get_loss_fn(margin, gamma, triplet_selector)
+        loss_fn = get_loss_fn(margin, gamma)
 
         early_integration_model = EarlyIntegration(ie_dim, h_dim, dropout_rate, ).to(device)
 
@@ -109,8 +108,7 @@ def train_final(parameterization, x_train_e, y_train, device, pin_memory):
 
     ie_dim = x_train_e.shape[-1]
 
-    triplet_selector = get_triplet_selector()
-    loss_fn = get_loss_fn(margin, gamma, triplet_selector)
+    loss_fn = get_loss_fn(margin, gamma)
 
     early_integration_model = EarlyIntegration(ie_dim, h_dim, dropout_rate).to(device)
 

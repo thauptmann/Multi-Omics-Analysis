@@ -14,17 +14,10 @@ from sklearn.model_selection import StratifiedKFold
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.experiment_utils import create_generation_strategy
 from utils.input_arguments import get_cmd_arguments
-from utils.searchspaces import (
-    create_stacking_search_space,
-    create_stacking_splitted_search_space,
-)
+from utils.searchspaces import create_stacking_search_space
+
 from utils.choose_gpu import get_free_gpu
-from training_stacking import train_final, optimise_hyperparameter, reset_best_auroc
-from training_splitted_stacking import (
-    compute_splitted_metrics,
-    optimise_hyperparameter_splitted,
-    reset_best_auroc_splitted,
-)
+from src.experiments.stacking.train_stacking import train_final, optimise_hyperparameter, reset_best_auroc
 from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc, test

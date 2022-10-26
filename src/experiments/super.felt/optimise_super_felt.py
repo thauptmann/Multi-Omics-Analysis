@@ -1,21 +1,19 @@
-import argparse
 import sys
 import time
-
 import yaml
 import torch
-from pathlib import Path
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 from tqdm import tqdm
+from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.experiment_utils import write_results_to_file
-from models.super_felt_model import Classifier
 from utils import multi_omics_data
 from utils.choose_gpu import get_free_gpu
 from train_super_felt import optimise_super_felt_parameter, compute_super_felt_metrics
+from utils.input_arguments import get_cmd_arguments
 
 file_directory = Path(__file__).parent
 with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
@@ -29,7 +27,7 @@ def super_felt(
     extern_dataset_name,
     gpu_number,
     search_iterations,
-    architecture,
+    deactivate_triplet_loss,
 ):
     if torch.cuda.is_available():
         if gpu_number is None:
@@ -44,11 +42,16 @@ def super_felt(
     np.random.seed(random_seed)
     torch.cuda.manual_seed_all(random_seed)
 
-    sobol_iterations = search_iterations
-
     data_path = Path(file_directory, "..", "..", "..", "data")
     result_path = Path(
-        file_directory, "..", "..", "..", "results", "super.felt", drug_name, experiment_name
+        file_directory,
+        "..",
+        "..",
+        "..",
+        "results",
+        "super.felt",
+        drug_name,
+        experiment_name,
     )
     result_path.mkdir(parents=True, exist_ok=True)
     result_file = open(result_path / "results.txt", "w")
@@ -64,8 +67,6 @@ def super_felt(
     ) = multi_omics_data.load_drug_data_with_elbow(
         data_path, drug_name, extern_dataset_name
     )
-
-    classifier = Classifier
 
     test_auc_list = []
     extern_auc_list = []
@@ -101,6 +102,7 @@ def super_felt(
             x_train_val_c,
             y_train_val,
             device,
+            deactivate_triplet_loss,
         )
         external_AUC, external_AUCPR, test_AUC, test_AUCPR = compute_super_felt_metrics(
             x_test_e,
@@ -117,6 +119,7 @@ def super_felt(
             extern_r,
             y_test,
             y_train_val,
+            deactivate_triplet_loss,
         )
 
         test_auc_list.append(test_AUC)
@@ -126,7 +129,7 @@ def super_felt(
         objectives = np.array(
             [trial.objective_mean for trial in experiment.trials.values()]
         )
-        save_auroc_plots(objectives, result_path, iteration, sobol_iterations)
+        save_auroc_plots(objectives, result_path, iteration, search_iterations)
 
         max_objective = max(
             np.array([trial.objective_mean for trial in experiment.trials.values()])
@@ -148,7 +151,7 @@ def super_felt(
         test_auprc_list,
     )
     save_auroc_with_variance_plots(
-        objectives_list, result_path, "final", sobol_iterations
+        objectives_list, result_path, "final", search_iterations
     )
     positive_extern = np.count_nonzero(extern_r == 1)
     negative_extern = np.count_nonzero(extern_r == 0)
@@ -161,28 +164,7 @@ def super_felt(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--experiment_name", required=True)
-    parser.add_argument("--gpu_number", type=int)
-    parser.add_argument(
-        "--drug",
-        default="all",
-        choices=[
-            "Gemcitabine_tcga",
-            "Gemcitabine_pdx",
-            "Cisplatin",
-            "Docetaxel",
-            "Erlotinib",
-            "Cetuximab",
-            "Paclitaxel",
-        ],
-    )
-    parser.add_argument("--search_iterations", default=200, type=int)
-    parser.add_argument(
-        "--architecture", default=None, choices=["supervised-ae", "supervised-e"]
-    )
-
-    args = parser.parse_args()
+    args = get_cmd_arguments()
 
     if args.drug == "all":
         for drug, extern_dataset in parameter["drugs"].items():
@@ -192,7 +174,6 @@ if __name__ == "__main__":
                 extern_dataset,
                 args.gpu_number,
                 args.search_iterations,
-                args.architecture,
             )
     else:
         extern_dataset = parameter["drugs"][args.drug]
@@ -202,5 +183,5 @@ if __name__ == "__main__":
             extern_dataset,
             args.gpu_number,
             args.search_iterations,
-            args.architecture,
+            args.deactivate_triplet_loss,
         )

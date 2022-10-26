@@ -5,10 +5,8 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
 from models.moli_model import Moli
-from siamese_triplet.utils import AllTripletSelector
 from utils import network_training_util
 from utils.network_training_util import (
-    get_triplet_selector,
     get_loss_fn,
     create_data_loader,
     create_sampler,
@@ -78,8 +76,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         _, im_dim = x_train_m.shape
         _, ic_dim = x_train_c.shape
 
-        triplet_selector = get_triplet_selector()
-        loss_fn = get_loss_fn(margin, gamma, triplet_selector)
+        loss_fn = get_loss_fn(margin, gamma)
 
         input_sizes = [ie_dim, im_dim, ic_dim]
         dropout_rates = [
@@ -178,8 +175,7 @@ def train_final(
     im_dim = x_train_m.shape[-1]
     ic_dim = x_train_c.shape[-1]
 
-    triplet_selector = AllTripletSelector()
-    loss_fn = get_loss_fn(margin, gamma, triplet_selector)
+    loss_fn = get_loss_fn(margin, gamma)
 
     input_sizes = [ie_dim, im_dim, ic_dim]
     dropout_rates = [

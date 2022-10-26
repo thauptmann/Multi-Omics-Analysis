@@ -6,7 +6,7 @@ from torch.utils.data.sampler import WeightedRandomSampler
 from tqdm import trange, tqdm
 from models.stacking_model import StackingModel
 from utils import network_training_util
-from utils.network_training_util import get_triplet_selector, get_loss_fn, create_data_loader, create_sampler
+from utils.network_training_util import get_loss_fn, create_data_loader, create_sampler
 from scipy.stats import sem
 
 best_auroc = -1
@@ -60,12 +60,11 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
                                           torch.FloatTensor(x_train_c),
                                           torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
 
-        n_sample_e, ie_dim = x_train_e.shape
+        _, ie_dim = x_train_e.shape
         _, im_dim = x_train_m.shape
         _, ic_dim = x_train_c.shape
 
-        triplet_selector = get_triplet_selector()
-        loss_fn = get_loss_fn(margin, gamma, triplet_selector)
+        loss_fn = get_loss_fn(margin, gamma)
 
         encoding_sizes = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
         input_sizes = [ie_dim, im_dim, ic_dim]
@@ -134,12 +133,11 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
     train_scaler_gdsc = StandardScaler()
     x_train_e = train_scaler_gdsc.fit_transform(x_train_e)
 
-    n_sample_e, ie_dim = x_train_e.shape
+    _, ie_dim = x_train_e.shape
     _, im_dim = x_train_m.shape
     _, ic_dim = x_train_c.shape
 
-    triplet_selector = get_triplet_selector()
-    loss_fn = get_loss_fn(margin, gamma, triplet_selector)
+    loss_fn = get_loss_fn(margin, gamma)
 
     encoding_sizes = [h_dim_e_encode, h_dim_m_encode, h_dim_c_encode]
     input_sizes = [ie_dim, im_dim, ic_dim]

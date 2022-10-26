@@ -16,7 +16,7 @@ from utils.experiment_utils import create_generation_strategy
 from utils.input_arguments import get_cmd_arguments
 from utils.searchspaces import create_early_integration_search_space
 from utils.choose_gpu import get_free_gpu
-from training_early_integration import (
+from src.experiments.early_integration.train_early_integration import (
     train_final,
     optimise_hyperparameter,
     reset_best_auroc,
