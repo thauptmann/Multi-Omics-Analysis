@@ -38,6 +38,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
     class_dim_1 = parameterization["class_dim_1"]
     leaky_slope = parameterization["leaky_slope"]
     gamma = parameterization["gamma"]
+    margin = parameterization["margin"]
 
     epochs_phase = int(epochs_phase / 3) if int(epochs_phase / 3) > 0 else 1
 
@@ -110,6 +111,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
             k_kl,
             k_embed,
             gamma,
+            margin,
         )
 
         # validate
