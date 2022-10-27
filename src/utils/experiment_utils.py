@@ -7,7 +7,8 @@ from utils.network_training_util import calculate_mean_and_std_auc
 def create_generation_strategy():
     generation_strategy = GenerationStrategy(
         steps=[
-            GenerationStep(model=Models.SOBOL, num_trials=-1, max_parallelism=5),
+            GenerationStep(model=Models.SOBOL, num_trials=-1, max_parallelism=5,
+            model_gen_kwargs = {"optimizer_kwargs": {"joint_optimize": True}}),
         ],
         name="Sobol",
     )

@@ -7,7 +7,7 @@ import time
 import numpy as np
 import yaml
 from tqdm import tqdm
-from ax import optimize
+from ax import optimize, Runner
 from ax.storage.json_store.save import save_experiment
 from sklearn.model_selection import StratifiedKFold
 
@@ -26,11 +26,17 @@ from utils import multi_omics_data
 from utils.visualisation import save_auroc_plots, save_auroc_with_variance_plots
 from utils.network_training_util import calculate_mean_and_std_auc
 
+
 file_directory = Path(__file__).parent
 
 with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
     parameter = yaml.safe_load(stream)
 
+
+class MyRunner(Runner):
+    def run(self, trial):
+        trial_metadata = {"name": str(trial.index)}
+        return trial_metadata
 
 def early_integration(
     search_iterations,
@@ -118,7 +124,7 @@ def early_integration(
         )
         generation_strategy = create_generation_strategy()
 
-        best_parameters, values, experiment, model = optimize(
+        best_parameters, _, experiment, _ = optimize(
             total_trials=search_iterations,
             experiment_name="Early-Integration",
             objective_name="auroc",
