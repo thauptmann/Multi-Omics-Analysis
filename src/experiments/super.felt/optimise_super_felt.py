@@ -174,6 +174,7 @@ if __name__ == "__main__":
                 extern_dataset,
                 args.gpu_number,
                 args.search_iterations,
+                args.deactivate_triplet_loss,
             )
     else:
         extern_dataset = parameter["drugs"][args.drug]

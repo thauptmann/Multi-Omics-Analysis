@@ -15,7 +15,7 @@ from utils.experiment_utils import create_generation_strategy
 from utils.input_arguments import get_cmd_arguments
 from utils.searchspaces import create_moma_search_space
 from utils.choose_gpu import get_free_gpu
-from src.experiments.moma.train_moma import (
+from train_moma import (
     train_final,
     optimise_hyperparameter,
     reset_best_auroc,

@@ -15,7 +15,7 @@ from utils.experiment_utils import create_generation_strategy
 from utils.input_arguments import get_cmd_arguments
 from utils.searchspaces import create_omi_embed_search_space
 from utils.choose_gpu import get_free_gpu
-from src.experiments.omiEmbed.train_omiEmbed import (
+from train_omiEmbed import (
     train_final,
     optimise_hyperparameter,
     reset_best_auroc,
