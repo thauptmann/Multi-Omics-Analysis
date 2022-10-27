@@ -162,6 +162,6 @@ def train_final(parameterization, x_train_e, x_train_m, x_train_c, y_train, devi
                                       torch.FloatTensor(x_train_c),
                                       torch.FloatTensor(y_train), mini_batch, pin_memory, sampler)
 
-    for epoch in range(epochs):
+    for _ in range(epochs):
         network_training_util.train(train_loader, stacking_model, optimiser, loss_fn, device, gamma)
     return stacking_model, train_scaler_gdsc
