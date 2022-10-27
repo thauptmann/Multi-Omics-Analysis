@@ -371,7 +371,6 @@ def train_final(
         train_loader,
         loss_fn,
         0,
-        deactivate_triplet_loss,
     )
     train_encoder_fn(
         M_Supervised_Encoder_epoch,
@@ -381,7 +380,6 @@ def train_final(
         train_loader,
         loss_fn,
         1,
-        deactivate_triplet_loss,
     )
     train_encoder_fn(
         C_Supervised_Encoder_epoch,
@@ -391,7 +389,6 @@ def train_final(
         train_loader,
         loss_fn,
         2,
-        deactivate_triplet_loss,
     )
 
     # train classifier

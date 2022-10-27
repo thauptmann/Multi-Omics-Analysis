@@ -7,7 +7,7 @@ import time
 import numpy as np
 import yaml
 from tqdm import tqdm
-from ax import optimize, Runner
+from ax import optimize
 from ax.storage.json_store.save import save_experiment
 from sklearn.model_selection import StratifiedKFold
 
@@ -32,11 +32,6 @@ file_directory = Path(__file__).parent
 with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
     parameter = yaml.safe_load(stream)
 
-
-class MyRunner(Runner):
-    def run(self, trial):
-        trial_metadata = {"name": str(trial.index)}
-        return trial_metadata
 
 def early_integration(
     search_iterations,
