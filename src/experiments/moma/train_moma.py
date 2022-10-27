@@ -162,7 +162,7 @@ def train_final(
     weight_decay = parameterization["weight_decay"]
     epochs = parameterization["epochs"]
     gamma = parameterization["gamma"]
-    margin = ["margin"]
+    margin = parameterization["margin"]
 
     train_scaler_gdsc = StandardScaler()
     train_scaler_gdsc.fit(x_train_e)
