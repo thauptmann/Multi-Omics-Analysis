@@ -92,7 +92,9 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device, pin_memo
         )
 
         for _ in trange(epochs, desc="Epoch"):
-            train_moma(train_loader, moma_model, moma_optimiser, loss_fn, device)
+            train_moma(
+                train_loader, moma_model, moma_optimiser, loss_fn, device, gamma, margin
+            )
 
         with torch.no_grad():
             moma_model = moma_model.cpu()
@@ -269,13 +271,13 @@ def train_moma(
                 + loss_fn(torch.squeeze(cna_logit), target)
             )
             if gamma > 0:
-                        triplets = triplet_selector.get_triplets(features, target)
-                        triplet_loss = triplet_loss_fn(
-                            features[triplets[:, 0], :],
-                            features[triplets[:, 1], :],
-                            features[triplets[:, 2], :],
-                        )
-                        loss += triplet_loss
+                triplets = triplet_selector.get_triplets(features, target)
+                triplet_loss = triplet_loss_fn(
+                    features[triplets[:, 0], :],
+                    features[triplets[:, 1], :],
+                    features[triplets[:, 2], :],
+                )
+                loss += triplet_loss
             loss.backward()
             optimiser.step()
 

@@ -24,8 +24,7 @@ from utils.searchspaces import create_super_felt_search_space
 
 
 best_auroc = -1
-with open(Path("../../config/hyperparameter.yaml"), "r") as stream:
-    parameter = yaml.safe_load(stream)
+cv_splits_inner = 5
 
 
 def reset_best_auroc():
@@ -136,7 +135,7 @@ def train_validate_hyperparameter_set(
     hyperparameters,
     deactivate_triplet_loss,
 ):
-    skf = StratifiedKFold(n_splits=parameter["cv_splits"])
+    skf = StratifiedKFold(n_splits=cv_splits_inner)
     all_validation_aurocs = []
     encoder_dropout = hyperparameters["encoder_dropout"]
     encoder_weight_decay = hyperparameters["encoder_weight_decay"]
@@ -272,8 +271,8 @@ def train_validate_hyperparameter_set(
         )
         all_validation_aurocs.append(val_auroc)
 
-        if iteration < parameter["cv_splits"]:
-            open_folds = parameter["cv_splits"] - iteration
+        if iteration < cv_splits_inner:
+            open_folds = cv_splits_inner - iteration
             remaining_best_results = np.ones(open_folds)
             best_possible_mean = np.mean(
                 np.concatenate([all_validation_aurocs, remaining_best_results])
