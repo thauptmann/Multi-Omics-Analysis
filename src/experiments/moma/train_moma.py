@@ -223,7 +223,7 @@ def train_final(
 
     with torch.no_grad():
         moma_model = moma_model.cpu()
-        expression_logit, mutation_logit, cna_logit = moma_model.forward(
+        expression_logit, mutation_logit, cna_logit, _ = moma_model.forward(
             torch.FloatTensor(x_train_e),
             torch.FloatTensor(x_train_m),
             torch.FloatTensor(x_train_c),
