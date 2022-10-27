@@ -395,7 +395,7 @@ def create_stacking_search_space(deactivate_triplet_loss):
 
 
 def create_moma_search_space(add_triplet_loss):
-    if add_triplet_loss:
+    if not add_triplet_loss:
         gamma = {"name": "gamma", "value": 0, "value_type": "int", "type": "fixed"}
     else:
         gamma = {
@@ -476,7 +476,7 @@ def create_moma_search_space(add_triplet_loss):
 
 
 def create_omi_embed_search_space(add_triplet_loss):
-    if add_triplet_loss:
+    if not add_triplet_loss:
         gamma = {"name": "gamma", "value": 0, "value_type": "int", "type": "fixed"}
     else:
         gamma = {
