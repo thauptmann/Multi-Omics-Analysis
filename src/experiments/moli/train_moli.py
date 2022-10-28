@@ -184,7 +184,7 @@ def train_final(
         dropout_rate_middle,
         dropout_rate_clf,
     ]
-    output_sizes = [h_dim1, h_dim2, h_dim3, h_dim4]
+    output_sizes = [h_dim1, h_dim2, h_dim3]
     moli_model = Moli(input_sizes, output_sizes, dropout_rates).to(device)
 
     moli_optimiser = torch.optim.Adagrad(
