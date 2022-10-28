@@ -14,7 +14,14 @@ with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
 
 
 parameterization = {
-    
+    "mini_batch": 16,
+    "h_dim": 512,
+    "lr": 0.001,
+    "dropout_rate": 0.1,
+    "weight_decay": 0.0001,
+    "margin": 1.0,
+    "epochs": 2,
+    "gamma": 0,
 }
 
 

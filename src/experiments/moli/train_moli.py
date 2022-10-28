@@ -151,7 +151,6 @@ def train_final(
     h_dim1 = parameterization["h_dim1"]
     h_dim2 = parameterization["h_dim2"]
     h_dim3 = parameterization["h_dim3"]
-    h_dim4 = parameterization["h_dim4"]
     lr_e = parameterization["lr_e"]
     lr_m = parameterization["lr_m"]
     lr_c = parameterization["lr_c"]
