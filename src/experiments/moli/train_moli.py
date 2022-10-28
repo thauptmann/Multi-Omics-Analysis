@@ -154,13 +154,11 @@ def train_final(
     lr_e = parameterization["lr_e"]
     lr_m = parameterization["lr_m"]
     lr_c = parameterization["lr_c"]
-    lr_middle = parameterization["lr_middle"]
     lr_cl = parameterization["lr_cl"]
     dropout_rate_e = parameterization["dropout_rate_e"]
     dropout_rate_m = parameterization["dropout_rate_m"]
     dropout_rate_c = parameterization["dropout_rate_c"]
     dropout_rate_clf = parameterization["dropout_rate_clf"]
-    dropout_rate_middle = parameterization["dropout_rate_middle"]
     weight_decay = parameterization["weight_decay"]
     gamma = parameterization["gamma"]
     epochs = parameterization["epochs"]
@@ -181,7 +179,6 @@ def train_final(
         dropout_rate_e,
         dropout_rate_m,
         dropout_rate_c,
-        dropout_rate_middle,
         dropout_rate_clf,
     ]
     output_sizes = [h_dim1, h_dim2, h_dim3]
@@ -189,7 +186,6 @@ def train_final(
 
     moli_optimiser = torch.optim.Adagrad(
         [
-            {"params": moli_model.left_encoder.parameters(), "lr": lr_middle},
             {"params": moli_model.expression_encoder.parameters(), "lr": lr_e},
             {"params": moli_model.mutation_encoder.parameters(), "lr": lr_m},
             {"params": moli_model.cna_encoder.parameters(), "lr": lr_c},
