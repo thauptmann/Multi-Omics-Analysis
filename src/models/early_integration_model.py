@@ -13,7 +13,6 @@ class AdaptiveEncoder(nn.Module):
         )
 
     def forward(self, x):
-        x = torch.FloatTensor(x)
         return self.layer(x)
 
 
