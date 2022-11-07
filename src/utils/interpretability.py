@@ -8,5 +8,5 @@ def compute_importances_values(X, explainer, baseline):
             X,
             sample[None, :],
         )
-        mean_attributions += all_attributions
+        mean_attributions += all_attributions.detach().cpu()
     return all_attributions / len(baseline)

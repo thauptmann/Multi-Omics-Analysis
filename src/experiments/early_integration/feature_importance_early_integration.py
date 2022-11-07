@@ -186,6 +186,7 @@ def early_integration_feature_importance(
         convert_ids=convert_ids,
     )
 
+    extern_concat_scaled = extern_concat_scaled.to(device)
     extern_predictions = early_integration_model(extern_concat_scaled)
     extern_concat_scaled.requires_grad_()
     all_attributions_extern = compute_importances_values(
