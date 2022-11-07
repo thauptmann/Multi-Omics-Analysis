@@ -126,7 +126,7 @@ def train_final(parameterization, x_train_e, y_train, device, pin_memory):
                                                num_workers=8, pin_memory=pin_memory, drop_last=True,
                                                sampler=sampler)
 
-    for epoch in range(epochs):
+    for _ in range(epochs):
         train_early_integration(train_loader, early_integration_model, optimiser, loss_fn, device, gamma)
     return early_integration_model, train_scaler_gdsc
 
@@ -141,7 +141,7 @@ def train_early_integration(train_loader, model, optimiser, loss_fn, device, gam
 
             data = data.to(device)
             target = target.to(device)
-            prediction = model.forward(data)
+            prediction = model.forward_with_features(data)
             if gamma > 0:
                 loss = loss_fn(prediction, target)
             else:
@@ -154,7 +154,7 @@ def test_early_integration(model, scaler, extern_concat, test_r, device):
     x_test_e = torch.FloatTensor(scaler.transform(extern_concat)).to(device)
     test_y = torch.FloatTensor(test_r.astype(int))
     model.eval()
-    predictions = model.forward(x_test_e)
+    predictions = model.forward_with_features(x_test_e)
     probabilities = sigmoid(predictions[0])
     auc_validate = roc_auc_score(test_y, probabilities.cpu().detach().numpy())
     auprc_validate = average_precision_score(test_y, probabilities.cpu().detach().numpy())

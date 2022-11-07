@@ -4,15 +4,21 @@ import torch
 from pathlib import Path
 import numpy as np
 import sys
-from captum.attr import DeepLift
+from captum.attr import IntegratedGradients, GradientShap
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
-from models.early_integration_model import EarlyIntegration
+from models.stacking_model import StackingModel
 from utils.network_training_util import create_sampler, get_loss_fn
 from utils.input_arguments import get_cmd_arguments
 from utils import multi_omics_data
 from utils.interpretability import compute_importances_values
-from train_early_integration import train_early_integration
+from utils.network_training_util import (
+    get_loss_fn,
+    create_data_loader,
+    create_sampler,
+    train,
+    test,
+)
 from utils.visualisation import visualize_importances
 
 file_directory = Path(__file__).parent
@@ -33,7 +39,7 @@ torch.manual_seed(parameter["random_seed"])
 np.random.seed(parameter["random_seed"])
 
 
-def early_integration_feature_importance(
+def stacking_feature_importance(
     experiment_name,
     drug_name,
     extern_dataset_name,
@@ -68,16 +74,16 @@ def early_integration_feature_importance(
     # get columns names
     expression_columns = gdsc_e.columns
     expression_columns = [
-        f"Expression {expression_gene}" for expression_gene in expression_columns
+        f"expression_{expression_gene}" for expression_gene in expression_columns
     ]
 
     mutation_columns = gdsc_m.columns
     mutation_columns = [
-        f"Mutation {mutation_gene}" for mutation_gene in mutation_columns
+        f"mutation_{mutation_gene}" for mutation_gene in mutation_columns
     ]
 
     cna_columns = gdsc_c.columns
-    cna_columns = [f"CNA {cna_gene}" for cna_gene in cna_columns]
+    cna_columns = [f"cna_{cna_gene}" for cna_gene in cna_columns]
 
     all_columns = np.concatenate([expression_columns, mutation_columns, cna_columns])
 
@@ -91,16 +97,18 @@ def early_integration_feature_importance(
     gdsc_concat = np.concatenate([gdsc_e, gdsc_m, gdsc_c], axis=1)
     extern_concat = np.concatenate([extern_e, extern_m, extern_c], axis=1)
 
-    # baseline = torch.zeros_like(torch.FloatTensor([gdsc_concat[0]]))
-    
+    baseline = torch.zeros_like(torch.FloatTensor([gdsc_concat[0]]))
+
+    baseline = gdsc_concat
+
     scaler_gdsc = StandardScaler()
-    gdsc_concat_scaled = torch.FloatTensor(scaler_gdsc.fit_transform(gdsc_concat))
-    extern_concat_scaled = torch.FloatTensor(scaler_gdsc.transform(extern_concat))
-    scaled_baseline = torch.FloatTensor(gdsc_concat_scaled[:2])
+    gdsc_concat = torch.FloatTensor(scaler_gdsc.fit_transform(gdsc_concat))
+    extern_concat = torch.FloatTensor(scaler_gdsc.transform(extern_concat))
+    scaled_baseline = torch.FloatTensor(scaler_gdsc.transform(baseline))
 
     # Initialisation
     sampler = create_sampler(gdsc_r)
-    dataset = torch.utils.data.TensorDataset(gdsc_concat_scaled, torch.FloatTensor(gdsc_r))
+    dataset = torch.utils.data.TensorDataset(gdsc_concat, torch.FloatTensor(gdsc_r))
     train_loader = torch.utils.data.DataLoader(
         dataset=dataset,
         batch_size=mini_batch,
@@ -110,61 +118,63 @@ def early_integration_feature_importance(
         drop_last=True,
         sampler=sampler,
     )
-    _, ie_dim = gdsc_concat_scaled.shape
+    _, ie_dim = gdsc_concat.shape
 
     loss_fn = get_loss_fn(margin, gamma)
 
-    early_integration_model = EarlyIntegration(
+    stacking_model = StackingModel(
         ie_dim,
         h_dim,
         dropout_rate,
     ).to(device)
 
-    moli_optimiser = torch.optim.Adagrad(
-        early_integration_model.parameters(), lr=lr, weight_decay=weight_decay
+    stacking_optimiser = torch.optim.Adagrad(
+        stacking_model.parameters(), lr=lr, weight_decay=weight_decay
     )
 
     for _ in range(epochs):
-        train_early_integration(
+        train(
             train_loader,
-            early_integration_model,
-            moli_optimiser,
+            stacking_model,
+            stacking_optimiser,
             loss_fn,
             device,
             gamma,
         )
-    early_integration_model.eval()
+    stacking_model.eval()
 
-    train_predictions = early_integration_model(gdsc_concat_scaled)
-    gdsc_concat_scaled.requires_grad_()
-    integradet_gradients = DeepLift(early_integration_model)
+    train_predictions = stacking_model(gdsc_concat)
+    gdsc_concat.requires_grad_()
+    integradet_gradients = GradientShap(stacking_model)
 
     all_attributions_test = compute_importances_values(
-        gdsc_concat_scaled,
+        gdsc_concat,
+        gdsc_r,
+        train_predictions,
+        all_columns,
         integradet_gradients,
         scaled_baseline,
     )
     visualize_importances(
         all_columns,
         all_attributions_test.detach().numpy(),
-        gdsc_r,
-        train_predictions,
-        gdsc_concat,
         path=result_path,
         file_name="all_attributions_test",
     )
 
-    extern_predictions = early_integration_model(extern_concat_scaled)
-    extern_concat_scaled.requires_grad_()
+    extern_predictions = stacking_model(extern_concat)
+    extern_concat.requires_grad_()
     all_attributions_extern = compute_importances_values(
-        extern_concat_scaled, integradet_gradients, scaled_baseline
+        extern_concat,
+        extern_r,
+        extern_predictions,
+        all_columns,
+        integradet_gradients,
+        scaled_baseline,
     )
     visualize_importances(
         all_columns,
         all_attributions_extern.detach().numpy(),
-        extern_r,
-        extern_predictions,
-        extern_concat,
         path=result_path,
         file_name="all_attributions_extern",
     )
@@ -175,14 +185,14 @@ if __name__ == "__main__":
 
     if args.drug == "all":
         for drug, extern_dataset in parameter["drugs"].items():
-            early_integration_feature_importance(
+            stacking_feature_importance(
                 args.experiment_name,
                 drug,
                 extern_dataset,
             )
     else:
         extern_dataset = parameter["drugs"][args.drug]
-        early_integration_feature_importance(
+        stacking_feature_importance(
             args.experiment_name,
             args.drug,
             extern_dataset,
