@@ -142,3 +142,4 @@ nohup.out
 *.txt
 *.svg
 *.pyc
+.vscode/launch.json
