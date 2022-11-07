@@ -236,7 +236,7 @@ def draw_swarm_attributions(
 
     norm = plt.Normalize(df['Value'].min(), df['Value'].max())
 
-    sm = plt.cm.ScalarMappable(cmap="viridis", norm=norm))
+    sm = plt.cm.ScalarMappable(cmap="viridis", norm=norm)
     sm.set_array([])
 
     # Remove the legend and add a colorbar
