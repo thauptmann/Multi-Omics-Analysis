@@ -2,6 +2,10 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
+from Bio import Entrez
+import os
+
+Entrez.email = os.environ.get("MAIL")
 
 sns.set_style("whitegrid")
 
@@ -86,7 +90,9 @@ def visualize_importances(
     number_of_most_important_features=10,
     path="",
     file_name="",
+    convert_ids=False,
 ):
+
     number_of_most_important_features += 1
     mean_importances = np.mean(importances, axis=0)
     sd_importances = np.std(importances, axis=0)
@@ -111,8 +117,17 @@ def visualize_importances(
         -1:-number_of_most_important_features:-1
     ].copy()
     negative_most_important_features = feature_names[negative_highest_indices]
-    negative_highest_importances = negative_mean_importances[negative_highest_indices]
+    negative_highest_importances = -negative_mean_importances[negative_highest_indices]
     negative_highest_importance_sd = negative_sd_importances[negative_highest_indices]
+
+    if convert_ids:
+        most_important_features = convert_genez_id_to_name(most_important_features)
+        negative_most_important_features = convert_genez_id_to_name(
+            negative_most_important_features
+        )
+        absolute_most_important_features = convert_genez_id_to_name(
+            absolute_most_important_features
+        )
 
     draw_attributions(
         title,
@@ -127,9 +142,9 @@ def visualize_importances(
     draw_swarm_attributions(
         path,
         file_name,
-        feature_names[absolute_highest_indices],
-        importances[:10, absolute_highest_indices],
-        feature_values[:10, absolute_highest_indices],
+        absolute_most_important_features,
+        importances[:, absolute_highest_indices],
+        feature_values[:, absolute_highest_indices],
     )
 
     sum_of_rest = np.sum(
@@ -215,14 +230,14 @@ def draw_swarm_attributions(
         y="Feature Name",
         hue="Value",
         palette="viridis",
-        size=5,
+        size=4,
     )
     ax.set_xlabel("Attribution")
 
     # norm = plt.Normalize(tips['size'].min(), tips['size'].max())
 
     sm = plt.cm.ScalarMappable(cmap="viridis")
-    sm.set_array([])   
+    sm.set_array([])
 
     # Remove the legend and add a colorbar
     ax.get_legend().remove()
@@ -231,3 +246,25 @@ def draw_swarm_attributions(
     fig = ax.get_figure()
     fig.savefig(str(path / f"{file_name}_swarm.pdf"), bbox_inches="tight")
     fig.clf()
+
+
+def convert_genez_id_to_name(feature_names):
+    names = []
+    types = ids = [feature.split(" ")[0] for feature in feature_names]
+    ids = [feature.split(" ")[1] for feature in feature_names]
+
+    # Rest call to get names for ids
+    request = Entrez.epost("gene", id=",".join(ids))
+    result = Entrez.read(request)
+    webEnv = result["WebEnv"]
+    queryKey = result["QueryKey"]
+    data = Entrez.esummary(db="gene", webenv=webEnv, query_key=queryKey)
+    annotations = Entrez.read(data)
+    for annotation in annotations.items():
+        document_summary = annotation[1]["DocumentSummary"]
+        for gene_data in document_summary:
+            gene_name = gene_data["Name"]
+            names.append(gene_name)
+
+    # return converted features
+    return [type + f" {name}" for type, name in zip(types, names)]

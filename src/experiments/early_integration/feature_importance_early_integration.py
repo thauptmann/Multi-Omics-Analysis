@@ -19,15 +19,18 @@ file_directory = Path(__file__).parent
 with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
     parameter = yaml.safe_load(stream)
 
-
-mini_batch = 16
-h_dim = 512
-lr = 0.001
-dropout_rate = 0.1
-weight_decay = 0.0001
-margin = 1.0
-epochs = 2
-gamma = 0
+best_hyperparameter = {
+    "Cetuximab": {
+        "mini_batch": 16,
+        "h_dim": 512,
+        "lr": 0.001,
+        "dropout_rate": 0.1,
+        "weight_decay": 0.0001,
+        "margin": 1.0,
+        "epochs": 2,
+        "gamma": 0,
+    }
+}
 
 torch.manual_seed(parameter["random_seed"])
 np.random.seed(parameter["random_seed"])
@@ -37,7 +40,18 @@ def early_integration_feature_importance(
     experiment_name,
     drug_name,
     extern_dataset_name,
+    convert_ids,
 ):
+    hyperparameter = best_hyperparameter[drug_name]
+    mini_batch = hyperparameter["mini_batch"]
+    h_dim = hyperparameter["h_dim"]
+    lr = hyperparameter["lr"]
+    dropout_rate = hyperparameter["dropout_rate"]
+    weight_decay = hyperparameter["weight_decay"]
+    margin = hyperparameter["margin"]
+    epochs = hyperparameter["epochs"]
+    gamma = hyperparameter["gamma"]
+
     device = torch.device("cpu")
     pin_memory = False
     result_path = Path(
@@ -92,15 +106,17 @@ def early_integration_feature_importance(
     extern_concat = np.concatenate([extern_e, extern_m, extern_c], axis=1)
 
     # baseline = torch.zeros_like(torch.FloatTensor([gdsc_concat[0]]))
-    
+
     scaler_gdsc = StandardScaler()
     gdsc_concat_scaled = torch.FloatTensor(scaler_gdsc.fit_transform(gdsc_concat))
     extern_concat_scaled = torch.FloatTensor(scaler_gdsc.transform(extern_concat))
-    scaled_baseline = torch.FloatTensor(gdsc_concat_scaled[:2])
+    scaled_baseline = torch.FloatTensor(gdsc_concat_scaled)
 
     # Initialisation
     sampler = create_sampler(gdsc_r)
-    dataset = torch.utils.data.TensorDataset(gdsc_concat_scaled, torch.FloatTensor(gdsc_r))
+    dataset = torch.utils.data.TensorDataset(
+        gdsc_concat_scaled, torch.FloatTensor(gdsc_r)
+    )
     train_loader = torch.utils.data.DataLoader(
         dataset=dataset,
         batch_size=mini_batch,
@@ -144,14 +160,31 @@ def early_integration_feature_importance(
         integradet_gradients,
         scaled_baseline,
     )
+
+    # prepare data for visualization
+    min_value = np.min(gdsc_concat)
+    max_value = np.max(gdsc_concat)
+    homogenized_mutation = np.ones_like(gdsc_m)
+    homogenized_mutation[gdsc_m == 1] = max_value
+    homogenized_mutation[gdsc_m == 0] = min_value
+
+    homogenized_cna = np.ones_like(gdsc_c)
+    homogenized_cna[gdsc_c == 1] = max_value
+    homogenized_cna[gdsc_c == 0] = min_value
+
+    gdsc_visualize = np.concatenate(
+        [gdsc_e, homogenized_mutation, homogenized_cna], axis=1
+    )
+
     visualize_importances(
         all_columns,
         all_attributions_test.detach().numpy(),
         gdsc_r,
         train_predictions,
-        gdsc_concat,
+        gdsc_visualize,
         path=result_path,
         file_name="all_attributions_test",
+        convert_ids=convert_ids,
     )
 
     extern_predictions = early_integration_model(extern_concat_scaled)
@@ -159,14 +192,29 @@ def early_integration_feature_importance(
     all_attributions_extern = compute_importances_values(
         extern_concat_scaled, integradet_gradients, scaled_baseline
     )
+
+    homogenized_mutation = np.ones_like(extern_m, dtype=np.float32)
+    homogenized_mutation[extern_m == 1] = max_value
+    homogenized_mutation[extern_m == 0] = min_value
+
+    homogenized_cna = np.ones_like(extern_c, dtype=np.float32)
+    homogenized_cna[extern_c == 1] = max_value
+    homogenized_cna[extern_c == 0] = min_value
+
+    extern_visualization = None
+    extern_visualization = np.concatenate(
+        [extern_e, homogenized_mutation, homogenized_cna], axis=1
+    )
+
     visualize_importances(
         all_columns,
         all_attributions_extern.detach().numpy(),
         extern_r,
         extern_predictions,
-        extern_concat,
+        extern_visualization,
         path=result_path,
         file_name="all_attributions_extern",
+        convert_ids=convert_ids,
     )
 
 
@@ -176,14 +224,10 @@ if __name__ == "__main__":
     if args.drug == "all":
         for drug, extern_dataset in parameter["drugs"].items():
             early_integration_feature_importance(
-                args.experiment_name,
-                drug,
-                extern_dataset,
+                args.experiment_name, drug, extern_dataset, args.convert_ids
             )
     else:
         extern_dataset = parameter["drugs"][args.drug]
         early_integration_feature_importance(
-            args.experiment_name,
-            args.drug,
-            extern_dataset,
+            args.experiment_name, args.drug, extern_dataset, args.convert_ids
         )

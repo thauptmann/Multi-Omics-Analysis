@@ -143,3 +143,5 @@ nohup.out
 *.svg
 *.pyc
 .vscode/launch.json
+epost.dtd
+esummary_gene.dtd
