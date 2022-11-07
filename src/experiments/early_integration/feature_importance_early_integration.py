@@ -110,7 +110,7 @@ def early_integration_feature_importance(
     scaler_gdsc = StandardScaler()
     gdsc_concat_scaled = torch.Tensor(scaler_gdsc.fit_transform(gdsc_concat))
     extern_concat_scaled = torch.Tensor(scaler_gdsc.transform(extern_concat))
-    scaled_baseline = torch.Tensor(gdsc_concat_scaled)
+    scaled_baseline = torch.Tensor(gdsc_concat_scaled).to(device)
 
     # Initialisation
     sampler = create_sampler(gdsc_r)

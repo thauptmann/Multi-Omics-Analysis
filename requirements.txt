@@ -13,3 +13,4 @@ jupyter
 PyYAML==5.1.2
 shap~=0.41.0
 biopython~=1.79
+captum
