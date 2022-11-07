@@ -4,7 +4,7 @@ import torch
 from pathlib import Path
 import numpy as np
 import sys
-from captum.attr import DeepLift
+from captum.attr import DeepLift, ShapleyValueSampling
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from models.early_integration_model import EarlyIntegration
@@ -54,7 +54,6 @@ def early_integration_feature_importance(
     gamma = hyperparameter["gamma"]
 
     device, pin_memory = create_device(0)
-    pin_memory = False
     result_path = Path(
         file_directory,
         "..",
@@ -109,15 +108,13 @@ def early_integration_feature_importance(
     # baseline = torch.zeros_like(torch.FloatTensor([gdsc_concat[0]]))
 
     scaler_gdsc = StandardScaler()
-    gdsc_concat_scaled = torch.FloatTensor(scaler_gdsc.fit_transform(gdsc_concat))
-    extern_concat_scaled = torch.FloatTensor(scaler_gdsc.transform(extern_concat))
-    scaled_baseline = torch.FloatTensor(gdsc_concat_scaled)
+    gdsc_concat_scaled = torch.Tensor(scaler_gdsc.fit_transform(gdsc_concat))
+    extern_concat_scaled = torch.Tensor(scaler_gdsc.transform(extern_concat))
+    scaled_baseline = torch.Tensor(gdsc_concat_scaled)
 
     # Initialisation
     sampler = create_sampler(gdsc_r)
-    dataset = torch.utils.data.TensorDataset(
-        gdsc_concat_scaled, torch.FloatTensor(gdsc_r)
-    )
+    dataset = torch.utils.data.TensorDataset(gdsc_concat_scaled, torch.Tensor(gdsc_r))
     train_loader = torch.utils.data.DataLoader(
         dataset=dataset,
         batch_size=mini_batch,
@@ -152,9 +149,10 @@ def early_integration_feature_importance(
         )
     early_integration_model.eval()
 
+    gdsc_concat_scaled = gdsc_concat_scaled.to(device)
     train_predictions = early_integration_model(gdsc_concat_scaled)
     gdsc_concat_scaled.requires_grad_()
-    integradet_gradients = DeepLift(early_integration_model)
+    integradet_gradients = ShapleyValueSampling(early_integration_model)
 
     all_attributions_test = compute_importances_values(
         gdsc_concat_scaled,
@@ -217,7 +215,6 @@ def early_integration_feature_importance(
         file_name="all_attributions_extern",
         convert_ids=convert_ids,
     )
-
 
 
 if __name__ == "__main__":
