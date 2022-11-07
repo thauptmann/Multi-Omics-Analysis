@@ -52,7 +52,7 @@ def early_integration_feature_importance(
     epochs = hyperparameter["epochs"]
     gamma = hyperparameter["gamma"]
 
-    device = torch.device("cpu")
+    device, pin_memory = create_device(0)
     pin_memory = False
     result_path = Path(
         file_directory,
@@ -216,6 +216,19 @@ def early_integration_feature_importance(
         file_name="all_attributions_extern",
         convert_ids=convert_ids,
     )
+
+def create_device(gpu_number):
+    if torch.cuda.is_available():
+        if gpu_number is None:
+            free_gpu_id = get_free_gpu()
+        else:
+            free_gpu_id = gpu_number
+        device = torch.device(f"cuda:{free_gpu_id}")
+        pin_memory = False
+    else:
+        device = torch.device("cpu")
+        pin_memory = False
+    return device, pin_memory
 
 
 if __name__ == "__main__":
