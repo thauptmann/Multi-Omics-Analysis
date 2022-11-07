@@ -1,0 +1,3 @@
+Start experiment at 2022-10-18 10:43:53.693697
+	iteration = 0. 
+		str(best_parameters) = "{'variance_e': 0.9, 'variance_m': 0.9, 'variance_c': 0.975, 'dropout': 0.3, 'learning_rate': 0.01, 'weight_decay': 0.01, 'epochs': 4, 'mini_batch': 16}"
