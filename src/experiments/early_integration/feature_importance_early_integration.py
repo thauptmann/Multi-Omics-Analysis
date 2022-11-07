@@ -14,6 +14,7 @@ from utils import multi_omics_data
 from utils.interpretability import compute_importances_values
 from train_early_integration import train_early_integration
 from utils.visualisation import visualize_importances
+from utils.choose_gpu import create_device
 
 file_directory = Path(__file__).parent
 with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
@@ -217,18 +218,6 @@ def early_integration_feature_importance(
         convert_ids=convert_ids,
     )
 
-def create_device(gpu_number):
-    if torch.cuda.is_available():
-        if gpu_number is None:
-            free_gpu_id = get_free_gpu()
-        else:
-            free_gpu_id = gpu_number
-        device = torch.device(f"cuda:{free_gpu_id}")
-        pin_memory = False
-    else:
-        device = torch.device("cpu")
-        pin_memory = False
-    return device, pin_memory
 
 
 if __name__ == "__main__":
