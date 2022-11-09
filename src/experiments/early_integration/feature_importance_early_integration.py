@@ -30,7 +30,17 @@ best_hyperparameter = {
         "margin": 1.0,
         "epochs": 2,
         "gamma": 0,
-    }
+    },
+    "Docetaxel": {
+        "mini_batch": 8,
+        "h_dim": 64,
+        "lr": 0.001,
+        "dropout_rate": 0.3,
+        "weight_decay": 0.0001,
+        "margin": 1.0,
+        "epochs": 13,
+        "gamma": 0,
+    },
 }
 
 torch.manual_seed(parameter["random_seed"])
