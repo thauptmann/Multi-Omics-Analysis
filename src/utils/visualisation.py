@@ -91,6 +91,8 @@ def visualize_importances(
     path="",
     file_name="",
     convert_ids=False,
+    number_of_expression_features=0,
+    number_of_mutation_features=0,
 ):
 
     number_of_most_important_features += 1
@@ -184,6 +186,14 @@ def visualize_importances(
         negative_highest_importance_sd,
     )
 
+    plot_omics_importance(
+        np.mean(np.abs(importances), axis=0),
+        number_of_expression_features,
+        number_of_mutation_features,
+        path,
+        file_name + "_omics_importance",
+    )
+
 
 def draw_attributions(
     title,
@@ -234,7 +244,7 @@ def draw_swarm_attributions(
     )
     ax.set_xlabel("Attribution")
 
-    norm = plt.Normalize(df['Value'].min(), df['Value'].max())
+    norm = plt.Normalize(df["Value"].min(), df["Value"].max())
 
     sm = plt.cm.ScalarMappable(cmap="viridis", norm=norm)
     sm.set_array([])
@@ -268,3 +278,35 @@ def convert_genez_id_to_name(feature_names):
 
     # return converted features
     return [type + f" {name}" for type, name in zip(types, names)]
+
+
+def plot_omics_importance(
+    importances,
+    number_of_expression_features,
+    number_of_mutation_features,
+    path,
+    file_name,
+):
+    expression_importance = np.sum(np.abs(importances[0:number_of_expression_features]))
+    mutation_importance = np.sum(
+        np.abs(
+            importances[
+                number_of_expression_features : number_of_expression_features
+                + number_of_mutation_features
+            ]
+        )
+    )
+    cna_importance = np.sum(
+        np.abs(
+            importances[number_of_expression_features + number_of_mutation_features :]
+        )
+    )
+    x = [expression_importance, mutation_importance, cna_importance]
+    y = ["Expression", "Mutation", "CNA"]
+    ax = sns.barplot(x=x, y=y, color="b")
+    ax.set_ylabel("Omics")
+    ax.set_xlabel("Sum Absolute Attribution")
+
+    fig = ax.get_figure()
+    fig.savefig(str(path / f"{file_name}.pdf"), bbox_inches="tight")
+    fig.clf()

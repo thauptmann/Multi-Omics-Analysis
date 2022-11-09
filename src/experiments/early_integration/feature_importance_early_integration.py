@@ -11,7 +11,7 @@ from models.early_integration_model import EarlyIntegration
 from utils.network_training_util import create_sampler, get_loss_fn
 from utils.input_arguments import get_cmd_arguments
 from utils import multi_omics_data
-from utils.interpretability import compute_importances_values
+from utils.interpretability import compute_importances_values, save_importance_results
 from train_early_integration import train_early_integration
 from utils.visualisation import visualize_importances
 from utils.choose_gpu import create_device
@@ -102,6 +102,9 @@ def early_integration_feature_importance(
     extern_m = extern_m.to_numpy()
     extern_c = extern_c.to_numpy()
 
+    number_of_expression_features = gdsc_e.shape[1]
+    number_of_mutation_features = gdsc_m.shape[1]
+
     gdsc_concat = np.concatenate([gdsc_e, gdsc_m, gdsc_c], axis=1)
     extern_concat = np.concatenate([extern_e, extern_m, extern_c], axis=1)
 
@@ -152,7 +155,7 @@ def early_integration_feature_importance(
     gdsc_concat_scaled = gdsc_concat_scaled.to(device)
     train_predictions = early_integration_model(gdsc_concat_scaled)
     gdsc_concat_scaled.requires_grad_()
-    integradet_gradients = ShapleyValueSampling(early_integration_model)
+    integradet_gradients = DeepLift(early_integration_model)
 
     all_attributions_test = compute_importances_values(
         gdsc_concat_scaled,
@@ -177,13 +180,15 @@ def early_integration_feature_importance(
 
     visualize_importances(
         all_columns,
-        all_attributions_test.detach().numpy(),
+        all_attributions_test,
         gdsc_r,
         train_predictions,
         gdsc_visualize,
         path=result_path,
         file_name="all_attributions_test",
         convert_ids=convert_ids,
+        number_of_expression_features=number_of_expression_features,
+        number_of_mutation_features=number_of_mutation_features,
     )
 
     extern_concat_scaled = extern_concat_scaled.to(device)
@@ -208,14 +213,19 @@ def early_integration_feature_importance(
 
     visualize_importances(
         all_columns,
-        all_attributions_extern.detach().numpy(),
+        all_attributions_extern,
         extern_r,
         extern_predictions,
         extern_visualization,
         path=result_path,
         file_name="all_attributions_extern",
         convert_ids=convert_ids,
+        number_of_expression_features=number_of_expression_features,
+        number_of_mutation_features=number_of_mutation_features,
     )
+
+    # save_importance_results(all_attributions_test, "extern")
+    # save_importance_results(all_attributions_extern, "test")
 
 
 if __name__ == "__main__":
