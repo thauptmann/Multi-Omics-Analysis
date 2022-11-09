@@ -145,3 +145,4 @@ nohup.out
 .vscode/launch.json
 epost.dtd
 esummary_gene.dtd
+**/*.pyc
