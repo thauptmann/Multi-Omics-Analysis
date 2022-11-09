@@ -141,13 +141,13 @@ def visualize_importances(
         highest_importance_sd,
     )
 
-    draw_swarm_attributions(
+    """ draw_swarm_attributions(
         path,
         file_name,
         absolute_most_important_features,
         importances[:, absolute_highest_indices],
         feature_values[:, absolute_highest_indices],
-    )
+    ) """
 
     sum_of_rest = np.sum(
         mean_importances[sorted_indices[:-number_of_most_important_features]]
@@ -306,6 +306,7 @@ def plot_omics_importance(
     ax = sns.barplot(x=x, y=y, color="b")
     ax.set_ylabel("Omics")
     ax.set_xlabel("Sum Absolute Attribution")
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=40)
 
     fig = ax.get_figure()
     fig.savefig(str(path / f"{file_name}.pdf"), bbox_inches="tight")
