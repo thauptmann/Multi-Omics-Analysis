@@ -304,7 +304,8 @@ def plot_omics_importance(
     x = [expression_importance, mutation_importance, cna_importance]
     y = ["Expression", "Mutation", "CNA"]
     ax = sns.barplot(x=x, y=y, color="b")
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+    plt.xticks(rotation=45)
+
     ax.set_ylabel("Omics")
     ax.set_xlabel("Sum Absolute Attribution")
 
