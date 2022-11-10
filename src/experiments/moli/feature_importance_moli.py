@@ -199,7 +199,7 @@ def moli_feature_importance(
     homogenized_cna[extern_c == 0] = min_value
 
     extern_visualization = np.concatenate(
-        [extern_e.cpu(), homogenized_mutation, homogenized_cna], axis=1
+        [extern_e, homogenized_mutation, homogenized_cna], axis=1
     )
 
     visualize_importances(
