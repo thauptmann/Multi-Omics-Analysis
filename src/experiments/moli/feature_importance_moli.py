@@ -190,11 +190,11 @@ def moli_feature_importance(
         (extern_e_scaled, extern_m, extern_c), integradet_gradients, scaled_baseline
     )
 
-    homogenized_mutation = np.ones_like(extern_m.detach().cpu(), dtype=np.float32)
+    homogenized_mutation = torch.ones_like(extern_m.detach().cpu(), dtype=np.float32)
     homogenized_mutation[extern_m == 1] = max_value
     homogenized_mutation[extern_m == 0] = min_value
 
-    homogenized_cna = np.ones_like(extern_c.detach().cpu(), dtype=np.float32)
+    homogenized_cna = torch.ones_like(extern_c.detach().cpu(), dtype=np.float32)
     homogenized_cna[extern_c == 1] = max_value
     homogenized_cna[extern_c == 0] = min_value
 
