@@ -11,7 +11,10 @@ from models.early_integration_model import EarlyIntegration
 from utils.network_training_util import create_sampler, get_loss_fn
 from utils.input_arguments import get_cmd_arguments
 from utils import multi_omics_data
-from utils.interpretability import compute_importances_values, save_importance_results
+from utils.interpretability import (
+    compute_importances_values_single_input,
+    save_importance_results,
+)
 from train_early_integration import train_early_integration
 from utils.visualisation import visualize_importances
 from utils.choose_gpu import create_device
@@ -167,7 +170,7 @@ def early_integration_feature_importance(
     gdsc_concat_scaled.requires_grad_()
     integradet_gradients = DeepLift(early_integration_model)
 
-    all_attributions_test = compute_importances_values(
+    all_attributions_test = compute_importances_values_single_input(
         gdsc_concat_scaled,
         integradet_gradients,
         scaled_baseline,
@@ -204,7 +207,7 @@ def early_integration_feature_importance(
     extern_concat_scaled = extern_concat_scaled.to(device)
     extern_predictions = early_integration_model(extern_concat_scaled)
     extern_concat_scaled.requires_grad_()
-    all_attributions_extern = compute_importances_values(
+    all_attributions_extern = compute_importances_values_single_input(
         extern_concat_scaled, integradet_gradients, scaled_baseline
     )
 
@@ -234,8 +237,12 @@ def early_integration_feature_importance(
         number_of_mutation_features=number_of_mutation_features,
     )
 
-    # save_importance_results(all_attributions_test, "extern")
-    # save_importance_results(all_attributions_extern, "test")
+    save_importance_results(
+        all_attributions_test, all_columns, extern_predictions, gdsc_r, "extern"
+    )
+    save_importance_results(
+        all_attributions_extern, all_columns, train_predictions, extern_r, "test"
+    )
 
 
 if __name__ == "__main__":

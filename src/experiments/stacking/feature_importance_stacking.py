@@ -11,7 +11,7 @@ from models.stacking_model import StackingModel
 from utils.network_training_util import create_sampler, get_loss_fn
 from utils.input_arguments import get_cmd_arguments
 from utils import multi_omics_data
-from utils.interpretability import compute_importances_values
+from utils.interpretability import compute_importances_values_single_input
 from utils.network_training_util import (
     get_loss_fn,
     create_data_loader,
@@ -147,7 +147,7 @@ def stacking_feature_importance(
     gdsc_concat.requires_grad_()
     integradet_gradients = GradientShap(stacking_model)
 
-    all_attributions_test = compute_importances_values(
+    all_attributions_test = compute_importances_values_single_input(
         gdsc_concat,
         gdsc_r,
         train_predictions,
@@ -164,7 +164,7 @@ def stacking_feature_importance(
 
     extern_predictions = stacking_model(extern_concat)
     extern_concat.requires_grad_()
-    all_attributions_extern = compute_importances_values(
+    all_attributions_extern = compute_importances_values_single_input(
         extern_concat,
         extern_r,
         extern_predictions,

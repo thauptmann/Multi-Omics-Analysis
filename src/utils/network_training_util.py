@@ -27,7 +27,7 @@ def train(train_loader, model, optimiser, loss_fn, device, gamma):
             data_c = data_c.to(device)
             target = target.to(device)
 
-            prediction = model.forward(data_e, data_m, data_c)
+            prediction = model.forward_with_features(data_e, data_m, data_c)
             if gamma > 0:
                 loss = loss_fn(prediction, target)
             else:
@@ -87,7 +87,7 @@ def test(moli_model, scaler, x_test_e, x_test_m, x_test_c, test_y, device):
     x_test_c = torch.FloatTensor(x_test_c).to(device)
     test_y = torch.FloatTensor(test_y.astype(int))
     moli_model.eval()
-    predictions = moli_model.forward(x_test_e, x_test_m, x_test_c)
+    predictions = moli_model.forward_with_features(x_test_e, x_test_m, x_test_c)
     probabilities = sigmoid(predictions[0])
     auc_validate = roc_auc_score(test_y, probabilities.cpu().detach().numpy())
     auprc_validate = average_precision_score(

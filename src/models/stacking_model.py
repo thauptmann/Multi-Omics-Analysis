@@ -68,7 +68,7 @@ class StackingModel(nn.Module):
         self.emc_classify = nn.Sequential(nn.Linear(emc_encoding_size, 1), nn.Sigmoid())
         self.classify_all = nn.Linear(stacking_dimension, 1)
 
-    def forward(self, expression, mutation, cna):
+    def forward_with_features(self, expression, mutation, cna):
         encoded_e = self.expression_encoder(expression)
         encoded_m = self.mutation_encoder(mutation)
         encoded_c = self.cna_encoder(cna)
@@ -121,3 +121,58 @@ class StackingModel(nn.Module):
             )
 
         return [classification, torch.concat((encoded_e, encoded_m, encoded_c), dim=1)]
+
+
+def forward_with_features(self, expression, mutation, cna):
+        encoded_e = self.expression_encoder(expression)
+        encoded_m = self.mutation_encoder(mutation)
+        encoded_c = self.cna_encoder(cna)
+
+        classified_e = self.e_classify(encoded_e)
+        classified_m = self.m_classify(encoded_m)
+        classified_c = self.c_classify(encoded_c)
+
+        if self.stacking_type == "less_stacking":
+            classified_emc = self.emc_classify(
+                torch.concat((encoded_e, encoded_m, encoded_c), dim=1)
+            )
+            classification = self.classify_all(
+                torch.concat(
+                    (classified_e, classified_m, classified_c, classified_emc), dim=1
+                )
+            )
+
+        elif self.stacking_type == "all":
+            classified_emc = self.emc_classify(
+                torch.concat((encoded_e, encoded_m, encoded_c), dim=1)
+            )
+            classified_em = self.em_classify(
+                torch.concat((encoded_e, encoded_m), dim=1)
+            )
+            classified_mc = self.mc_classify(
+                torch.concat((encoded_m, encoded_c), dim=1)
+            )
+            classified_ec = self.ec_classify(
+                torch.concat((encoded_e, encoded_c), dim=1)
+            )
+            classification = self.classify_all(
+                torch.concat(
+                    (
+                        classified_e,
+                        classified_m,
+                        classified_c,
+                        classified_em,
+                        classified_mc,
+                        classified_ec,
+                        classified_emc,
+                    ),
+                    dim=1,
+                )
+            )
+
+        else:
+            classification = self.classify_all(
+                torch.concat((classified_e, classified_m, classified_c), dim=1)
+            )
+
+        return classification
