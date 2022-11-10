@@ -112,16 +112,6 @@ def visualize_importances(
     absolute_highest_importances = mean_importances[absolute_highest_indices]
     absolute_highest_importance_sd = sd_importances[absolute_highest_indices]
 
-    negative_mean_importances = np.mean(importances * -1, axis=0)
-    negative_sd_importances = np.std(importances, axis=0)
-    negative_sorted_indices = negative_mean_importances.argsort()
-    negative_highest_indices = negative_sorted_indices[
-        -1:-number_of_most_important_features:-1
-    ].copy()
-    negative_most_important_features = feature_names[negative_highest_indices]
-    negative_highest_importances = -negative_mean_importances[negative_highest_indices]
-    negative_highest_importance_sd = negative_sd_importances[negative_highest_indices]
-
     if convert_ids:
         most_important_features = convert_genez_id_to_name(most_important_features)
         negative_most_important_features = convert_genez_id_to_name(
@@ -130,16 +120,6 @@ def visualize_importances(
         absolute_most_important_features = convert_genez_id_to_name(
             absolute_most_important_features
         )
-
-    draw_attributions(
-        title,
-        axis_title,
-        path,
-        file_name + "_positive",
-        most_important_features,
-        highest_importances,
-        highest_importance_sd,
-    )
 
     draw_swarm_attributions(
         path,
@@ -176,15 +156,6 @@ def visualize_importances(
         absolute_highest_importance_sd,
     )
 
-    draw_attributions(
-        title,
-        axis_title,
-        path,
-        file_name + "_negative",
-        negative_most_important_features,
-        negative_highest_importances,
-        negative_highest_importance_sd,
-    )
 
     plot_omics_importance(
         np.mean(np.abs(importances), axis=0),
