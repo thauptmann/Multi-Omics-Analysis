@@ -117,8 +117,8 @@ def moli_feature_importance(
     gdsc_m = gdsc_m.to_numpy()
     gdsc_c = gdsc_c.to_numpy()
     extern_e = extern_e.to_numpy()
-    extern_m = torch.FloatTensor(extern_m.to_numpy())
-    extern_c = torch.FloatTensor(extern_c.to_numpy())
+    extern_m = torch.FloatTensor(extern_m.to_numpy()).to(device)
+    extern_c = torch.FloatTensor(extern_c.to_numpy()).to(device)
 
     number_of_expression_features = gdsc_e.shape[1]
     number_of_mutation_features = gdsc_m.shape[1]
