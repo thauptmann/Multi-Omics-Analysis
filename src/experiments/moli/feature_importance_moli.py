@@ -136,7 +136,7 @@ def moli_feature_importance(
     gdsc_c = torch.FloatTensor(gdsc_c).to(device)
 
     extern_e_scaled = torch.Tensor(scaler_gdsc.transform(extern_e)).to(device)
-    scaled_baseline = (gdsc_e_scale_e, gdsc_m, gdsc_c)
+    scaled_baseline = (gdsc_e_scaled, gdsc_m, gdsc_c)
 
     train_predictions = moli_model(gdsc_e_scaled, gdsc_m, gdsc_c)
     gdsc_e_scaled.requires_grad_()
