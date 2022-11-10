@@ -150,27 +150,9 @@ def moli_feature_importance(
         scaled_baseline,
     )
 
-    # prepare data for visualization
-    min_value = np.min(gdsc_e)
-    max_value = np.max(gdsc_e)
-    homogenized_mutation = torch.ones_like(gdsc_m)
-    homogenized_mutation[gdsc_m == 1] = max_value
-    homogenized_mutation[gdsc_m == 0] = min_value
-
-    homogenized_cna = torch.ones_like(gdsc_c)
-    homogenized_cna[gdsc_c == 1] = max_value
-    homogenized_cna[gdsc_c == 0] = min_value
-
-    gdsc_visualize = np.concatenate(
-        [gdsc_e, homogenized_mutation.cpu(), homogenized_cna.cpu()], axis=1
-    )
-
     visualize_importances(
         all_columns,
         all_attributions_test,
-        gdsc_r,
-        train_predictions,
-        gdsc_visualize,
         path=result_path,
         file_name="all_attributions_test",
         convert_ids=convert_ids,
@@ -186,24 +168,9 @@ def moli_feature_importance(
         (extern_e_scaled, extern_m, extern_c), integradet_gradients, scaled_baseline
     )
 
-    homogenized_mutation = torch.ones_like(extern_m.detach().cpu())
-    homogenized_mutation[extern_m == 1] = max_value
-    homogenized_mutation[extern_m == 0] = min_value
-
-    homogenized_cna = torch.ones_like(extern_c.detach().cpu())
-    homogenized_cna[extern_c == 1] = max_value
-    homogenized_cna[extern_c == 0] = min_value
-
-    extern_visualization = np.concatenate(
-        [extern_e, homogenized_mutation, homogenized_cna], axis=1
-    )
-
     visualize_importances(
         all_columns,
         all_attributions_extern,
-        extern_r,
-        extern_predictions,
-        extern_visualization,
         path=result_path,
         file_name="all_attributions_extern",
         convert_ids=convert_ids,

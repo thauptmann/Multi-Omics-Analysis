@@ -177,27 +177,9 @@ def early_integration_feature_importance(
         scaled_baseline,
     )
 
-    # prepare data for visualization
-    min_value = np.min(gdsc_concat)
-    max_value = np.max(gdsc_concat)
-    homogenized_mutation = np.ones_like(gdsc_m)
-    homogenized_mutation[gdsc_m == 1] = max_value
-    homogenized_mutation[gdsc_m == 0] = min_value
-
-    homogenized_cna = np.ones_like(gdsc_c)
-    homogenized_cna[gdsc_c == 1] = max_value
-    homogenized_cna[gdsc_c == 0] = min_value
-
-    gdsc_visualize = np.concatenate(
-        [gdsc_e, homogenized_mutation, homogenized_cna], axis=1
-    )
-
     visualize_importances(
         all_columns,
         all_attributions_test,
-        gdsc_r,
-        train_predictions,
-        gdsc_visualize,
         path=result_path,
         file_name="all_attributions_test",
         convert_ids=convert_ids,
@@ -212,25 +194,9 @@ def early_integration_feature_importance(
         extern_concat_scaled, integradet_gradients, scaled_baseline
     )
 
-    homogenized_mutation = np.ones_like(extern_m, dtype=np.float32)
-    homogenized_mutation[extern_m == 1] = max_value
-    homogenized_mutation[extern_m == 0] = min_value
-
-    homogenized_cna = np.ones_like(extern_c, dtype=np.float32)
-    homogenized_cna[extern_c == 1] = max_value
-    homogenized_cna[extern_c == 0] = min_value
-
-    extern_visualization = None
-    extern_visualization = np.concatenate(
-        [extern_e, homogenized_mutation, homogenized_cna], axis=1
-    )
-
     visualize_importances(
         all_columns,
         all_attributions_extern,
-        extern_r,
-        extern_predictions,
-        extern_visualization,
         path=result_path,
         file_name="all_attributions_extern",
         convert_ids=convert_ids,

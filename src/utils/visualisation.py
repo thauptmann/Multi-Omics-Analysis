@@ -2,10 +2,8 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
-from Bio import Entrez
-import os
+from interpretability import convert_genez_id_to_name
 
-Entrez.email = os.environ.get("MAIL")
 
 sns.set_style("whitegrid")
 
@@ -82,9 +80,6 @@ def save_auroc_with_variance_plots(aucs_list, path, iteration, model_transitions
 def visualize_importances(
     feature_names,
     importances,
-    targets,
-    predictions,
-    feature_values,
     title="Average Feature Importances",
     axis_title="Features",
     number_of_most_important_features=10,
@@ -121,13 +116,14 @@ def visualize_importances(
             absolute_most_important_features
         )
 
-    draw_swarm_attributions(
+    # extremely slow
+    """ draw_swarm_attributions(
         path,
         file_name,
         absolute_most_important_features,
         importances[:, absolute_highest_indices],
         feature_values[:, absolute_highest_indices],
-    )
+    ) """
 
     sum_of_rest = np.sum(
         mean_importances[sorted_indices[:-number_of_most_important_features]]
@@ -228,27 +224,6 @@ def draw_swarm_attributions(
     fig.savefig(str(path / f"{file_name}_swarm.pdf"), bbox_inches="tight")
     fig.clf()
 
-
-def convert_genez_id_to_name(feature_names):
-    names = []
-    types = ids = [feature.split(" ")[0] for feature in feature_names]
-    ids = [feature.split(" ")[1] for feature in feature_names]
-
-    # Rest call to get names for ids
-    request = Entrez.epost("gene", id=",".join(ids))
-    result = Entrez.read(request)
-    webEnv = result["WebEnv"]
-    queryKey = result["QueryKey"]
-    data = Entrez.esummary(db="gene", webenv=webEnv, query_key=queryKey)
-    annotations = Entrez.read(data)
-    for annotation in annotations.items():
-        document_summary = annotation[1]["DocumentSummary"]
-        for gene_data in document_summary:
-            gene_name = gene_data["Name"]
-            names.append(gene_name)
-
-    # return converted features
-    return [type + f" {name}" for type, name in zip(types, names)]
 
 
 def plot_omics_importance(
