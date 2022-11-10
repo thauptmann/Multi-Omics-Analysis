@@ -78,7 +78,7 @@ def moli_feature_importance(
         "..",
         "..",
         "results",
-        "early_integration",
+        "moli",
         "explanation",
         experiment_name,
         drug_name,
