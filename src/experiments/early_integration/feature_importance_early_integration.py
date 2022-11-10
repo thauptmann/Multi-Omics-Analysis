@@ -55,6 +55,7 @@ def early_integration_feature_importance(
     drug_name,
     extern_dataset_name,
     convert_ids,
+    gpu_number,
 ):
     hyperparameter = best_hyperparameter[drug_name]
     mini_batch = hyperparameter["mini_batch"]
@@ -66,7 +67,7 @@ def early_integration_feature_importance(
     epochs = hyperparameter["epochs"]
     gamma = hyperparameter["gamma"]
 
-    device, pin_memory = create_device(0)
+    device, pin_memory = create_device(gpu_number)
     result_path = Path(
         file_directory,
         "..",
@@ -251,10 +252,18 @@ if __name__ == "__main__":
     if args.drug == "all":
         for drug, extern_dataset in parameter["drugs"].items():
             early_integration_feature_importance(
-                args.experiment_name, drug, extern_dataset, args.convert_ids
+                args.experiment_name,
+                drug,
+                extern_dataset,
+                args.convert_ids,
+                args.gpu_number,
             )
     else:
         extern_dataset = parameter["drugs"][args.drug]
         early_integration_feature_importance(
-            args.experiment_name, args.drug, extern_dataset, args.convert_ids
+            args.experiment_name,
+            args.drug,
+            extern_dataset,
+            args.convert_ids,
+            args.gpu_number,
         )

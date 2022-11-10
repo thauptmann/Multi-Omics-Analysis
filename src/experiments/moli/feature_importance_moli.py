@@ -68,26 +68,10 @@ def moli_feature_importance(
     drug_name,
     extern_dataset_name,
     convert_ids,
+    gpu_number
 ):
     hyperparameter = best_hyperparameter[drug_name]
-    mini_batch = hyperparameter["mini_batch"]
-    h_dim1 = hyperparameter["h_dim1"]
-    h_dim2 = hyperparameter["h_dim2"]
-    h_dim3 = hyperparameter["h_dim3"]
-    lr_e = hyperparameter["lr_e"]
-    lr_m = hyperparameter["lr_m"]
-    lr_c = hyperparameter["lr_c"]
-    lr_cl = hyperparameter["lr_cl"]
-    dropout_rate_e = hyperparameter["dropout_rate_e"]
-    dropout_rate_m = hyperparameter["dropout_rate_m"]
-    dropout_rate_c = hyperparameter["dropout_rate_c"]
-    dropout_rate_clf = hyperparameter["dropout_rate_clf"]
-    weight_decay = hyperparameter["weight_decay"]
-    gamma = hyperparameter["gamma"]
-    epochs = hyperparameter["epochs"]
-    margin = hyperparameter["margin"]
-
-    device, pin_memory = create_device(0)
+    device, _ = create_device(gpu_number)
     result_path = Path(
         file_directory,
         "..",
@@ -244,10 +228,10 @@ if __name__ == "__main__":
     if args.drug == "all":
         for drug, extern_dataset in parameter["drugs"].items():
             moli_feature_importance(
-                args.experiment_name, drug, extern_dataset, args.convert_ids
+                args.experiment_name, drug, extern_dataset, args.convert_ids, args.gpu_number,
             )
     else:
         extern_dataset = parameter["drugs"][args.drug]
         moli_feature_importance(
-            args.experiment_name, args.drug, extern_dataset, args.convert_ids
+            args.experiment_name, args.drug, extern_dataset, args.convert_ids, args.gpu_number
         )
