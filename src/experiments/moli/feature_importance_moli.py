@@ -140,7 +140,7 @@ def moli_feature_importance(
     gdsc_c = torch.FloatTensor(gdsc_c).to(device)
 
     extern_e_scaled = torch.Tensor(scaler_gdsc.transform(extern_e)).to(device)
-    scaled_baseline = (gdsc_e_scaled, gdsc_m, gdsc_c)
+    scaled_baseline = (gdsc_e_scaled[:2], gdsc_m[:2], gdsc_c[:2])
 
     train_predictions = moli_model(gdsc_e_scaled, gdsc_m, gdsc_c)
     gdsc_e_scaled.requires_grad_()
@@ -190,11 +190,11 @@ def moli_feature_importance(
         (extern_e_scaled, extern_m, extern_c), integradet_gradients, scaled_baseline
     )
 
-    homogenized_mutation = torch.ones_like(extern_m.detach().cpu(), dtype=np.float32)
+    homogenized_mutation = torch.ones_like(extern_m.detach().cpu())
     homogenized_mutation[extern_m == 1] = max_value
     homogenized_mutation[extern_m == 0] = min_value
 
-    homogenized_cna = torch.ones_like(extern_c.detach().cpu(), dtype=np.float32)
+    homogenized_cna = torch.ones_like(extern_c.detach().cpu())
     homogenized_cna[extern_c == 1] = max_value
     homogenized_cna[extern_c == 0] = min_value
 
