@@ -187,16 +187,16 @@ def moli_feature_importance(
         (extern_e_scaled, extern_m, extern_c), integradet_gradients, scaled_baseline
     )
 
-    homogenized_mutation = np.ones_like(extern_m, dtype=np.float32)
+    homogenized_mutation = np.ones_like(extern_m.cpu(), dtype=np.float32)
     homogenized_mutation[extern_m == 1] = max_value
     homogenized_mutation[extern_m == 0] = min_value
 
-    homogenized_cna = np.ones_like(extern_c, dtype=np.float32)
+    homogenized_cna = np.ones_like(extern_c.cpu(), dtype=np.float32)
     homogenized_cna[extern_c == 1] = max_value
     homogenized_cna[extern_c == 0] = min_value
 
     extern_visualization = np.concatenate(
-        [extern_e, homogenized_mutation, homogenized_cna], axis=1
+        [extern_e.cpu(), homogenized_mutation, homogenized_cna], axis=1
     )
 
     visualize_importances(
