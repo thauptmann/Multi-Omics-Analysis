@@ -157,16 +157,16 @@ def moli_feature_importance(
     # prepare data for visualization
     min_value = np.min(gdsc_e)
     max_value = np.max(gdsc_e)
-    homogenized_mutation = np.ones_like(gdsc_m)
+    homogenized_mutation = torch.ones_like(gdsc_m)
     homogenized_mutation[gdsc_m == 1] = max_value
     homogenized_mutation[gdsc_m == 0] = min_value
 
-    homogenized_cna = np.ones_like(gdsc_c)
+    homogenized_cna = torch.ones_like(gdsc_c)
     homogenized_cna[gdsc_c == 1] = max_value
     homogenized_cna[gdsc_c == 0] = min_value
 
     gdsc_visualize = np.concatenate(
-        [gdsc_e, homogenized_mutation, homogenized_cna], axis=1
+        [gdsc_e, homogenized_mutation.cpu(), homogenized_cna.cpu()], axis=1
     )
 
     visualize_importances(

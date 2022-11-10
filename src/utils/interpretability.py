@@ -30,7 +30,7 @@ def compute_importances_values_multiple_inputs(X, explainer, baseline):
     mutation_attributions = (mutation_attributions / len(baseline[0])).detach().cpu().numpy()
     cna_attributions = (cna_attributions / len(baseline[0])).detach().cpu().numpy()
     result_attributions = np.concatenate(
-        [expression_attributions, mutation_attributions, cna_attributions]
+        [expression_attributions, mutation_attributions, cna_attributions], axis=1
     )
     return result_attributions
 
