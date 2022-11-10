@@ -139,7 +139,7 @@ def moli_feature_importance(
     gdsc_m = torch.FloatTensor(gdsc_m).to(device)
     gdsc_c = torch.FloatTensor(gdsc_c).to(device)
 
-    extern_e_scaled = torch.Tensor(scaler_gdsc.transform(extern_e))
+    extern_e_scaled = torch.Tensor(scaler_gdsc.transform(extern_e)).to(device)
     scaled_baseline = (gdsc_e_scaled, gdsc_m, gdsc_c)
 
     train_predictions = moli_model(gdsc_e_scaled, gdsc_m, gdsc_c)
@@ -182,7 +182,6 @@ def moli_feature_importance(
         number_of_mutation_features=number_of_mutation_features,
     )
 
-    extern_concat_scaled = extern_concat_scaled.to(device)
     extern_predictions = moli_model(extern_e_scaled, extern_m, extern_c)
     all_attributions_extern = compute_importances_values_multiple_inputs(
         (extern_e_scaled, extern_m, extern_c), integradet_gradients, scaled_baseline
