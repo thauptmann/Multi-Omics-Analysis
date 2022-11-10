@@ -64,11 +64,7 @@ np.random.seed(parameter["random_seed"])
 
 
 def moli_feature_importance(
-    experiment_name,
-    drug_name,
-    extern_dataset_name,
-    convert_ids,
-    gpu_number
+    experiment_name, drug_name, extern_dataset_name, convert_ids, gpu_number
 ):
     hyperparameter = best_hyperparameter[drug_name]
     device, _ = create_device(gpu_number)
@@ -216,10 +212,20 @@ def moli_feature_importance(
     )
 
     save_importance_results(
-        all_attributions_test, all_columns, extern_predictions, gdsc_r, "extern"
+        all_attributions_test,
+        all_columns,
+        extern_predictions,
+        gdsc_r,
+        result_path,
+        "extern",
     )
     save_importance_results(
-        all_attributions_extern, all_columns, train_predictions, extern_r, "test"
+        all_attributions_extern,
+        all_columns,
+        train_predictions,
+        extern_r,
+        result_path,
+        "test",
     )
 
 
@@ -229,10 +235,18 @@ if __name__ == "__main__":
     if args.drug == "all":
         for drug, extern_dataset in parameter["drugs"].items():
             moli_feature_importance(
-                args.experiment_name, drug, extern_dataset, args.convert_ids, args.gpu_number,
+                args.experiment_name,
+                drug,
+                extern_dataset,
+                args.convert_ids,
+                args.gpu_number,
             )
     else:
         extern_dataset = parameter["drugs"][args.drug]
         moli_feature_importance(
-            args.experiment_name, args.drug, extern_dataset, args.convert_ids, args.gpu_number
+            args.experiment_name,
+            args.drug,
+            extern_dataset,
+            args.convert_ids,
+            args.gpu_number,
         )
