@@ -141,13 +141,13 @@ def visualize_importances(
         highest_importance_sd,
     )
 
-    """ draw_swarm_attributions(
+    draw_swarm_attributions(
         path,
         file_name,
         absolute_most_important_features,
         importances[:, absolute_highest_indices],
         feature_values[:, absolute_highest_indices],
-    ) """
+    )
 
     sum_of_rest = np.sum(
         mean_importances[sorted_indices[:-number_of_most_important_features]]
