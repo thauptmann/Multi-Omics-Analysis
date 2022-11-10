@@ -183,6 +183,9 @@ def moli_feature_importance(
     )
 
     extern_predictions = moli_model(extern_e_scaled, extern_m, extern_c)
+    extern_e_scaled.requires_grad_()
+    extern_m.requires_grad_()
+    extern_c.requires_grad_()
     all_attributions_extern = compute_importances_values_multiple_inputs(
         (extern_e_scaled, extern_m, extern_c), integradet_gradients, scaled_baseline
     )
