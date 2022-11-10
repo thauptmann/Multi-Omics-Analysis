@@ -183,8 +183,7 @@ def moli_feature_importance(
     )
 
     extern_concat_scaled = extern_concat_scaled.to(device)
-    extern_predictions = moli_model(extern_concat_scaled)
-    extern_concat_scaled.requires_grad_()
+    extern_predictions = moli_model(extern_e_scaled, extern_m, extern_c)
     all_attributions_extern = compute_importances_values_multiple_inputs(
         (extern_e_scaled, extern_m, extern_c), integradet_gradients, scaled_baseline
     )
