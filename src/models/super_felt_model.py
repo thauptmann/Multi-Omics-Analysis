@@ -42,7 +42,6 @@ class AutoEncoder(nn.Module):
         )
 
         self.decoder = nn.Linear(output_dim, input_dim)
-        
 
     def forward(self, x):
         encoded = self.encoder(x)
@@ -50,3 +49,20 @@ class AutoEncoder(nn.Module):
 
     def encode(self, x):
         return self.encoder(x)
+
+
+class SuperFelt:
+    def __init__(self, encoder_e, encoder_m, encoder_c, classifier):
+        super(SuperFelt, self).__init__()
+        self.encoder_e = encoder_e
+        self.encoder_m = encoder_m
+        self.encoder_c = encoder_c
+        self.classifier = classifier
+
+    def forward(self, e, m, c):
+        encoded_e = self.encoder_e(e)
+        encoded_m = self.encode_m(m)
+        encoded_c = self.encoder_c(c)
+        encoded_concatenated = torch.concat([encoded_e, encoded_m, encoded_c], axis=1)
+
+        return self.classifier(encoded_concatenated)

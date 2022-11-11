@@ -123,7 +123,7 @@ class StackingModel(nn.Module):
         return [classification, torch.concat((encoded_e, encoded_m, encoded_c), dim=1)]
 
 
-def forward_with_features(self, expression, mutation, cna):
+    def forward(self, expression, mutation, cna):
         encoded_e = self.expression_encoder(expression)
         encoded_m = self.mutation_encoder(mutation)
         encoded_c = self.cna_encoder(cna)

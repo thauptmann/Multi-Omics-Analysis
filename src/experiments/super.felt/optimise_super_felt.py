@@ -138,6 +138,7 @@ def super_felt(
 
         test_validation_list.append(max_objective)
         result_file.write(f"\t\tBest {drug_name} validation Auroc = {max_objective}\n")
+        result_file.write(f"\t\t{str(best_parameters) = }\n")
         iteration += 1
 
     end_time = time.time()
