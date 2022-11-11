@@ -93,8 +93,8 @@ def load_drug_data_with_elbow(data_path, drug, dataset, return_data_frames=False
         gdsc_e = gdsc_e.to_numpy()
         gdsc_m = gdsc_m.to_numpy()
         gdsc_c = gdsc_c.to_numpy()
-        extern_e = extern_e.numpy()
-        extern_m = extern_m.numpy()
-        extern_c = extern_c.numpy()
+        extern_e = extern_e.to_numpy()
+        extern_m = extern_m.to_numpy()
+        extern_c = extern_c.to_numpy()
 
     return gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r
