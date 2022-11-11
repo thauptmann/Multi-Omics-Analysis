@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import numpy as np
 
 
 class Moma(nn.Module):
@@ -22,7 +23,7 @@ class Moma(nn.Module):
         self.mutation_FC3 = nn.Sequential(nn.Linear(Modules * 4, 1), nn.Sigmoid())
         self.cna_FC3 = nn.Sequential(nn.Linear(Modules * 4, 1), nn.Sigmoid())
 
-    def forward(self, expression, mutation, cna):
+    def forward(self, expression, mutation, cna, with_features=False):
         expression_x = self.expression_FC1_x(expression)
         expression_y = self.expression_FC1_y(expression)
 
@@ -124,4 +125,39 @@ class Moma(nn.Module):
         mutation = self.mutation_FC3(mutation)
         cna = self.cna_FC3(cna)
 
-        return torch.squeeze(expression), torch.squeeze(mutation), torch.squeeze(cna), features
+        if with_features:
+            return (
+                torch.squeeze(expression),
+                torch.squeeze(mutation),
+                torch.squeeze(cna),
+                features,
+            )
+        else:
+            return (
+                torch.squeeze(expression),
+                torch.squeeze(mutation),
+                torch.squeeze(cna),
+            )
+
+
+class FullMomaModel(nn.Module):
+    def __init__(self, classifier, logistic_regression):
+        super(FullMomaModel, self).__init__()
+        self.classifier = classifier
+        self.logistic_regression = logistic_regression
+
+    def forward(self, e, m, c):
+        prediction_e, prediction_m, prediction_c = self.classifier(e, m, c)
+        X = np.stack(
+            [
+                prediction_e.detach().cpu(),
+                prediction_m.detach().cpu(),
+                prediction_c.detach().cpu(),
+            ],
+            axis=-1,
+        )
+        X = np.nan_to_num(X)
+        if len(X.shape) == 1:
+            X = X.reshape(1, -1)
+        final_probabilities = self.logistic_regression.predict_proba(X)[:, 1]
+        return torch.FloatTensor(final_probabilities)

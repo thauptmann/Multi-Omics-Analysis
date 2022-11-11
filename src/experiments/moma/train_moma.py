@@ -223,10 +223,11 @@ def train_final(
 
     with torch.no_grad():
         moma_model = moma_model.cpu()
-        expression_logit, mutation_logit, cna_logit, _ = moma_model.forward(
+        expression_logit, mutation_logit, cna_logit = moma_model.forward(
             torch.FloatTensor(x_train_e),
             torch.FloatTensor(x_train_m),
             torch.FloatTensor(x_train_c),
+
         )
     moma_model = moma_model.to(device)
     X = np.stack([expression_logit, mutation_logit, cna_logit], axis=-1)
@@ -263,7 +264,7 @@ def train_moma(
             data_c = data_c.to(device)
             target = target.to(device)
             expression_logit, mutation_logit, cna_logit, features = model.forward(
-                data_e, data_m, data_c
+                data_e, data_m, data_c, True
             )
             loss = (
                 loss_fn(torch.squeeze(expression_logit), target)
@@ -292,7 +293,7 @@ def test_moma(
     test_y = torch.FloatTensor(response.astype(int))
     model.eval()
     with torch.no_grad():
-        expression_logit, mutation_logit, cna_logit, _ = model.forward(
+        expression_logit, mutation_logit, cna_logit = model.forward(
             expression, mutation, cna
         )
     X = np.stack([expression_logit, mutation_logit, cna_logit], axis=-1)

@@ -2,7 +2,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
-from interpretability import convert_genez_id_to_name
+from utils.interpretability import convert_genez_id_to_name
 
 
 sns.set_style("whitegrid")

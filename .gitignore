@@ -146,3 +146,4 @@ nohup.out
 epost.dtd
 esummary_gene.dtd
 **/*.pyc
+*.pyc
