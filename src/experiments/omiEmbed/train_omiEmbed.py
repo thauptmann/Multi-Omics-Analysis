@@ -181,7 +181,6 @@ def train_final(
     x_train_e = train_scaler_gdsc.transform(x_train_e)
 
     omic_dims = (x_train_e.shape[-1], x_train_m.shape[-1], x_train_c.shape[-1])
-    print(omic_dims)
     omi_embed_model = VaeClassifierModel(
         omic_dims,
         dropout,

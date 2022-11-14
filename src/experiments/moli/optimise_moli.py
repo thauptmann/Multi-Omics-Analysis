@@ -198,14 +198,6 @@ def create_device(gpu_number):
     return device, pin_memory
 
 
-def extract_best_parameter(experiment):
-    data = experiment.fetch_data()
-    df = data.df
-    best_arm_name = df.arm_name[df["mean"] == df["mean"].max()].values[0]
-    best_arm = experiment.arms_by_name[best_arm_name]
-    best_parameters = best_arm.parameters
-    return best_parameters
-
 
 if __name__ == "__main__":
     args = get_cmd_arguments()

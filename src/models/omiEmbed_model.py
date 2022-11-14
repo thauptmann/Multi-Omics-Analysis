@@ -103,7 +103,8 @@ class FCBlock(nn.Module):
         self.fc_block = nn.Sequential(*self.fc_block)
 
     def forward(self, x):
-        return self.fc_block(x)
+        output = self.fc_block(x)
+        return output
 
 
 # FcVae
@@ -325,6 +326,13 @@ class VaeClassifierModel(VaeBasicModel):
         )
         y_out = self.netDown(latent)
         return z, recon_omics, mean, log_var, y_out
+
+    def forward(self, data_e, data_m , data_c):
+        _, _, _, _, latent = VaeBasicModel.forward(
+            self, data_e, data_m, data_c
+        )
+        # Get the output tensor
+        return self.netDown(latent)
 
 
 def define_down(

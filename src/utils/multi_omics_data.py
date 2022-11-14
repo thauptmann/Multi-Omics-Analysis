@@ -90,11 +90,11 @@ def load_drug_data_with_elbow(data_path, drug, dataset, return_data_frames=False
         extern_m = extern_m.loc[:, mutation_intersection_genes_index]
         extern_c = extern_c.loc[:, cna_intersection_genes_index]
     else:
+        extern_e = extern_e.loc[:, expression_intersection_genes_index].to_numpy()
+        extern_m = extern_m.loc[:, mutation_intersection_genes_index].to_numpy()
+        extern_c = extern_c.loc[:, cna_intersection_genes_index].to_numpy()
         gdsc_e = gdsc_e.to_numpy()
         gdsc_m = gdsc_m.to_numpy()
         gdsc_c = gdsc_c.to_numpy()
-        extern_e = extern_e.to_numpy()
-        extern_m = extern_m.to_numpy()
-        extern_c = extern_c.to_numpy()
 
     return gdsc_e, gdsc_m, gdsc_c, gdsc_r, extern_e, extern_m, extern_c, extern_r

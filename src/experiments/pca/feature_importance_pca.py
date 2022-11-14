@@ -3,7 +3,7 @@ import torch
 from pathlib import Path
 import numpy as np
 import sys
-from captum.attr import DeepLift, ShapleyValueSampling
+from captum.attr import KernelShap
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.input_arguments import get_cmd_arguments
@@ -12,9 +12,11 @@ from utils.interpretability import (
     compute_importances_values_multiple_inputs,
     save_importance_results,
 )
-from train_stacking import train_final
+from train_pca import train_final
+from models.pca_model import PcaModel
 from utils.visualisation import visualize_importances
 from utils.choose_gpu import create_device
+
 
 file_directory = Path(__file__).parent
 with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
@@ -22,40 +24,24 @@ with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
 
 best_hyperparameter = {
     "Cetuximab": {
-        "mini_batch": 8,
-        "h_dim_e_encode": 512,
-        "h_dim_m_encode": 64,
-        "h_dim_c_encode": 128,
-        "lr_e": 0.01,
-        "lr_m": 0.01,
-        "lr_c": 0.001,
-        "lr_clf": 0.01,
-        "dropout_e": 0.7,
-        "dropout_m": 0.7,
-        "dropout_c": 0.7,
-        "dropout_clf": 0.3,
+        "variance_e": 0.975,
+        "variance_m": 0.9,
+        "variance_c": 0.975,
+        "dropout": 0.1,
+        "learning_rate": 0.01,
         "weight_decay": 0.01,
-        "gamma": 0.1,
-        "margin": 1.0,
-        "epochs": 3,
+        "epochs": 19,
+        "mini_batch": 8,
     },
     "Docetaxel": {
-        "mini_batch": 8,
-        "h_dim_e_encode": 1024,
-        "h_dim_m_encode": 128,
-        "h_dim_c_encode": 1024,
-        "lr_e": 0.01,
-        "lr_m": 0.01,
-        "lr_c": 0.001,
-        "lr_clf": 0.001,
-        "dropout_e": 0.5,
-        "dropout_m": 0.3,
-        "dropout_c": 0.7,
-        "dropout_clf": 0.5,
-        "weight_decay": 0.1,
-        "gamma": 0.5,
-        "margin": 1.0,
-        "epochs": 9,
+        "variance_e": 0.9,
+        "variance_m": 0.975,
+        "variance_c": 0.9,
+        "dropout": 0.3,
+        "learning_rate": 0.01,
+        "weight_decay": 0.01,
+        "epochs": 8,
+        "mini_batch": 16,
     },
 }
 
@@ -63,7 +49,7 @@ torch.manual_seed(parameter["random_seed"])
 np.random.seed(parameter["random_seed"])
 
 
-def stacking_feature_importance(
+def pca_feature_importance(
     experiment_name, drug_name, extern_dataset_name, convert_ids, gpu_number
 ):
     hyperparameter = best_hyperparameter[drug_name]
@@ -74,7 +60,7 @@ def stacking_feature_importance(
         "..",
         "..",
         "results",
-        "stacking",
+        "pca",
         "explanation",
         experiment_name,
         drug_name,
@@ -119,7 +105,7 @@ def stacking_feature_importance(
     number_of_expression_features = gdsc_e.shape[1]
     number_of_mutation_features = gdsc_m.shape[1]
 
-    stacking_model, scaler_gdsc = train_final(
+    pca_model, train_scaler_gdsc, pca_e, pca_m, pca_c = train_final(
         hyperparameter,
         gdsc_e,
         gdsc_m,
@@ -127,23 +113,24 @@ def stacking_feature_importance(
         gdsc_r,
         device,
         pin_memory=False,
-        stacking_type="less_stacking",
     )
-    stacking_model.eval()
+    pca_model.eval()
 
-    gdsc_e_scaled = torch.Tensor(scaler_gdsc.fit_transform(gdsc_e))
+    gdsc_e_scaled = torch.Tensor(train_scaler_gdsc.fit_transform(gdsc_e))
     gdsc_e_scaled = gdsc_e_scaled.to(device)
     gdsc_m = torch.FloatTensor(gdsc_m).to(device)
     gdsc_c = torch.FloatTensor(gdsc_c).to(device)
 
-    extern_e_scaled = torch.Tensor(scaler_gdsc.transform(extern_e)).to(device)
+    extern_e_scaled = torch.Tensor(train_scaler_gdsc.transform(extern_e)).to(device)
     scaled_baseline = (gdsc_e_scaled, gdsc_m, gdsc_c)
 
-    train_predictions = stacking_model(gdsc_e_scaled, gdsc_m, gdsc_c)
+    full_pca_model = PcaModel(pca_e, pca_m, pca_c, pca_model)
+    train_predictions = full_pca_model(gdsc_e_scaled, gdsc_m, gdsc_c)
     gdsc_e_scaled.requires_grad_()
     gdsc_m.requires_grad_()
     gdsc_c.requires_grad_()
-    integradet_gradients = DeepLift(stacking_model)
+
+    integradet_gradients = KernelShap(full_pca_model)
 
     all_attributions_test = compute_importances_values_multiple_inputs(
         (gdsc_e_scaled, gdsc_m, gdsc_c),
@@ -161,7 +148,7 @@ def stacking_feature_importance(
         number_of_mutation_features=number_of_mutation_features,
     )
 
-    extern_predictions = stacking_model(extern_e_scaled, extern_m, extern_c)
+    extern_predictions = full_pca_model(extern_e_scaled, extern_m, extern_c)
     extern_e_scaled.requires_grad_()
     extern_m.requires_grad_()
     extern_c.requires_grad_()
@@ -202,7 +189,7 @@ if __name__ == "__main__":
 
     if args.drug == "all":
         for drug, extern_dataset in parameter["drugs"].items():
-            stacking_feature_importance(
+            pca_feature_importance(
                 args.experiment_name,
                 drug,
                 extern_dataset,
@@ -211,7 +198,7 @@ if __name__ == "__main__":
             )
     else:
         extern_dataset = parameter["drugs"][args.drug]
-        stacking_feature_importance(
+        pca_feature_importance(
             args.experiment_name,
             args.drug,
             extern_dataset,
