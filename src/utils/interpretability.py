@@ -46,7 +46,7 @@ def compute_importances_values_multiple_inputs(X, explainer, baseline):
 
 def save_importance_results(importances, feature_names, path, dataset):
     mean_importances = np.mean(importances, axis=0)
-    sd_importances = np.sd(importances, axis=0)
+    sd_importances = np.std(importances, axis=0)
 
     absolute_sorted_indices = (np.abs(mean_importances)).argsort()
     absolute_most_important_features = feature_names[absolute_sorted_indices]
