@@ -2,6 +2,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
+import json
 from utils.interpretability import convert_genez_id_to_name
 
 
@@ -152,14 +153,23 @@ def visualize_importances(
         absolute_highest_importance_sd,
     )
 
-
-    plot_omics_importance(
+    expression_importance, mutation_importance, cna_importance = plot_omics_importance(
         np.mean(np.abs(importances), axis=0),
         number_of_expression_features,
         number_of_mutation_features,
         path,
         file_name + "_omics_importance",
     )
+
+    importances_per_omics = {
+        "expression_importance": expression_importance,
+        "mutation_importance": mutation_importance,
+        "cna_importance": cna_importance,
+    }
+
+    with open(path / "importances_per_omics.json", "w") as file:
+        json.dump(importances_per_omics, file)
+
 
 
 def draw_attributions(
@@ -225,7 +235,6 @@ def draw_swarm_attributions(
     fig.clf()
 
 
-
 def plot_omics_importance(
     importances,
     number_of_expression_features,
@@ -258,3 +267,5 @@ def plot_omics_importance(
     fig = ax.get_figure()
     fig.savefig(str(path / f"{file_name}.pdf"), bbox_inches="tight")
     fig.clf()
+
+    return expression_importance, mutation_importance, cna_importance
