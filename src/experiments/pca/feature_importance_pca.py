@@ -125,7 +125,6 @@ def pca_feature_importance(
     scaled_baseline = (gdsc_e_scaled, gdsc_m, gdsc_c)
 
     full_pca_model = PcaModel(pca_e, pca_m, pca_c, pca_model)
-    train_predictions = full_pca_model(gdsc_e_scaled, gdsc_m, gdsc_c)
     gdsc_e_scaled.requires_grad_()
     gdsc_m.requires_grad_()
     gdsc_c.requires_grad_()
