@@ -3,7 +3,7 @@ import torch
 from pathlib import Path
 import numpy as np
 import sys
-from captum.attr import DeepLift, ShapleyValueSampling, KernelShap
+from captum.attr import KernelShap
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.input_arguments import get_cmd_arguments
@@ -139,7 +139,6 @@ def omiEmbed_feature_importance(
     extern_e_scaled = torch.Tensor(train_scaler_gdsc.transform(extern_e)).to(device)
     scaled_baseline = (gdsc_e_scaled, gdsc_m, gdsc_c)
 
-    train_predictions = omiEmbed_model(gdsc_e_scaled, gdsc_m, gdsc_c)
     gdsc_e_scaled.requires_grad_()
     gdsc_m.requires_grad_()
     gdsc_c.requires_grad_()
@@ -162,7 +161,6 @@ def omiEmbed_feature_importance(
         number_of_mutation_features=number_of_mutation_features,
     )
 
-    extern_predictions = omiEmbed_model(extern_e_scaled, extern_m, extern_c)
     extern_e_scaled.requires_grad_()
     extern_m.requires_grad_()
     extern_c.requires_grad_()

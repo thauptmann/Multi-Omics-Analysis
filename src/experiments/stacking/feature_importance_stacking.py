@@ -3,7 +3,7 @@ import torch
 from pathlib import Path
 import numpy as np
 import sys
-from captum.attr import DeepLift, ShapleyValueSampling
+from captum.attr import KernelShap
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.input_arguments import get_cmd_arguments
@@ -139,11 +139,10 @@ def stacking_feature_importance(
     extern_e_scaled = torch.Tensor(scaler_gdsc.transform(extern_e)).to(device)
     scaled_baseline = (gdsc_e_scaled, gdsc_m, gdsc_c)
 
-    train_predictions = stacking_model(gdsc_e_scaled, gdsc_m, gdsc_c)
     gdsc_e_scaled.requires_grad_()
     gdsc_m.requires_grad_()
     gdsc_c.requires_grad_()
-    integradet_gradients = DeepLift(stacking_model)
+    integradet_gradients = KernelShap(stacking_model)
 
     all_attributions_test = compute_importances_values_multiple_inputs(
         (gdsc_e_scaled, gdsc_m, gdsc_c),
@@ -161,7 +160,6 @@ def stacking_feature_importance(
         number_of_mutation_features=number_of_mutation_features,
     )
 
-    extern_predictions = stacking_model(extern_e_scaled, extern_m, extern_c)
     extern_e_scaled.requires_grad_()
     extern_m.requires_grad_()
     extern_c.requires_grad_()

@@ -14,6 +14,8 @@ def compute_importances_values_single_input(X, explainer, baseline):
         all_attributions = explainer.attribute(
             X,
             baselines=sample[None, :],
+            n_samples=50,
+            perturbations_per_eval=50,
         )
         mean_attributions += all_attributions.detach()
     return (all_attributions / len(baseline)).detach().cpu().numpy()
@@ -27,6 +29,8 @@ def compute_importances_values_multiple_inputs(X, explainer, baseline):
         all_attributions = explainer.attribute(
             X,
             baselines=(e[None, :], m[None, :], c[None, :]),
+            n_samples=50,
+            perturbations_per_eval=50,
         )
         expression_attributions += all_attributions[0].detach()
         mutation_attributions += all_attributions[1].detach()
@@ -45,6 +49,7 @@ def compute_importances_values_multiple_inputs(X, explainer, baseline):
 
 
 def save_importance_results(importances, feature_names, path, dataset):
+    feature_names = convert_genez_id_to_name(feature_names)
     mean_importances = np.mean(importances, axis=0)
     sd_importances = np.std(importances, axis=0)
 
@@ -52,7 +57,6 @@ def save_importance_results(importances, feature_names, path, dataset):
     absolute_most_important_features = feature_names[absolute_sorted_indices]
     absolute_highest_importances_mean = mean_importances[absolute_sorted_indices]
     absolute_highest_importance_sd = sd_importances[absolute_sorted_indices]
-    feature_names = convert_genez_id_to_name(feature_names)
     data = {
         "feature_names": absolute_most_important_features,
         "mean importances": absolute_highest_importances_mean,
