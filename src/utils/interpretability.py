@@ -59,7 +59,7 @@ def save_importance_results(importances, feature_names, path, dataset):
         "sd_importances": absolute_highest_importance_sd,
     }
     df = pd.DataFrame(data)
-    df.to_csv(path / dataset + ".csv")
+    df.to_csv(str(path / dataset) + ".csv")
 
 
 def convert_genez_id_to_name(feature_names):
