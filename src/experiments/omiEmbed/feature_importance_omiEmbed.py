@@ -183,16 +183,12 @@ def omiEmbed_feature_importance(
     save_importance_results(
         all_attributions_test,
         all_columns,
-        extern_predictions,
-        gdsc_r,
         result_path,
         "extern",
     )
     save_importance_results(
         all_attributions_extern,
         all_columns,
-        train_predictions,
-        extern_r,
         result_path,
         "test",
     )

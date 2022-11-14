@@ -167,7 +167,6 @@ def early_integration_feature_importance(
     early_integration_model.eval()
 
     gdsc_concat_scaled = gdsc_concat_scaled.to(device)
-    train_predictions = early_integration_model(gdsc_concat_scaled)
     gdsc_concat_scaled.requires_grad_()
     integradet_gradients = DeepLift(early_integration_model)
 
@@ -188,7 +187,6 @@ def early_integration_feature_importance(
     )
 
     extern_concat_scaled = extern_concat_scaled.to(device)
-    extern_predictions = early_integration_model(extern_concat_scaled)
     extern_concat_scaled.requires_grad_()
     all_attributions_extern = compute_importances_values_single_input(
         extern_concat_scaled, integradet_gradients, scaled_baseline
@@ -204,12 +202,8 @@ def early_integration_feature_importance(
         number_of_mutation_features=number_of_mutation_features,
     )
 
-    save_importance_results(
-        all_attributions_test, all_columns, extern_predictions, gdsc_r, "extern"
-    )
-    save_importance_results(
-        all_attributions_extern, all_columns, train_predictions, extern_r, "test"
-    )
+    save_importance_results(all_attributions_test, all_columns, result_path, "extern")
+    save_importance_results(all_attributions_extern, all_columns, result_path, "test")
 
 
 if __name__ == "__main__":
