@@ -124,7 +124,7 @@ def pca_feature_importance(
     extern_e_scaled = torch.Tensor(train_scaler_gdsc.transform(extern_e)).to(device)
     scaled_baseline = (gdsc_e_scaled, gdsc_m, gdsc_c)
 
-    full_pca_model = PcaModel(pca_e, pca_m, pca_c, pca_model)
+    full_pca_model = PcaModel(pca_e, pca_m, pca_c, pca_model, device)
     gdsc_e_scaled.requires_grad_()
     gdsc_m.requires_grad_()
     gdsc_c.requires_grad_()
