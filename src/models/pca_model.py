@@ -23,9 +23,9 @@ class PcaModel(nn.Module):
         self.classifier = classifier
 
     def forward(self, e, m, c):
-        features_e = torch.FloatTensor(self.pca_e.transform(e.detach()))
-        features_m = torch.FloatTensor(self.pca_m.transform(m.detach()))
-        features_c = torch.FloatTensor(self.pca_c.transform(c.detach()))
+        features_e = torch.FloatTensor(self.pca_e.transform(e.cpu().detach()))
+        features_m = torch.FloatTensor(self.pca_m.transform(m.cpu().detach()))
+        features_c = torch.FloatTensor(self.pca_c.transform(c.cpu().detach()))
 
         input = torch.concat([features_e, features_m, features_c], axis=1)
         return self.classifier(input)
