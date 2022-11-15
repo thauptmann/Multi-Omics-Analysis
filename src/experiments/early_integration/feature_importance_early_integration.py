@@ -127,7 +127,14 @@ def early_integration_feature_importance(
     scaler_gdsc = StandardScaler()
     gdsc_concat_scaled = torch.Tensor(scaler_gdsc.fit_transform(gdsc_concat))
     extern_concat_scaled = torch.Tensor(scaler_gdsc.transform(extern_concat))
-    scaled_baseline = torch.Tensor(gdsc_concat_scaled).to(device)
+
+    # Choose 10 samples each five negative and positive
+    responder_indices = np.random.choice(np.where(gdsc_r == 1)[0], size=5, replace=False)
+    non_responder_indices = np.random.choice(
+        np.where(gdsc_r == 0)[0], size=5, replace=False
+    )
+    all_indices = np.concatenate([responder_indices, non_responder_indices])
+    scaled_baseline = torch.Tensor(gdsc_concat_scaled[all_indices]).to(device)
 
     # Initialisation
     sampler = create_sampler(gdsc_r)

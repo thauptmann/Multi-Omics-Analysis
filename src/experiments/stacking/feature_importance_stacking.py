@@ -137,7 +137,12 @@ def stacking_feature_importance(
     gdsc_c = torch.FloatTensor(gdsc_c).to(device)
 
     extern_e_scaled = torch.Tensor(scaler_gdsc.transform(extern_e)).to(device)
-    scaled_baseline = (gdsc_e_scaled, gdsc_m, gdsc_c)
+    responder_indices = np.random.choice(np.where(gdsc_r == 1)[0], size=5, replace=False)
+    non_responder_indices = np.random.choice(
+        np.where(gdsc_r == 0)[0], size=5, replace=False
+    )
+    all_indices = np.concatenate([responder_indices, non_responder_indices])
+    scaled_baseline = (gdsc_e_scaled[all_indices], gdsc_m[all_indices], gdsc_c[all_indices])
 
     gdsc_e_scaled.requires_grad_()
     gdsc_m.requires_grad_()
