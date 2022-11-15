@@ -162,9 +162,9 @@ def visualize_importances(
     )
 
     importances_per_omics = {
-        "expression_importance": expression_importance,
-        "mutation_importance": mutation_importance,
-        "cna_importance": cna_importance,
+        "expression_importance": float(expression_importance),
+        "mutation_importance": float(mutation_importance),
+        "cna_importance": float(cna_importance),
     }
 
     with open(path / "importances_per_omics.json", "w") as file:
