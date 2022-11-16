@@ -23,10 +23,42 @@ with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
 
 best_hyperparameter = {
     "Cetuximab": {
-        
+        "encoder_dropout": 0.3,
+        "classifier_dropout": 0.3,
+        "classifier_weight_decay": 0.01,
+        "encoder_weight_decay": 0.05,
+        "learning_rate_e": 0.01,
+        "learning_rate_m": 0.01,
+        "learning_rate_c": 0.01,
+        "learning_rate_classifier": 0.001,
+        "e_epochs": 4,
+        "m_epochs": 2,
+        "c_epochs": 13,
+        "classifier_epochs": 14,
+        "mini_batch": 32,
+        "margin": 1.0,
+        "e_dimension": 256,
+        "m_dimension": 32,
+        "c_dimension": 64,
     },
     "Docetaxel": {
-        
+        "encoder_dropout": 0.7,
+        "classifier_dropout": 0.5,
+        "classifier_weight_decay": 0.1,
+        "encoder_weight_decay": 0.0001,
+        "learning_rate_e": 0.001,
+        "learning_rate_m": 0.001,
+        "learning_rate_c": 0.001,
+        "learning_rate_classifier": 0.001,
+        "e_epochs": 19,
+        "m_epochs": 13,
+        "c_epochs": 7,
+        "classifier_epochs": 15,
+        "mini_batch": 8,
+        "margin": 0.2,
+        "e_dimension": 1024,
+        "m_dimension": 256,
+        "c_dimension": 512,
     },
 }
 
@@ -107,12 +139,18 @@ def stacking_feature_importance(
     gdsc_c = torch.FloatTensor(gdsc_c).to(device)
 
     extern_e_scaled = torch.Tensor(scaler_gdsc.transform(extern_e)).to(device)
-    responder_indices = np.random.choice(np.where(gdsc_r == 1)[0], size=5, replace=False)
+    responder_indices = np.random.choice(
+        np.where(gdsc_r == 1)[0], size=5, replace=False
+    )
     non_responder_indices = np.random.choice(
         np.where(gdsc_r == 0)[0], size=5, replace=False
     )
     all_indices = np.concatenate([responder_indices, non_responder_indices])
-    scaled_baseline = (gdsc_e_scaled[all_indices], gdsc_m[all_indices], gdsc_c[all_indices])
+    scaled_baseline = (
+        gdsc_e_scaled[all_indices],
+        gdsc_m[all_indices],
+        gdsc_c[all_indices],
+    )
 
     super_felt_model = SuperFelt(e_encoder, m_encoder, c_encoder, classifier)
     gdsc_e_scaled.requires_grad_()
