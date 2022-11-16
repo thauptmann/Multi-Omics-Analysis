@@ -85,4 +85,4 @@ def convert_genez_id_to_name(feature_names):
             names.append(gene_name)
 
     # return converted features
-    return [type + f" {name}" for type, name in zip(types, names)]
+    return np.array([type + f" {name}" for type, name in zip(types, names)])
