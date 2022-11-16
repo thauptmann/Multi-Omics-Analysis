@@ -51,7 +51,7 @@ class AutoEncoder(nn.Module):
         return self.encoder(x)
 
 
-class SuperFelt:
+class SuperFelt(nn.Module):
     def __init__(self, encoder_e, encoder_m, encoder_c, classifier):
         super(SuperFelt, self).__init__()
         self.encoder_e = encoder_e
