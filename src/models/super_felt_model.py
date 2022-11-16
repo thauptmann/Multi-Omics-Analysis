@@ -63,6 +63,5 @@ class SuperFelt(nn.Module):
         encoded_e = self.encoder_e(e)
         encoded_m = self.encoder_m(m)
         encoded_c = self.encoder_c(c)
-        encoded_concatenated = torch.concat([encoded_e, encoded_m, encoded_c], axis=1)
 
-        return self.classifier(encoded_concatenated)
+        return self.classifier(encoded_e, encoded_m, encoded_c)
