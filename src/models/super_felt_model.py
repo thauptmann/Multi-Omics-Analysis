@@ -61,7 +61,7 @@ class SuperFelt(nn.Module):
 
     def forward(self, e, m, c):
         encoded_e = self.encoder_e(e)
-        encoded_m = self.encode_m(m)
+        encoded_m = self.encoder_m(m)
         encoded_c = self.encoder_c(c)
         encoded_concatenated = torch.concat([encoded_e, encoded_m, encoded_c], axis=1)
 
