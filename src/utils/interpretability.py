@@ -31,7 +31,6 @@ def compute_importances_values_multiple_inputs(X, explainer):
 
 
 def save_importance_results(importances, feature_names, path, dataset):
-    feature_names = convert_genez_id_to_name(feature_names)
     mean_importances = np.mean(importances, axis=0)
     sd_importances = np.std(importances, axis=0)
 
