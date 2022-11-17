@@ -171,7 +171,6 @@ def visualize_importances(
         json.dump(importances_per_omics, file)
 
 
-
 def draw_attributions(
     title,
     axis_title,
@@ -256,16 +255,30 @@ def plot_omics_importance(
             importances[number_of_expression_features + number_of_mutation_features :]
         )
     )
-    x = [expression_importance, mutation_importance, cna_importance]
+
+    all_importances = np.sum(np.abs(importances))
+    normalised_expression_importance = expression_importance / all_importances
+    normalised_mutation_importance = mutation_importance / all_importances
+    normalised_cna_importance = cna_importance / all_importances
+
+    x = [
+        normalised_expression_importance,
+        normalised_mutation_importance,
+        normalised_cna_importance,
+    ]
     y = ["Expression", "Mutation", "CNA"]
     ax = sns.barplot(x=x, y=y, color="b")
     plt.xticks(rotation=45)
 
     ax.set_ylabel("Omics")
-    ax.set_xlabel("Sum Absolute Attribution")
+    ax.set_xlabel("Normalized Absolute Attribution")
 
     fig = ax.get_figure()
     fig.savefig(str(path / f"{file_name}.pdf"), bbox_inches="tight")
     fig.clf()
 
-    return expression_importance, mutation_importance, cna_importance
+    return (
+        normalised_expression_importance,
+        normalised_mutation_importance,
+        normalised_cna_importance,
+    )
