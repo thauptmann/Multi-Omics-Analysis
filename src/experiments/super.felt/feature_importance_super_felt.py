@@ -92,7 +92,7 @@ def stacking_feature_importance(
         extern_e,
         extern_m,
         extern_c,
-        extern_r,
+        _,
     ) = multi_omics_data.load_drug_data_with_elbow(
         data_path, drug_name, extern_dataset_name, return_data_frames=True
     )
@@ -133,35 +133,18 @@ def stacking_feature_importance(
     )
     classifier.eval()
 
-    gdsc_e_scaled = torch.Tensor(scaler_gdsc.fit_transform(gdsc_e))
-    gdsc_e_scaled = gdsc_e_scaled.to(device)
+    gdsc_e_scaled = torch.Tensor(scaler_gdsc.fit_transform(gdsc_e)).to(device)
     gdsc_m = torch.FloatTensor(gdsc_m).to(device)
     gdsc_c = torch.FloatTensor(gdsc_c).to(device)
 
     extern_e_scaled = torch.Tensor(scaler_gdsc.transform(extern_e)).to(device)
-    responder_indices = np.random.choice(
-        np.where(gdsc_r == 1)[0], size=5, replace=False
-    )
-    non_responder_indices = np.random.choice(
-        np.where(gdsc_r == 0)[0], size=5, replace=False
-    )
-    all_indices = np.concatenate([responder_indices, non_responder_indices])
-    scaled_baseline = (
-        gdsc_e_scaled[all_indices],
-        gdsc_m[all_indices],
-        gdsc_c[all_indices],
-    )
 
     super_felt_model = SuperFelt(e_encoder, m_encoder, c_encoder, classifier)
-    gdsc_e_scaled.requires_grad_()
-    gdsc_m.requires_grad_()
-    gdsc_c.requires_grad_()
-    integradet_gradients = KernelShap(super_felt_model)
+    shapley = KernelShap(super_felt_model)
 
     all_attributions_test = compute_importances_values_multiple_inputs(
         (gdsc_e_scaled, gdsc_m, gdsc_c),
-        integradet_gradients,
-        scaled_baseline,
+        shapley,
     )
 
     visualize_importances(
@@ -178,7 +161,7 @@ def stacking_feature_importance(
     extern_m.requires_grad_()
     extern_c.requires_grad_()
     all_attributions_extern = compute_importances_values_multiple_inputs(
-        (extern_e_scaled, extern_m, extern_c), integradet_gradients, scaled_baseline
+        (extern_e_scaled, extern_m, extern_c), shapley
     )
 
     visualize_importances(

@@ -128,14 +128,6 @@ def early_integration_feature_importance(
     gdsc_concat_scaled = torch.Tensor(scaler_gdsc.fit_transform(gdsc_concat))
     extern_concat_scaled = torch.Tensor(scaler_gdsc.transform(extern_concat))
 
-    # Choose 10 samples each five negative and positive
-    responder_indices = np.random.choice(np.where(gdsc_r == 1)[0], size=5, replace=False)
-    non_responder_indices = np.random.choice(
-        np.where(gdsc_r == 0)[0], size=5, replace=False
-    )
-    all_indices = np.concatenate([responder_indices, non_responder_indices])
-    scaled_baseline = torch.Tensor(gdsc_concat_scaled[all_indices]).to(device)
-
     # Initialisation
     sampler = create_sampler(gdsc_r)
     dataset = torch.utils.data.TensorDataset(gdsc_concat_scaled, torch.Tensor(gdsc_r))
@@ -174,13 +166,11 @@ def early_integration_feature_importance(
     early_integration_model.eval()
 
     gdsc_concat_scaled = gdsc_concat_scaled.to(device)
-    gdsc_concat_scaled.requires_grad_()
     integradet_gradients = KernelShap(early_integration_model)
 
     all_attributions_test = compute_importances_values_single_input(
         gdsc_concat_scaled,
         integradet_gradients,
-        scaled_baseline,
     )
 
     visualize_importances(
@@ -194,9 +184,8 @@ def early_integration_feature_importance(
     )
 
     extern_concat_scaled = extern_concat_scaled.to(device)
-    extern_concat_scaled.requires_grad_()
     all_attributions_extern = compute_importances_values_single_input(
-        extern_concat_scaled, integradet_gradients, scaled_baseline
+        extern_concat_scaled, integradet_gradients
     )
 
     visualize_importances(

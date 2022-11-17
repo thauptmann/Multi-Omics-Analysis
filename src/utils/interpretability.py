@@ -1,5 +1,4 @@
 import torch
-from tqdm import tqdm
 import numpy as np
 import os
 import pandas as pd
@@ -8,40 +7,23 @@ from Bio import Entrez
 Entrez.email = os.environ.get("MAIL")
 
 
-def compute_importances_values_single_input(X, explainer, baseline):
-    mean_attributions = torch.zeros_like(X)
-    for sample in tqdm(baseline):
-        all_attributions = explainer.attribute(
-            X,
-            baselines=sample[None, :],
-            n_samples=50,
-            perturbations_per_eval=50,
-        )
-        mean_attributions += all_attributions.detach()
-    return (all_attributions / len(baseline)).detach().cpu().numpy()
+def compute_importances_values_single_input(X, explainer):
+    all_attributions = explainer.attribute(
+        X,
+    )
+    return all_attributions.detach().cpu().numpy()
 
 
-def compute_importances_values_multiple_inputs(X, explainer, baseline):
+def compute_importances_values_multiple_inputs(X, explainer):
     expression_attributions = torch.zeros_like(X[0])
     mutation_attributions = torch.zeros_like(X[1])
     cna_attributions = torch.zeros_like(X[2])
-    for e, m, c in tqdm(zip(baseline[0], baseline[1], baseline[2])):
-        all_attributions = explainer.attribute(
-            X,
-            baselines=(e[None, :], m[None, :], c[None, :]),
-            n_samples=50,
-            perturbations_per_eval=50,
-        )
-        expression_attributions += all_attributions[0].detach()
-        mutation_attributions += all_attributions[1].detach()
-        cna_attributions += all_attributions[2].detach()
-    expression_attributions = (
-        (expression_attributions / len(baseline[0])).detach().cpu().numpy()
+    all_attributions = explainer.attribute(
+        X,
     )
-    mutation_attributions = (
-        (mutation_attributions / len(baseline[0])).detach().cpu().numpy()
-    )
-    cna_attributions = (cna_attributions / len(baseline[0])).detach().cpu().numpy()
+    expression_attributions += all_attributions[0].detach().cpu().numpy()
+    mutation_attributions += all_attributions[1].detach().cpu().numpy()
+    cna_attributions += all_attributions[2].detach().cpu().numpy()
     result_attributions = np.concatenate(
         [expression_attributions, mutation_attributions, cna_attributions], axis=1
     )
