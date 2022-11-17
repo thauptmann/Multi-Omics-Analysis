@@ -11,19 +11,16 @@ def compute_importances_values_single_input(X, explainer):
     all_attributions = explainer.attribute(
         X,
     )
-    return all_attributions.detach().cpu().numpy()
+    return all_attributions.cpu().numpy()
 
 
 def compute_importances_values_multiple_inputs(X, explainer):
-    expression_attributions = torch.zeros_like(X[0])
-    mutation_attributions = torch.zeros_like(X[1])
-    cna_attributions = torch.zeros_like(X[2])
     all_attributions = explainer.attribute(
         X,
     )
-    expression_attributions += all_attributions[0].detach().cpu().numpy()
-    mutation_attributions += all_attributions[1].detach().cpu().numpy()
-    cna_attributions += all_attributions[2].detach().cpu().numpy()
+    expression_attributions = all_attributions[0].cpu().numpy()
+    mutation_attributions = all_attributions[1].cpu().numpy()
+    cna_attributions = all_attributions[2].cpu().numpy()
     result_attributions = np.concatenate(
         [expression_attributions, mutation_attributions, cna_attributions], axis=1
     )
