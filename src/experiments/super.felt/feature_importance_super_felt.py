@@ -77,7 +77,7 @@ def stacking_feature_importance(
         "..",
         "..",
         "results",
-        "stacking",
+        "super_felt",
         "explanation",
         experiment_name,
         drug_name,
