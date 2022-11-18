@@ -110,9 +110,6 @@ def visualize_importances(
 
     if convert_ids:
         most_important_features = convert_genez_id_to_name(most_important_features)
-        negative_most_important_features = convert_genez_id_to_name(
-            negative_most_important_features
-        )
         absolute_most_important_features = convert_genez_id_to_name(
             absolute_most_important_features
         )
