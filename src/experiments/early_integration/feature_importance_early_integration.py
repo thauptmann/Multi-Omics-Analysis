@@ -4,7 +4,7 @@ import torch
 from pathlib import Path
 import numpy as np
 import sys
-from captum.attr import KernelShap
+from captum.attr import FeaturePermutation
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from models.early_integration_model import EarlyIntegration
@@ -166,7 +166,7 @@ def early_integration_feature_importance(
     early_integration_model.eval()
 
     gdsc_concat_scaled = gdsc_concat_scaled.to(device)
-    integradet_gradients = KernelShap(early_integration_model)
+    integradet_gradients = FeaturePermutation(early_integration_model)
 
     all_attributions_test = compute_importances_values_single_input(
         gdsc_concat_scaled,

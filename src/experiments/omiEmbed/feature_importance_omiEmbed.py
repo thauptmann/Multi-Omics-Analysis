@@ -3,7 +3,7 @@ import torch
 from pathlib import Path
 import numpy as np
 import sys
-from captum.attr import KernelShap
+from captum.attr import FeaturePermutation
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.input_arguments import get_cmd_arguments
@@ -137,7 +137,7 @@ def omiEmbed_feature_importance(
 
     extern_e_scaled = torch.Tensor(train_scaler_gdsc.transform(extern_e)).to(device)
 
-    shapley = KernelShap(omiEmbed_model)
+    shapley = FeaturePermutation(omiEmbed_model)
 
     all_attributions_test = compute_importances_values_multiple_inputs(
         (gdsc_e_scaled, gdsc_m, gdsc_c),
