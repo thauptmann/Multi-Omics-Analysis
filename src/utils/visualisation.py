@@ -181,6 +181,7 @@ def draw_attributions(
     highest_importance_sd,
 ):
     path.mkdir(exist_ok=True, parents=True)
+    most_important_features = convert_genez_id_to_name(most_important_features)
     ax = sns.barplot(x=most_important_features, y=highest_importances, color="b")
     ax.set_xlabel(axis_title)
     ax.set_title(title)
