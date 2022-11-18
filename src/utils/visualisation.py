@@ -273,7 +273,7 @@ def plot_omics_importance(
     plt.xticks(rotation=45)
 
     ax.set_ylabel("Omics")
-    ax.set_xlabel("Normalized Absolute Attribution")
+    ax.set_xlabel("Absolute Attribution")
 
     fig = ax.get_figure()
     fig.savefig(str(path / f"{file_name}.pdf"), bbox_inches="tight")
