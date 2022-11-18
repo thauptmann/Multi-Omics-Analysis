@@ -141,6 +141,7 @@ def visualize_importances(
         most_important_features,
         highest_importances,
         highest_importance_sd,
+        convert_ids
     )
 
     draw_attributions(
