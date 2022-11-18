@@ -180,6 +180,7 @@ def draw_attributions(
     highest_importances,
     highest_importance_sd,
 ):
+    path.mkdir(exist_ok=True, parents=True)
     ax = sns.barplot(x=most_important_features, y=highest_importances, color="b")
     ax.set_xlabel(axis_title)
     ax.set_title(title)
