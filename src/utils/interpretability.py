@@ -10,7 +10,7 @@ Entrez.email = os.environ.get("MAIL")
 def compute_importances_values_single_input(X, explainer):
     all_attributions = explainer.attribute(
         X,
-        perturbations_per_eval=15,
+        perturbations_per_eval=10,
         n_samples=10,
     )
     return all_attributions.cpu().numpy()
