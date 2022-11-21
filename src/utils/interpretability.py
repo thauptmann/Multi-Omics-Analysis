@@ -19,7 +19,7 @@ def compute_importances_values_single_input(X, explainer):
 def compute_importances_values_multiple_inputs(X, explainer):
     all_attributions = explainer.attribute(
         X,
-        perturbations_per_eval=15,
+        perturbations_per_eval=10,
         n_samples=10,
     )
     expression_attributions = all_attributions[0].cpu().numpy()
