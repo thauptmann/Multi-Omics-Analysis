@@ -3,7 +3,7 @@ import torch
 from pathlib import Path
 import numpy as np
 import sys
-from captum.attr import FeaturePermutation
+from captum.attr import ShapleyValueSampling
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from utils.input_arguments import get_cmd_arguments
@@ -124,7 +124,7 @@ def pca_feature_importance(
     
     full_pca_model = PcaModel(pca_e, pca_m, pca_c, pca_model, device)
 
-    shapley = FeaturePermutation(full_pca_model)
+    shapley = ShapleyValueSampling(full_pca_model)
 
     all_attributions_test = compute_importances_values_multiple_inputs(
         (gdsc_e_scaled, gdsc_m, gdsc_c),

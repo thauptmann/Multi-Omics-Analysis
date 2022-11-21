@@ -268,8 +268,8 @@ def plot_omics_importance(
     ax = sns.barplot(x=x, y=y, color="b")
     plt.xticks(rotation=45)
 
-    ax.set_ylabel("Omics")
-    ax.set_xlabel("Absolute Attribution")
+    # ax.set_ylabel("Omics")
+    ax.set_xlabel("Summarized Shapley Values")
 
     fig = ax.get_figure()
     fig.savefig(str(path / f"{file_name}.pdf"), bbox_inches="tight")

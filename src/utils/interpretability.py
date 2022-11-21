@@ -10,6 +10,9 @@ Entrez.email = os.environ.get("MAIL")
 def compute_importances_values_single_input(X, explainer):
     all_attributions = explainer.attribute(
         X,
+        perturbations_per_eval=200,
+        n_samples=200,
+        show_progress=True
     )
     return all_attributions.cpu().numpy()
 
@@ -17,6 +20,8 @@ def compute_importances_values_single_input(X, explainer):
 def compute_importances_values_multiple_inputs(X, explainer):
     all_attributions = explainer.attribute(
         X,
+        perturbations_per_eval=200,
+        n_samples=200,
     )
     expression_attributions = all_attributions[0].cpu().numpy()
     mutation_attributions = all_attributions[1].cpu().numpy()

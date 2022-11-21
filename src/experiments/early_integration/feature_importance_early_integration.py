@@ -4,7 +4,7 @@ import torch
 from pathlib import Path
 import numpy as np
 import sys
-from captum.attr import FeaturePermutation
+from captum.attr import ShapleyValueSampling
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from models.early_integration_model import EarlyIntegration
@@ -42,6 +42,56 @@ best_hyperparameter = {
         "weight_decay": 0.0001,
         "margin": 1.0,
         "epochs": 13,
+        "gamma": 0,
+    },
+    "Cisplatin": {
+        "mini_batch": 16,
+        "h_dim": 128,
+        "lr": 0.01,
+        "dropout_rate": 0.3,
+        "weight_decay": 0.05,
+        "margin": 0.5,
+        "epochs": 14,
+        "gamma": 0,
+    },
+    "Erlotinib": {
+        "mini_batch": 32,
+        "h_dim": 128,
+        "lr": 0.01,
+        "dropout_rate": 0.3,
+        "weight_decay": 0.01,
+        "margin": 0.2,
+        "epochs": 4,
+        "gamma": 0,
+    },
+    "Gemcitabine_pdx": {
+        "mini_batch": 8,
+        "h_dim": 1024,
+        "lr": 0.01,
+        "dropout_rate": 0.1,
+        "weight_decay": 0.001,
+        "margin": 0.5,
+        "epochs": 14,
+        "gamma": 0,
+    },
+    "Gemcitabine_tcga": {
+        "mini_batch": 8,
+        "h_dim": 512,
+        "lr": 0.01,
+        "dropout_rate": 0.7,
+        "weight_decay": 0.01,
+        "margin": 0.5,
+        "epochs": 7,
+        "gamma": 0,
+    },
+    "Paclitaxel": {
+        "mini_batch": 32,
+        "h_dim": 128,
+        "lr": 0.01,
+        "dropout_rate": 0.3,
+        "weight_decay": 0.05,
+        "margin": 1.0,
+        "epochs": 4,
         "gamma": 0,
     },
 }
@@ -166,7 +216,7 @@ def early_integration_feature_importance(
     early_integration_model.eval()
 
     gdsc_concat_scaled = gdsc_concat_scaled.to(device)
-    integradet_gradients = FeaturePermutation(early_integration_model)
+    integradet_gradients = ShapleyValueSampling(early_integration_model)
 
     all_attributions_test = compute_importances_values_single_input(
         gdsc_concat_scaled,
