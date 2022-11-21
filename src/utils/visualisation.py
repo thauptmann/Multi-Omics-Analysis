@@ -150,18 +150,37 @@ def visualize_importances(
         absolute_highest_importance_sd,
     )
 
-    expression_importance, mutation_importance, cna_importance = plot_omics_importance(
+    sum_expression_importance, sum_mutation_importance, sum_cna_importance = plot_omics_importance(
         np.mean(np.abs(importances), axis=0),
         number_of_expression_features,
         number_of_mutation_features,
         path,
-        file_name + "_omics_importance",
+        file_name + "_omics_importance_sum",
+        np.sum
     )
 
     importances_per_omics = {
-        "expression_importance": float(expression_importance),
-        "mutation_importance": float(mutation_importance),
-        "cna_importance": float(cna_importance),
+        "expression_importance": float(sum_expression_importance),
+        "mutation_importance": float(sum_mutation_importance),
+        "cna_importance": float(sum_cna_importance),
+    }
+
+    mean_expression_importance, mean_mutation_importance, mean_cna_importance = plot_omics_importance(
+        np.mean(np.abs(importances), axis=0),
+        number_of_expression_features,
+        number_of_mutation_features,
+        path,
+        file_name + "_omics_importance_mean",
+        np.mean
+    )
+
+    importances_per_omics = {
+        "sum_expression_importance": float(mean_expression_importance),
+        "sum_mutation_importance": float(mean_mutation_importance),
+        "sum_cna_importance": float(mean_cna_importance),
+        "mean_expression_importance": float(mean_expression_importance),
+        "mean_mutation_importance": float(mean_mutation_importance),
+        "mean_cna_importance": float(mean_cna_importance),
     }
 
     with open(path / "importances_per_omics.json", "w") as file:
@@ -238,9 +257,10 @@ def plot_omics_importance(
     number_of_mutation_features,
     path,
     file_name,
+    aggregation_function
 ):
-    expression_importance = np.sum(np.abs(importances[0:number_of_expression_features]))
-    mutation_importance = np.sum(
+    expression_importance = aggregation_function(np.abs(importances[0:number_of_expression_features]))
+    mutation_importance = aggregation_function(
         np.abs(
             importances[
                 number_of_expression_features : number_of_expression_features
@@ -248,21 +268,21 @@ def plot_omics_importance(
             ]
         )
     )
-    cna_importance = np.sum(
+    cna_importance = aggregation_function(
         np.abs(
             importances[number_of_expression_features + number_of_mutation_features :]
         )
     )
 
-    all_importances = np.sum(np.abs(importances))
+    """ all_importances = np.sum(np.abs(importances))
     normalised_expression_importance = expression_importance / all_importances
     normalised_mutation_importance = mutation_importance / all_importances
-    normalised_cna_importance = cna_importance / all_importances
+    normalised_cna_importance = cna_importance / all_importances """
 
     x = [
-        normalised_expression_importance,
-        normalised_mutation_importance,
-        normalised_cna_importance,
+        expression_importance,
+        mutation_importance,
+        cna_importance,
     ]
     y = ["Expression", "Mutation", "CNA"]
     ax = sns.barplot(x=x, y=y, color="b")
@@ -276,7 +296,7 @@ def plot_omics_importance(
     fig.clf()
 
     return (
-        normalised_expression_importance,
-        normalised_mutation_importance,
-        normalised_cna_importance,
+        expression_importance,
+        mutation_importance,
+        cna_importance,
     )

@@ -139,7 +139,7 @@ def early_integration_feature_importance(
         extern_e,
         extern_m,
         extern_c,
-        extern_r,
+        _,
     ) = multi_omics_data.load_drug_data_with_elbow(
         data_path, drug_name, extern_dataset_name, return_data_frames=True
     )
@@ -171,8 +171,6 @@ def early_integration_feature_importance(
 
     gdsc_concat = np.concatenate([gdsc_e, gdsc_m, gdsc_c], axis=1)
     extern_concat = np.concatenate([extern_e, extern_m, extern_c], axis=1)
-
-    # baseline = torch.zeros_like(torch.FloatTensor([gdsc_concat[0]]))
 
     scaler_gdsc = StandardScaler()
     gdsc_concat_scaled = torch.Tensor(scaler_gdsc.fit_transform(gdsc_concat))
