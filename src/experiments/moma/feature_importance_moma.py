@@ -49,6 +49,71 @@ best_hyperparameter = {
         "gamma": 0,
         "margin": 0,
     },
+    "Cisplatin": {
+        "mini_batch": 16,
+        "h_dim_classifier": 128,
+        "modules": 128,
+        "lr_expression": 0.001,
+        "lr_mutation": 0.001,
+        "lr_cna": 0.001,
+        "lr_classifier": 0.001,
+        "weight_decay": 0.1,
+        "epochs": 17,
+        "gamma": 0,
+        "margin": 0,
+    },
+    "Erlotinib": {
+        "mini_batch": 8,
+        "h_dim_classifier": 32,
+        "modules": 64,
+        "lr_expression": 0.001,
+        "lr_mutation": 0.01,
+        "lr_cna": 0.01,
+        "lr_classifier": 0.01,
+        "weight_decay": 0.0001,
+        "epochs": 7,
+        "gamma": 0,
+        "margin": 0,
+    },
+    "Gemcitabine_pdx": {
+        "mini_batch": 8,
+        "h_dim_classifier": 64,
+        "modules": 32,
+        "lr_expression": 0.01,
+        "lr_mutation": 0.001,
+        "lr_cna": 0.001,
+        "lr_classifier": 0.001,
+        "weight_decay": 0.05,
+        "epochs": 6,
+        "gamma": 0,
+        "margin": 0,
+    },
+    "Gemcitabine_tcga": {
+        "mini_batch": 8,
+        "h_dim_classifier": 64,
+        "modules": 128,
+        "lr_expression": 0.01,
+        "lr_mutation": 0.001,
+        "lr_cna": 0.001,
+        "lr_classifier": 0.001,
+        "weight_decay": 0.01,
+        "epochs": 11,
+        "gamma": 0,
+        "margin": 0,
+    },
+    "Paclitaxel": {
+        "mini_batch": 8,
+        "h_dim_classifier": 1024,
+        "modules": 64,
+        "lr_expression": 0.01,
+        "lr_mutation": 0.01,
+        "lr_cna": 0.001,
+        "lr_classifier": 0.001,
+        "weight_decay": 0.001,
+        "epochs": 2,
+        "gamma": 0,
+        "margin": 0,
+    },
 }
 
 torch.manual_seed(parameter["random_seed"])
@@ -147,7 +212,8 @@ def moma_feature_importance(
     )
 
     all_attributions_extern = compute_importances_values_multiple_inputs(
-        (extern_e_scaled, extern_m, extern_c), shapley)
+        (extern_e_scaled, extern_m, extern_c), shapley
+    )
 
     visualize_importances(
         all_columns,
@@ -171,7 +237,6 @@ def moma_feature_importance(
         result_path,
         "test",
     )
-
 
 
 if __name__ == "__main__":

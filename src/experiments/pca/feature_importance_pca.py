@@ -43,6 +43,56 @@ best_hyperparameter = {
         "epochs": 8,
         "mini_batch": 16,
     },
+    "Cisplatin": {
+        "variance_e": 0.975,
+        "variance_m": 0.95,
+        "variance_c": 0.9,
+        "dropout": 0.7,
+        "learning_rate": 0.01,
+        "weight_decay": 0.05,
+        "epochs": 14,
+        "mini_batch": 8,
+    },
+    "Erlotinib": {
+        "variance_e": 0.99,
+        "variance_m": 0.99,
+        "variance_c": 0.95,
+        "dropout": 0.3,
+        "learning_rate": 0.01,
+        "weight_decay": 0.01,
+        "epochs": 7,
+        "mini_batch": 16,
+    },
+    "Gemcitabine_pdx": {
+        "variance_e": 0.975,
+        "variance_m": 0.9,
+        "variance_c": 0.99,
+        "dropout": 0.1,
+        "learning_rate": 0.001,
+        "weight_decay": 0.001,
+        "epochs": 11,
+        "mini_batch": 8,
+    },
+    "Gemcitabine_tcga": {
+        "variance_e": 0.9,
+        "variance_m": 0.9,
+        "variance_c": 0.975,
+        "dropout": 0.3,
+        "learning_rate": 0.01,
+        "weight_decay": 0.01,
+        "epochs": 4,
+        "mini_batch": 16,
+    },
+    "Paclitaxel": {
+        "variance_e": 0.9,
+        "variance_m": 0.9,
+        "variance_c": 0.9,
+        "dropout": 0.3,
+        "learning_rate": 0.001,
+        "weight_decay": 0.01,
+        "epochs": 12,
+        "mini_batch": 16,
+    },
 }
 
 torch.manual_seed(parameter["random_seed"])
@@ -121,7 +171,7 @@ def pca_feature_importance(
     gdsc_c = torch.FloatTensor(gdsc_c).to(device)
 
     extern_e_scaled = torch.Tensor(train_scaler_gdsc.transform(extern_e)).to(device)
-    
+
     full_pca_model = PcaModel(pca_e, pca_m, pca_c, pca_model, device)
 
     shapley = ShapleyValueSampling(full_pca_model)
