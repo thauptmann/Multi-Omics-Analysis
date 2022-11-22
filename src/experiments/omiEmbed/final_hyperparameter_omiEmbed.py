@@ -67,8 +67,6 @@ def omiEmbed(
     torch.manual_seed(parameter["random_seed"])
     np.random.seed(parameter["random_seed"])
 
-    result_file.write(f"\t{iteration = }. \n")
-
     reset_best_auroc()
     evaluation_function = lambda parameterization: optimise_hyperparameter(
         parameterization,
@@ -95,8 +93,6 @@ def omiEmbed(
     max_objective = max(
         np.array([trial.objective_mean for trial in experiment.trials.values()])
     )
-
-    iteration += 1
 
     result_file.write(f"\t\t{str(best_parameters) = }\n")
     result_file.write(f"\t\tBest {drug_name} test Auroc = {max_objective}\n")
