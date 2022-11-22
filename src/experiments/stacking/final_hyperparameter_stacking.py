@@ -11,7 +11,7 @@ from utils.input_arguments import get_cmd_arguments
 from utils.searchspaces import create_stacking_search_space
 
 from utils.choose_gpu import get_free_gpu
-from src.experiments.stacking.train_stacking import optimise_hyperparameter, reset_best_auroc
+from experiments.stacking.train_stacking import optimise_hyperparameter, reset_best_auroc
 from utils import multi_omics_data
 
 file_directory = Path(__file__).parent
