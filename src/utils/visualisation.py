@@ -175,9 +175,9 @@ def visualize_importances(
     )
 
     importances_per_omics = {
-        "sum_expression_importance": float(mean_expression_importance),
-        "sum_mutation_importance": float(mean_mutation_importance),
-        "sum_cna_importance": float(mean_cna_importance),
+        "sum_expression_importance": float(sum_expression_importance),
+        "sum_mutation_importance": float(sum_mutation_importance),
+        "sum_cna_importance": float(sum_cna_importance),
         "mean_expression_importance": float(mean_expression_importance),
         "mean_mutation_importance": float(mean_mutation_importance),
         "mean_cna_importance": float(mean_cna_importance),
@@ -259,10 +259,12 @@ def plot_omics_importance(
     file_name,
     aggregation_function
 ):
-    expression_importance = aggregation_function(np.abs(importances[0:number_of_expression_features]))
+    all_importances = np.sum(np.abs(importances))
+    normalized_importances = importances / all_importances
+    expression_importance = aggregation_function(np.abs(normalized_importances[0:number_of_expression_features]))
     mutation_importance = aggregation_function(
         np.abs(
-            importances[
+            normalized_importances[
                 number_of_expression_features : number_of_expression_features
                 + number_of_mutation_features
             ]
@@ -270,14 +272,10 @@ def plot_omics_importance(
     )
     cna_importance = aggregation_function(
         np.abs(
-            importances[number_of_expression_features + number_of_mutation_features :]
+            normalized_importances[number_of_expression_features + number_of_mutation_features :]
         )
     )
 
-    """ all_importances = np.sum(np.abs(importances))
-    normalised_expression_importance = expression_importance / all_importances
-    normalised_mutation_importance = mutation_importance / all_importances
-    normalised_cna_importance = cna_importance / all_importances """
 
     x = [
         expression_importance,
@@ -288,7 +286,6 @@ def plot_omics_importance(
     ax = sns.barplot(x=x, y=y, color="b")
     plt.xticks(rotation=45)
 
-    # ax.set_ylabel("Omics")
     ax.set_xlabel("Summarized Shapley Values")
 
     fig = ax.get_figure()
