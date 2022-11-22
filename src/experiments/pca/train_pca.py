@@ -55,7 +55,7 @@ def optimise_hyperparameter(parameterization, x_e, x_m, x_c, y, device):
         x_train_e = scaler_gdsc.transform(x_train_e)
 
         # Initialisation
-        loss_fn = get_loss_fn(None, None, None)
+        loss_fn = get_loss_fn(None, None)
 
         pca_e = PCA(n_components=variance_e).fit(x_train_e)
         pca_m = PCA(n_components=variance_m).fit(x_train_m)
