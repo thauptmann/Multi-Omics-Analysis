@@ -107,15 +107,15 @@ def early_integration_feature_importance(
     convert_ids,
     gpu_number,
 ):
-    # hyperparameter = best_hyperparameter[drug_name]
-    # mini_batch = hyperparameter["mini_batch"]
-    # h_dim = hyperparameter["h_dim"]
-    # lr = hyperparameter["lr"]
-    # dropout_rate = hyperparameter["dropout_rate"]
-    # weight_decay = hyperparameter["weight_decay"]
-    # margin = hyperparameter["margin"]
-    # epochs = hyperparameter["epochs"]
-    # gamma = hyperparameter["gamma"]
+    hyperparameter = best_hyperparameter[drug_name]
+    mini_batch = hyperparameter["mini_batch"]
+    h_dim = hyperparameter["h_dim"]
+    lr = hyperparameter["lr"]
+    dropout_rate = hyperparameter["dropout_rate"]
+    weight_decay = hyperparameter["weight_decay"]
+    margin = hyperparameter["margin"]
+    epochs = hyperparameter["epochs"]
+    gamma = hyperparameter["gamma"]
 
     device, pin_memory = create_device(gpu_number)
     result_path = Path(
