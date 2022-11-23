@@ -23,42 +23,25 @@ with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
 
 best_hyperparameter = {
     "Cetuximab": {
-        "encoder_dropout": 0.3,
-        "classifier_dropout": 0.3,
-        "classifier_weight_decay": 0.01,
-        "encoder_weight_decay": 0.05,
-        "learning_rate_e": 0.01,
-        "learning_rate_m": 0.01,
-        "learning_rate_c": 0.01,
-        "learning_rate_classifier": 0.001,
-        "e_epochs": 4,
-        "m_epochs": 2,
-        "c_epochs": 13,
-        "classifier_epochs": 14,
-        "mini_batch": 32,
-        "margin": 1.0,
-        "e_dimension": 256,
-        "m_dimension": 32,
-        "c_dimension": 64,
+        
     },
     "Docetaxel": {
-        "encoder_dropout": 0.7,
-        "classifier_dropout": 0.5,
-        "classifier_weight_decay": 0.1,
-        "encoder_weight_decay": 0.0001,
-        "learning_rate_e": 0.001,
-        "learning_rate_m": 0.001,
-        "learning_rate_c": 0.001,
-        "learning_rate_classifier": 0.001,
-        "e_epochs": 19,
-        "m_epochs": 13,
-        "c_epochs": 7,
-        "classifier_epochs": 15,
-        "mini_batch": 8,
-        "margin": 0.2,
-        "e_dimension": 1024,
-        "m_dimension": 256,
-        "c_dimension": 512,
+        
+    },
+    "Cisplatin": {
+       
+    },
+    "Erlotinib": {
+        
+    },
+    "Gemcitabine_pdx": {
+        
+    },
+    "Gemcitabine_tcga": {
+        
+    },
+    "Paclitaxel": {
+        
     },
 }
 

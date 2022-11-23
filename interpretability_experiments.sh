@@ -1,4 +1,4 @@
-python src/experiments/early_integration/feature_importance_early_integration.py --experiment_name early_integration_shapley  --convert_ids
+python src/experiments/early_integration/feature_importance_early_integration.py --experiment_name early_integration_shapley  --convert_ids --deactivate_triplet_loss
 python src/experiments/moli/feature_importance_moli.py --experiment_name moli_shapley  --convert_ids
 python src/experiments/moma/feature_importance_moma.py --experiment_name moma_shapley  --convert_ids
 python src/experiments/omiEmbed/feature_importance_omiEmbed.py --experiment_name omiEmbed_shapley  --convert_ids

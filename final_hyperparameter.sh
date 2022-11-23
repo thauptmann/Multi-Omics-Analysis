@@ -1,4 +1,4 @@
-python src/experiments/early_integration/final_hyperparameter_early_integration.py --experiment_name early_integration_final  
+python src/experiments/early_integration/final_hyperparameter_early_integration.py --experiment_name early_integration_final  --deactivate_triplet_loss
 python src/experiments/moli/final_hyperparameter_moli.py --experiment_name moli_final 
 python src/experiments/moma/final_hyperparameter_moma.py --experiment_name moma_final 
 python src/experiments/omiEmbed/final_hyperparameter_omiEmbed.py --experiment_name omiEmbed_final 

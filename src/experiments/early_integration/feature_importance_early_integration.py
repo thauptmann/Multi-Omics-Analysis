@@ -25,73 +25,73 @@ with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
 
 best_hyperparameter = {
     "Cetuximab": {
-        "mini_batch": 16,
-        "h_dim": 512,
-        "lr": 0.001,
-        "dropout_rate": 0.1,
-        "weight_decay": 0.0001,
-        "margin": 1.0,
-        "epochs": 2,
+        "mini_batch": 32,
+        "h_dim": 64,
+        "lr": 0.01,
+        "dropout_rate": 0.7,
+        "weight_decay": 0.05,
+        "margin": 0.2,
+        "epochs": 7,
         "gamma": 0,
     },
     "Docetaxel": {
         "mini_batch": 8,
         "h_dim": 64,
-        "lr": 0.001,
-        "dropout_rate": 0.3,
-        "weight_decay": 0.0001,
-        "margin": 1.0,
-        "epochs": 13,
+        "lr": 0.01,
+        "dropout_rate": 0.7,
+        "weight_decay": 0.01,
+        "margin": 0.5,
+        "epochs": 17,
         "gamma": 0,
     },
     "Cisplatin": {
         "mini_batch": 16,
-        "h_dim": 128,
-        "lr": 0.01,
-        "dropout_rate": 0.3,
+        "h_dim": 64,
+        "lr": 0.001,
+        "dropout_rate": 0.1,
         "weight_decay": 0.05,
-        "margin": 0.5,
-        "epochs": 14,
+        "margin": 0.2,
+        "epochs": 20,
         "gamma": 0,
     },
     "Erlotinib": {
-        "mini_batch": 32,
-        "h_dim": 128,
-        "lr": 0.01,
-        "dropout_rate": 0.3,
+        "mini_batch": 8,
+        "h_dim": 1024,
+        "lr": 0.001,
+        "dropout_rate": 0.1,
         "weight_decay": 0.01,
-        "margin": 0.2,
-        "epochs": 4,
+        "margin": 1.0,
+        "epochs": 16,
         "gamma": 0,
     },
     "Gemcitabine_pdx": {
-        "mini_batch": 8,
-        "h_dim": 1024,
-        "lr": 0.01,
-        "dropout_rate": 0.1,
-        "weight_decay": 0.001,
-        "margin": 0.5,
-        "epochs": 14,
-        "gamma": 0,
-    },
-    "Gemcitabine_tcga": {
-        "mini_batch": 8,
+        "mini_batch": 16,
         "h_dim": 512,
         "lr": 0.01,
         "dropout_rate": 0.7,
         "weight_decay": 0.01,
         "margin": 0.5,
-        "epochs": 7,
+        "epochs": 13,
+        "gamma": 0,
+    },
+    "Gemcitabine_tcga": {
+        "mini_batch": 8,
+        "h_dim": 128,
+        "lr": 0.01,
+        "dropout_rate": 0.3,
+        "weight_decay": 0.01,
+        "margin": 0.2,
+        "epochs": 14,
         "gamma": 0,
     },
     "Paclitaxel": {
         "mini_batch": 32,
-        "h_dim": 128,
+        "h_dim": 64,
         "lr": 0.01,
-        "dropout_rate": 0.3,
-        "weight_decay": 0.05,
-        "margin": 1.0,
-        "epochs": 4,
+        "dropout_rate": 0.1,
+        "weight_decay": 0.001,
+        "margin": 0.5,
+        "epochs": 6,
         "gamma": 0,
     },
 }
@@ -107,15 +107,15 @@ def early_integration_feature_importance(
     convert_ids,
     gpu_number,
 ):
-    hyperparameter = best_hyperparameter[drug_name]
-    mini_batch = hyperparameter["mini_batch"]
-    h_dim = hyperparameter["h_dim"]
-    lr = hyperparameter["lr"]
-    dropout_rate = hyperparameter["dropout_rate"]
-    weight_decay = hyperparameter["weight_decay"]
-    margin = hyperparameter["margin"]
-    epochs = hyperparameter["epochs"]
-    gamma = hyperparameter["gamma"]
+    # hyperparameter = best_hyperparameter[drug_name]
+    # mini_batch = hyperparameter["mini_batch"]
+    # h_dim = hyperparameter["h_dim"]
+    # lr = hyperparameter["lr"]
+    # dropout_rate = hyperparameter["dropout_rate"]
+    # weight_decay = hyperparameter["weight_decay"]
+    # margin = hyperparameter["margin"]
+    # epochs = hyperparameter["epochs"]
+    # gamma = hyperparameter["gamma"]
 
     device, pin_memory = create_device(gpu_number)
     result_path = Path(
