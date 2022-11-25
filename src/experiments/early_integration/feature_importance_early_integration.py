@@ -216,7 +216,7 @@ def early_integration_feature_importance(
     gdsc_concat_scaled = gdsc_concat_scaled.to(device)
     integradet_gradients = ShapleyValueSampling(early_integration_model)
 
-    all_attributions_test = compute_importances_values_single_input(
+    """ all_attributions_test = compute_importances_values_single_input(
         gdsc_concat_scaled,
         integradet_gradients,
     )
@@ -229,7 +229,7 @@ def early_integration_feature_importance(
         convert_ids=convert_ids,
         number_of_expression_features=number_of_expression_features,
         number_of_mutation_features=number_of_mutation_features,
-    )
+    ) """
 
     extern_concat_scaled = extern_concat_scaled.to(device)
     all_attributions_extern = compute_importances_values_single_input(
@@ -246,7 +246,7 @@ def early_integration_feature_importance(
         number_of_mutation_features=number_of_mutation_features,
     )
 
-    save_importance_results(all_attributions_test, all_columns, result_path, "extern")
+    # save_importance_results(all_attributions_test, all_columns, result_path, "extern")
     save_importance_results(all_attributions_extern, all_columns, result_path, "test")
 
 

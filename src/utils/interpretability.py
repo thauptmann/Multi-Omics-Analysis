@@ -11,7 +11,7 @@ def compute_importances_values_single_input(X, explainer):
     all_attributions = explainer.attribute(
         X,
         perturbations_per_eval=10,
-        n_samples=10,
+        n_samples=50,
         show_progress=True,
     )
     return all_attributions.cpu().numpy()
@@ -21,7 +21,7 @@ def compute_importances_values_multiple_inputs(X, explainer):
     all_attributions = explainer.attribute(
         X,
         perturbations_per_eval=10,
-        n_samples=10,
+        n_samples=50,
         show_progress=True,
     )
     expression_attributions = all_attributions[0].cpu().numpy()

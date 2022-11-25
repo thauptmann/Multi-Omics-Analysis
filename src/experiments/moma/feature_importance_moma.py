@@ -197,7 +197,7 @@ def moma_feature_importance(
     full_moma_model = FullMomaModel(moma_model, logistic_regression)
     shapley = ShapleyValueSampling(full_moma_model)
 
-    all_attributions_test = compute_importances_values_multiple_inputs(
+    """ all_attributions_test = compute_importances_values_multiple_inputs(
         (gdsc_e_scaled, gdsc_m, gdsc_c),
         shapley,
     )
@@ -210,7 +210,7 @@ def moma_feature_importance(
         convert_ids=convert_ids,
         number_of_expression_features=number_of_expression_features,
         number_of_mutation_features=number_of_mutation_features,
-    )
+    ) """
 
     all_attributions_extern = compute_importances_values_multiple_inputs(
         (extern_e_scaled, extern_m, extern_c), shapley
@@ -226,12 +226,12 @@ def moma_feature_importance(
         number_of_mutation_features=number_of_mutation_features,
     )
 
-    save_importance_results(
+    """ save_importance_results(
         all_attributions_test,
         all_columns,
         result_path,
         "extern",
-    )
+    ) """
     save_importance_results(
         all_attributions_extern,
         all_columns,

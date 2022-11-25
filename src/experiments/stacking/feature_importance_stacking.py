@@ -229,7 +229,7 @@ def stacking_feature_importance(
 
     shapley = ShapleyValueSampling(stacking_model)
 
-    all_attributions_test = compute_importances_values_multiple_inputs(
+    """ all_attributions_test = compute_importances_values_multiple_inputs(
         (gdsc_e_scaled, gdsc_m, gdsc_c),
         shapley,
     )
@@ -242,7 +242,7 @@ def stacking_feature_importance(
         convert_ids=convert_ids,
         number_of_expression_features=number_of_expression_features,
         number_of_mutation_features=number_of_mutation_features,
-    )
+    ) """
 
     extern_e_scaled.requires_grad_()
     extern_m.requires_grad_()
@@ -261,12 +261,12 @@ def stacking_feature_importance(
         number_of_mutation_features=number_of_mutation_features,
     )
 
-    save_importance_results(
+    """ save_importance_results(
         all_attributions_test,
         all_columns,
         result_path,
         "extern",
-    )
+    ) """
     save_importance_results(
         all_attributions_extern,
         all_columns,
