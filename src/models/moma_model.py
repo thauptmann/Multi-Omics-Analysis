@@ -141,10 +141,11 @@ class Moma(nn.Module):
 
 
 class FullMomaModel(nn.Module):
-    def __init__(self, classifier, logistic_regression):
+    def __init__(self, classifier, logistic_regression, device):
         super(FullMomaModel, self).__init__()
         self.classifier = classifier
         self.logistic_regression = logistic_regression
+        self.device = device
 
     def forward(self, e, m, c):
         prediction_e, prediction_m, prediction_c = self.classifier(e, m, c)
@@ -160,4 +161,4 @@ class FullMomaModel(nn.Module):
         if len(X.shape) == 1:
             X = X.reshape(1, -1)
         final_probabilities = self.logistic_regression.predict_proba(X)[:, 1]
-        return torch.FloatTensor(final_probabilities)
+        return torch.FloatTensor(final_probabilities).to(self.device)

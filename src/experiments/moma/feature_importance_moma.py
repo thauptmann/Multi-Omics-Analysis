@@ -187,6 +187,7 @@ def moma_feature_importance(
         pin_memory=False,
     )
     moma_model.eval()
+    
 
     gdsc_e_scaled = torch.Tensor(train_scaler_gdsc.fit_transform(gdsc_e)).to(device)
     gdsc_m = torch.FloatTensor(gdsc_m).to(device)
@@ -194,7 +195,7 @@ def moma_feature_importance(
 
     extern_e_scaled = torch.Tensor(train_scaler_gdsc.transform(extern_e)).to(device)
 
-    full_moma_model = FullMomaModel(moma_model, logistic_regression)
+    full_moma_model = FullMomaModel(moma_model, logistic_regression, device)
     shapley = ShapleyValueSampling(full_moma_model)
 
     """ all_attributions_test = compute_importances_values_multiple_inputs(
