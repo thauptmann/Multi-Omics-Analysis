@@ -24,25 +24,74 @@ with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
 
 best_hyperparameter = {
     "Cetuximab": {
-        
+        "variance_e": 0.99,
+        "variance_m": 0.9,
+        "variance_c": 0.95,
+        "dropout": 0.1,
+        "learning_rate": 0.01,
+        "weight_decay": 0.1,
+        "epochs": 8,
+        "mini_batch": 8,
     },
     "Docetaxel": {
-        
+        "variance_e": 0.9,
+        "variance_m": 0.975,
+        "variance_c": 0.99,
+        "dropout": 0.3,
+        "learning_rate": 0.01,
+        "weight_decay": 0.001,
+        "epochs": 9,
+        "mini_batch": 32,
     },
     "Cisplatin": {
-       
+        "variance_e": 0.95,
+        "variance_m": 0.975,
+        "variance_c": 0.975,
+        "dropout": 0.7,
+        "learning_rate": 0.01,
+        "weight_decay": 0.05,
+        "epochs": 19,
+        "mini_batch": 16,
     },
     "Erlotinib": {
-       
+        "variance_e": 0.9,
+        "variance_m": 0.9,
+        "variance_c": 0.95,
+        "dropout": 0.7,
+        "learning_rate": 0.01,
+        "weight_decay": 0.0001,
+        "epochs": 14,
+        "mini_batch": 32,
     },
     "Gemcitabine_pdx": {
-        
+        "variance_e": 0.95,
+        "variance_m": 0.9,
+        "variance_c": 0.99,
+        "dropout": 0.7,
+        "learning_rate": 0.01,
+        "weight_decay": 0.001,
+        "epochs": 6,
+        "mini_batch": 8,
     },
     "Gemcitabine_tcga": {
-        
+        "variance_e": 0.95,
+        "variance_m": 0.99,
+        "variance_c": 0.975,
+        "dropout": 0.3,
+        "learning_rate": 0.001,
+        "weight_decay": 0.1,
+        "epochs": 6,
+        "mini_batch": 16,
     },
     "Paclitaxel": {
-        
+        "variance_e": 0.99,
+        "variance_m": 0.95,
+        "variance_c": 0.99,
+        "dropout": 0.3,
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "epochs": 5,
+        "mini_batch": 8,
     },
 }
 

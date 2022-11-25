@@ -23,7 +23,19 @@ with open((file_directory / "../../config/hyperparameter.yaml"), "r") as stream:
     parameter = yaml.safe_load(stream)
 
 best_hyperparameter = {
-    "Cetuximab": {},
+    "Cetuximab": {
+        "margin": 0.2,
+        "mini_batch": 8,
+        "h_dim_classifier": 512,
+        "modules": 32,
+        "lr_expression": 0.001,
+        "lr_mutation": 0.01,
+        "lr_cna": 0.01,
+        "lr_classifier": 0.001,
+        "weight_decay": 0.01,
+        "epochs": 4,
+        "gamma": 0,
+    },
     "Docetaxel": {
         "margin": 1.0,
         "mini_batch": 16,
@@ -51,7 +63,19 @@ best_hyperparameter = {
         "gamma": 0,
         "margin": 0,
     },
-    "Erlotinib": {},
+    "Erlotinib": {
+        "margin": 1.0,
+        "mini_batch": 32,
+        "h_dim_classifier": 1024,
+        "modules": 32,
+        "lr_expression": 0.01,
+        "lr_mutation": 0.01,
+        "lr_cna": 0.01,
+        "lr_classifier": 0.01,
+        "weight_decay": 0.001,
+        "epochs": 12,
+        "gamma": 0,
+    },
     "Gemcitabine_pdx": {
         "margin": 0.2,
         "mini_batch": 32,
@@ -78,7 +102,19 @@ best_hyperparameter = {
         "epochs": 10,
         "gamma": 0,
     },
-    "Paclitaxel": {},
+    "Paclitaxel": {
+        "margin": 0.5,
+        "mini_batch": 16,
+        "h_dim_classifier": 256,
+        "modules": 64,
+        "lr_expression": 0.01,
+        "lr_mutation": 0.01,
+        "lr_cna": 0.01,
+        "lr_classifier": 0.001,
+        "weight_decay": 0.0001,
+        "epochs": 8,
+        "gamma": 0,
+    },
 }
 
 torch.manual_seed(parameter["random_seed"])

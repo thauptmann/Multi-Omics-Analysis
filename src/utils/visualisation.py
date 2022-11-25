@@ -183,7 +183,7 @@ def visualize_importances(
         "mean_cna_importance": float(mean_cna_importance),
     }
 
-    with open(path / "importances_per_omics.json", "w") as file:
+    with open(path / f"importances_per_omics.json_{}", "w") as file:
         json.dump(importances_per_omics, file)
 
 
