@@ -10,7 +10,7 @@ ax~=0.52.0
 scipy~=1.8.1
 torchmetrics~=0.8.2
 jupyter
-PyYAML==5.1.2
+pyyaml>=5.4
 shap~=0.41.0
 biopython~=1.79
 captum
